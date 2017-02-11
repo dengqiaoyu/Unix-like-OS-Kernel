@@ -50,5 +50,11 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+# Some project temp files
+bootfd.img
+bootfd.gz
+user_apps.S
+temp/
+
 #qdeng's user define
 sftp-config.json
