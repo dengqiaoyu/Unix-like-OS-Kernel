@@ -8,6 +8,7 @@
 
 typedef struct mutex {
   /* fill this in */
+  int init;
 } mutex_t;
 
 #endif /* _MUTEX_TYPE_H */
