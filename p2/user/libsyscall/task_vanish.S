@@ -10,7 +10,7 @@
 task_vanish:
     pushl %ebp                 /* store old base pointer */
     movl  %esp, %ebp           /* move new stack base to %ebp */
-    push  %esi                 /* store %esi (callee-save) */
+    pushl %esi                 /* store %esi (callee-save) */
     movl  8(%ebp), %esi        /* move argument on stack to %esi */
     int   $TASK_VANISH_INT     /* trap instruction for task_vanish */
     movl  -4(%ebp), %esi       /* restore %esi */

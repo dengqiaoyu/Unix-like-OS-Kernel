@@ -60,7 +60,7 @@ UPDATE_METHOD = afs
 #
 # The idle process is a really good thing to keep here.
 #
-410REQPROGS = idle
+410REQPROGS = idle init shell
 
 ###########################################################################
 # Mandatory programs provided in binary form by course staff
@@ -72,7 +72,7 @@ UPDATE_METHOD = afs
 # they exist, but we will grade you against the binary versions.
 # This should be fine.
 #
-410REQBINPROGS = shell init
+410REQBINPROGS = #init shell
 
 ###########################################################################
 # WARNING: When we test your code, the two TESTS variables below will be
@@ -85,7 +85,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the 410user/progs
 # directory
 #
-410TESTS =
+410TESTS = getpid_test1 cat halt_test startle
 
 ###########################################################################
 # Test programs you have written which you wish to run
@@ -93,12 +93,12 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the user/progs
 # directory
 #
-STUDENTTESTS =
+STUDENTTESTS = print_test malloc_test create_test
 
 ###########################################################################
 # Object files for your thread library
 ###########################################################################
-THREAD_OBJS = malloc.o panic.o
+THREAD_OBJS = malloc.o panic.o mutex.o thread.o start_thread.o tid_table.o
 
 # Thread Group Library Support.
 #
@@ -111,7 +111,7 @@ THREAD_OBJS = malloc.o panic.o
 ###########################################################################
 # Object files for your syscall wrappers
 ###########################################################################
-SYSCALL_OBJS = syscall.o
+SYSCALL_OBJS = misbehave.o exec.o print.o fork.o task_vanish.o vanish.o wait.o set_status.o gettid.o deschedule.o get_ticks.o make_runnable.o readline.o set_term_color.o getchar.o new_pages.o remove_pages.o sleep.o set_cursor_pos.o get_cursor_pos.o swexn.o halt.o readfile.o yield.o
 
 ###########################################################################
 # Object files for your automatic stack handling
