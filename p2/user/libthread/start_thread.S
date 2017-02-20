@@ -13,6 +13,7 @@
 #include <syscall_int.h>
 
 .global start_thread
+.global wrap_thread_proc
 
 start_thread:
     pushl %ebp              /* store old base pointer */
@@ -32,5 +33,7 @@ parent:
 child:
     movl  %esi, %esp        /* set child stack pointer */
     pushl %edx              /* load child thread procedure argument */
-    call  %ecx              /* begin executing child thread procedure */
+    pushl %ecx              /* load child thread procedure argument */
+    call  wrap_thread_proc  /* begin executing child thread procedure */
+                            /* wrap_thread_proc should never return */
 
