@@ -1,14 +1,13 @@
 #ifndef __LIST_H__
 #define __LIST_H__
 
-struct node_t {
+typedef struct node_t {
     struct node_t *prev;
     struct node_t *next;
-    unsigned int padding[2];
     char data[0];
 } node_t;
 
-struct list_t {
+typedef struct list_t {
     int node_cnt;
     struct node_t *head;
     struct node_t *tail;
