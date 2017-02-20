@@ -10,11 +10,14 @@
 #include "thread_table.h"
 #include "allocator.h"
 
-#define NUM_THREAD_LISTS 16
-#define GET_THREAD_LIST(tid) (tid % NUM_THREAD_LISTS)
-#define NUM_STACK_LISTS 16
-#define GET_STACK_LIST(tid) (tid % NUM_STACK_LISTS)
-#define LIST_CHUNK_NUM 16
+#define THREAD_TABLE_SIZE 16
+#define GET_THREAD_TABLE_INDEX(tid) (tid % THREAD_TABLE_SIZE)
+#define NUM_THREAD_ALLOCATORS 16
+#define GET_THREAD_ALLOCATOR(tid) (tid % NUM_THREAD_ALLOCATORS)
+#define NUM_LIST_CHUNKS 16
+
+// thread_table_lock(tid);
+// thread_table_unlock(tid);
 
 int stack_size;
 int thread_counter;
