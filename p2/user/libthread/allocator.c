@@ -3,7 +3,7 @@
 #include "error_type.h"
 #include "list.h"
 #include "allocator.h"
-#include "allocator_pri.h"
+#include "allocator_internal.h"
 #include "mutex.h"
 
 int allocator_init(allocator_t **allocator,

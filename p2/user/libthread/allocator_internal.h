@@ -1,5 +1,5 @@
-#ifndef __ALLOCATOR_PRIVATE_H__
-#define __ALLOCATOR_PRIVATE_H__
+#ifndef __ALLOCATOR_INTERNAL_H__
+#define __ALLOCATOR_INTERNAL_H__
 
 #include "allocator.h"
 #include "mutex.h"
