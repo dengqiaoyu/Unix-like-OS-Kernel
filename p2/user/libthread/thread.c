@@ -67,42 +67,44 @@ int thr_create(void *(*func)(void *), void *args) {
 }
 
 int thr_join(int tid, void **statusp) {
+    thread_table_lock(tid);
     thr_info *thr_to_join = thread_table_find(tid);
     if (thr_to_join == NULL) {
+        thread_table_unlock(tid);
         return ERROR_THREADS_COULD_NOT_FIND_BY_ID;
     }
     if (thr_to_join->join_tid > 0) {
-        mutex_unlock(&(thr_to_join->mutex));
+        thread_table_unlock(tid);
         return ERROR_THREADS_ALREADY_JOINED;
     }
 
     thr_to_join->join_tid = thr_getid();
-    // THREAD_EXITED, THREAD_CLEARED
     if (thr_to_join->state != EXITED) {
-        cond_wait(&(thr_to_join->cond), &(thr_to_join->mutex));
+        cond_wait(&(thr_to_join->cond), thread_table_get_mutex_addr(tid));
     }
 
     if (thr_to_join->status != NULL) {
         *statusp = thr_to_join->status;
     }
-    mutex_unlock(&(thr_to_join->mutex));
+    thread_table_lock(tid);
     allocator_free(thr_to_join->stack);
     thread_table_delete(thr_to_join);
     return SUCCESS;
 }
 
 void thr_exit( void *status ) {
-    int kernel_tid = gettid();
-    thr_info *thr_to_exit = thread_table_find(kernel_tid);
+    int tid = gettid();
+    thread_table_lock(tid);
+    thr_info *thr_to_exit = thread_table_find(tid);
     // Is it impossible to get thread_info?
     thr_to_exit->state = EXITED;
     thr_to_exit->status = status;
 
     if (thr_to_exit->join_tid > 0) {
-        mutex_unlock(&(thr_to_exit->mutex));
+        thread_table_unlock(tid);
         cond_signal(&(thr_to_exit->cond));
     }
-    mutex_unlock(&(thr_to_exit->mutex));
+    thread_table_unlock(tid);
     vanish();
 }
 
