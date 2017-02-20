@@ -6,12 +6,18 @@
 #include <mutex.h>
 #include "tid_table.h"
 
-struct node {
-  unsigned int tid;
+#define NUM_THREAD_LISTS 16
+#define LIST_CHUNK_NUM 16
+
+mutex_t *mutexes;
+list_t *thread_lists;
+list_t *stack_lists;
+
+struct thread_info {
+  int tid;
   void *stackaddr;
   int exited;
   void *status;
-  mutex_t lock;
   struct node *next;
 };
 

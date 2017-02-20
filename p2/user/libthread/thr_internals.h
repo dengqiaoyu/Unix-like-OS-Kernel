@@ -8,5 +8,6 @@
 #define THR_INTERNALS_H
 
 int start_thread( void *stackaddr, void *(*func)(void *), void *args );
+void wrap_thread_proc(void *(*func)(void *), void *args);
 
 #endif /* THR_INTERNALS_H */
