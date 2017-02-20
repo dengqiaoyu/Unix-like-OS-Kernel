@@ -8,12 +8,13 @@
 typedef struct thread_info thr_info;
 struct thread_info {
   int tid;
-  int stack_group;
+  int count;
   void *stack;
-  cond_t cv;
-  int status;
-  void *retval;
-  struct node *next;
+  int state;
+  void *status;
+  mutex_t mutex;
+  cond_t cond;
+  thr_info *next;
 };
 
 int thread_table_init(int num_thread_lists);
