@@ -9,6 +9,7 @@
 #include "thr_internals.h"
 #include "tid_table.h"
 #include "allocator.h"
+#include "error_type.h"
 
 #define MAX_THREADS 4096
 
@@ -31,8 +32,8 @@ int thr_create( void *(*func)(void *), void *args ) {
     return tid;
 }
 
-int thr_join( int tid, void **statusp ) {
-    thread_t *thr_to_join = find_thr(tid);
+int thr_join(int tid, void **statusp) {
+    thread_info *thr_to_join = thread_table_find(tid);
     if (thr_to_join == NULL) {
         return ERROR_THREADS_COULD_NOT_FIND_BY_ID;
     }
@@ -59,7 +60,7 @@ int thr_join( int tid, void **statusp ) {
 
 void thr_exit( void *status ) {
     int tid = thr_getid();
-    thread_t *thr_to_exit = find_thr(tid);
+    thread_info *thr_to_exit = thread_table_find(tid);
     // Is it impossible to get thread_info?
     thr_to_exit->status = THREADS_EXIT;
     thr_to_exit->return_val = status;
