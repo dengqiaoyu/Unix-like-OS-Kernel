@@ -7,24 +7,27 @@
 #include "mutex.h"
 #include "cond.h"
 
+#include <mutex.h>
+#include <cond.h>
+
+#define RUNNABLE 0
+#define SUSPENDED 1
+#define EXITED 2
+
 typedef struct thread_info thr_info;
 struct thread_info {
-    int counter;
-    int kernel_tid;
+    int tid;
+    int tid_count;
     void *stack;
+    int state;
+    int join_tid;
+    void *status;
     mutex_t mutex;
     cond_t cond;
-    int join_tid;
-    int state;
-    void *status;
 };
 
-// status CODE
-#define RUNNABLE 0
-#define SUSPEND 1
-#define EXIT 2
-
-int thread_table_init(int num_thread_lists);
+int thread_table_init(int table_size);
 thr_info *thread_table_find(int tid);
+int thread_table_delete(thr_info *tinfo);
 
 #endif
