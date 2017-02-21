@@ -50,7 +50,6 @@ thr_info *thread_table_insert(int tid) {
     allocator_t *allocator = thread_allocators[THREAD_ALLOCATOR_INDEX(tid)];
     assert(allocator != NULL);
 
-    /*BUG sizeof(table_node_t) << 4K, waste of space*/
     table_node_t *new_node = (table_node_t *)allocator_alloc(allocator);
     if (new_node == NULL) return NULL;
     new_node->prev = NULL;
