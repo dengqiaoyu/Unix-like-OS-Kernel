@@ -9,6 +9,8 @@
 #define ERROR_ALLOCATOR_INIT_FAILED -1
 #define ERROR_ALLOCATOR_ADD_BLOCK_FAILED -2
 
+#define SUCCESS 0
+
 typedef struct allocator allocator_t;
 struct allocator {
     list_t *list;

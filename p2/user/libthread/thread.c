@@ -35,8 +35,8 @@ int thr_init(unsigned int size) {
     int stack_chunk_size = stack_size + 2 * sizeof(int);
     int i;
     for (i = 0; i < NUM_STACK_ALLOCATORS; i++) {
-        allocator_t *allocator = stack_allocators[i];
-        if (allocator_init(&allocator, stack_chunk_size, STACK_BLOCK_SIZE))
+        allocator_t **allocatorp = &(stack_allocators[i]);
+        if (allocator_init(allocatorp, stack_chunk_size, STACK_BLOCK_SIZE))
             return -1;
     }
 
@@ -69,7 +69,7 @@ int thr_create(void *(*func)(void *), void *args) {
     tinfo->stack = stack_chunk;
     tinfo->state = RUNNABLE;
     tinfo->join_tid = 0;
-    cond_init(&(tinfo->cond));
+    //cond_init(&(tinfo->cond));
     mutex_unlock(mutex);
 
     return tid;
@@ -92,7 +92,7 @@ int thr_join(int tid, void **statusp) {
     }
     thr_to_join->join_tid = thr_getid();
     if (thr_to_join->state != EXITED) {
-        cond_wait(&(thr_to_join->cond), mutex);
+        ;//cond_wait(&(thr_to_join->cond), mutex);
     }
     *statusp = thr_to_join->status;
 
@@ -115,7 +115,7 @@ void thr_exit(void *status) {
 
     if (thr_to_exit->join_tid > 0) {
         mutex_unlock(mutex);
-        cond_signal(&(thr_to_exit->cond));
+        //cond_signal(&(thr_to_exit->cond));
     }
     else mutex_unlock(mutex);
     vanish();

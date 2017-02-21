@@ -30,8 +30,8 @@ int thread_table_init() {
     if (thread_allocators == NULL) return -1;
     int i;
     for (i = 0; i < NUM_THREAD_ALLOCATORS; i++) {
-        allocator_t *allocator = thread_allocators[i];
-        if (allocator_init(&allocator, sizeof(table_node_t), THREAD_BLOCK_SIZE))
+        allocator_t **allocatorp = &(thread_allocators[i]);
+        if (allocator_init(allocatorp, sizeof(table_node_t), THREAD_BLOCK_SIZE))
             return -1;
     }
 
