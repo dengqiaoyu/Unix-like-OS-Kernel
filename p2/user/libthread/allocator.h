@@ -2,7 +2,7 @@
 #define __ALLOCATOR_H__
 
 #include "list.h"
-#include "mutex.h"
+#include <mutex.h>
 
 #define MAX_CHUNK_NUM 1024
 
