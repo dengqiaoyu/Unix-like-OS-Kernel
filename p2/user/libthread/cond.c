@@ -41,7 +41,9 @@ void cond_wait(cond_t *cv, mutex_t *mp) {
 void cond_signal(cond_t *cv) {
     mutex_lock(&(cv->mutex));
     wait_list_item_t *wait_list_item = cond_deq(cv->wait_list);
-    if (wait_list_item == NULL) return;
+
+    //BUG needs to crash thread
+    assert(wait_list_item != NULL);
     wait_list_item->is_not_runnable = 1;
     make_runnable(wait_list_item->tid);
     mutex_unlock(&(cv->mutex));

@@ -25,15 +25,17 @@ list_t *init_list() {
 void add_node_to_head(list_t *list, node_t *node) {
     list->node_cnt++;
     node->next = list->head->next;
+    node->next->prev = node;
     node->prev = list->head;
     list->head->next = node;
 }
 
 void add_node_to_tail(list_t *list, node_t *node) {
     list->node_cnt++;
-    node->next = list->tail;
     node->prev = list->tail->prev;
-    list->tail->prev->next = node;
+    node->prev->next = node;
+    node->next = list->tail;
+    list->tail->prev = node;
 }
 
 void delete_node(list_t *list, node_t *node) {
