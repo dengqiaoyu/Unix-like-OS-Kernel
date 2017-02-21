@@ -4,7 +4,7 @@
 
 #ifndef __COND_TYPE_H__
 #define __COND_TYPE_H__
-#include "mutex.h"
+#include <mutex.h>
 #include "cond_type_internal.h"
 
 typedef struct cond_t {

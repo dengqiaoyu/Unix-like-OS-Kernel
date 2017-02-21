@@ -7,25 +7,26 @@
 
 #include <syscall.h>
 #include <malloc.h>
+#include <simics.h>
 #include "cond_type.h"
 #include "cond_type_internal.h"
 
-int dev_cond_init(cond_t *cv) {
-    // wait_list_t *wait_list = &(cv->wait_list);
+int cond_init(cond_t *cv) {
     //@BUG if ini_list cannot malloc more memory.
     cv->wait_list = init_list();
+    mutex_init(&(cv->mutex));
     cv->is_act = 1;
     return SUCCESS;
 }
 
-void dev_cond_destory(cond_t *cv) {
+void cond_destory(cond_t *cv) {
     if (cv->is_act == 0 || cv->wait_list->node_cnt != 0)
         return;
 
     cv->is_act = 0;
 }
 
-void dev_cond_wait(cond_t *cv, mutex_t *mp) {
+void cond_wait(cond_t *cv, mutex_t *mp) {
     int tid = gettid();
     mutex_lock(&(cv->mutex));
     wait_list_node_t *node_enqed = cond_enq(cv->wait_list, tid);
@@ -37,7 +38,7 @@ void dev_cond_wait(cond_t *cv, mutex_t *mp) {
     free(node_enqed);
 }
 
-void dev_cond_signal(cond_t *cv) {
+void cond_signal(cond_t *cv) {
     mutex_lock(&(cv->mutex));
     wait_list_item_t *wait_list_item = cond_deq(cv->wait_list);
     wait_list_item->is_not_runnable = 1;
@@ -45,7 +46,7 @@ void dev_cond_signal(cond_t *cv) {
     mutex_unlock(&(cv->mutex));
 }
 
-void dev_cond_broadcast(cond_t *cv) {
+void cond_broadcast(cond_t *cv) {
     int i;
     mutex_lock(&(cv->mutex));
     int current_wait_leng = cv->wait_list->node_cnt;
@@ -55,8 +56,8 @@ void dev_cond_broadcast(cond_t *cv) {
         cond_signal(cv);
 }
 
-wait_list_node_t *dev_cond_enq(wait_list_t *wait_list, int tid) {
-    wait_list_node_t *wait_list_node = calloc(0, sizeof(wait_list_item_t));
+wait_list_node_t *cond_enq(wait_list_t *wait_list, int tid) {
+    wait_list_node_t *wait_list_node = calloc(1, sizeof(wait_list_item_t));
     wait_list_item_t *wait_list_item = (wait_list_item_t *)wait_list_node->data;
     wait_list_item->tid = tid;
     wait_list_item->is_not_runnable = 0;
@@ -64,7 +65,7 @@ wait_list_node_t *dev_cond_enq(wait_list_t *wait_list, int tid) {
     return wait_list_node;
 }
 
-wait_list_item_t *dev_cond_deq(wait_list_t *wait_list) {
+wait_list_item_t *cond_deq(wait_list_t *wait_list) {
     return (wait_list_item_t *)(pop_first_node(wait_list)->data);
 }
 

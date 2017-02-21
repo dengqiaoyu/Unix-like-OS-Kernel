@@ -7,6 +7,7 @@
 
 #include <malloc.h>
 #include <string.h>
+#include <simics.h>
 #include "list.h"
 
 list_t *init_list() {
@@ -30,7 +31,7 @@ void add_node_to_head(list_t *list, node_t *node) {
 
 void add_node_to_tail(list_t *list, node_t *node) {
     list->node_cnt++;
-    node->next = NULL;
+    node->next = list->tail;
     node->prev = list->tail->prev;
     list->tail->prev->next = node;
 }
@@ -59,6 +60,7 @@ node_t *get_last_node(list_t *list) {
 }
 
 node_t *pop_first_node(list_t *list) {
+    if (list->node_cnt == 0) return NULL;
     node_t *first_node = list->head->next;
     list->head->next = first_node->next;
     first_node->next->prev = list->head;

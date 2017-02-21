@@ -55,6 +55,7 @@ void *allocator_alloc(allocator_t *allocator) {
 }
 
 void allocator_free(void* chunk_ptr) {
+    if (chunk_ptr == NULL) return;
     allocator_block_t *allocator_block = get_allocator_block(chunk_ptr);
     unsigned int idx = get_chunk_idx(chunk_ptr);
     unsigned char idx_mask = 1 << (idx % NUM_BITS_PER_BYTE);
