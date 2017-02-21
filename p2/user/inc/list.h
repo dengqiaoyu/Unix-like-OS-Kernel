@@ -19,5 +19,6 @@ void add_node_to_tail(list_t *list, node_t *node);
 void delete_node(list_t *list, node_t *node);
 node_t *get_first_node(list_t *list);
 node_t *get_last_node(list_t *list);
+node_t *pop_first_node(list_t *list);
 
 #endif

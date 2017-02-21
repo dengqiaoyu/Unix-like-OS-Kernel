@@ -2,12 +2,15 @@
  *  @brief This file defines the type for condition variables.
  */
 
-#ifndef _COND_TYPE_H
-#define _COND_TYPE_H
+#ifndef __COND_TYPE_H__
+#define __COND_TYPE_H__
+#include "mutex.h"
+#include "cond_type_internal.h"
 
-
-typedef struct cond {
-  /* fill this in */
+typedef struct cond_t {
+    wait_list_t *wait_list;
+    mutex_t mutex;
+    int is_act;
 } cond_t;
 
-#endif /* _COND_TYPE_H */
+#endif /* __COND_TYPE_H__ */

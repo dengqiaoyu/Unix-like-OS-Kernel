@@ -383,6 +383,28 @@
 	},
 	"buffers":
 	[
+		{
+			"contents": "#include <malloc.h>\n#include <string.h>\n#include \"error_type.h\"\n#include \"list.h\"\n#include \"allocator.h\"\n#include \"allocator_internal.h\"\n#include \"mutex.h\"\n\nint allocator_init(allocator_t **allocator,\n                   unsigned int chunk_size,\n                   unsigned int chunk_num) {\n    int ret = SUCCESS;\n    //BUG check return of malloc\n    allocator_t *allocator_ptr = malloc(sizeof(allocator_t));\n    allocator_ptr->list = init_list();\n    ret = mutex_init(&(allocator_ptr->allocator_mutex));\n    if (ret != SUCCESS) {\n        return ERROR_ALLOCATOR_INIT_FAILED;\n    }\n    ret = add_new_block_to_front(allocator_ptr, chunk_size,\n                                 ROUNDUP(chunk_num, NUM_BITS_PER_BYTE));\n    if (ret != SUCCESS) {\n        return ERROR_ALLOCATOR_INIT_FAILED;\n    }\n\n    *allocator = allocator_ptr;\n    return SUCCESS;\n}\n\nvoid *allocator_alloc(allocator_t *allocator,\n                      unsigned int required_size,\n                      unsigned int new_chunk_num) {\n    allocator_node_t *node_rover = get_first_node(allocator->list);\n    allocator_block_t *allocator_block = (allocator_block_t *)(node_rover->data)\n                                         unsigned int chunk_size = ((allocator_block_t *)(node_rover->data))->chunk_size;\n    unsigned int chunk_num = allocator_block->chunk_num;\n    unsigned int chunk_size = allocator_block\n    while (node_rover != NULL) {\n        allocator_block_t *allocator_block =\n            (allocator_block_t *)node_rover->data;\n        void *chunk_ptr = get_free_chunk(allocator_block, required_size);\n        if (chunk_ptr != NULL) {\n            return chunk_ptr;\n        } else {\n            node_rover = node_rover->next;\n        }\n    }\n\n    /* Did not find free chunk */\n    //TODO if add_new_block_to_front failed due to malloc\n    add_new_block_to_front(allocator, required_size, new_chunk_num);\n    void *chunk_ptr =\n        get_free_chunk(\n            (allocator_block_t *)get_first_node(allocator->list)->data,\n            required_size);\n    return chunk_ptr;\n}\n\nvoid allocator_free(void* chunk_ptr) {\n    allocator_block_t *allocator_block = get_allocator_block(chunk_ptr);\n    unsigned int idx = get_chunk_idx(chunk_ptr);\n    unsigned char idx_mask = 1 << (idx % NUM_BITS_PER_BYTE);\n    unsigned char *bit_mask = get_bit_mask(chunk_ptr);\n    *bit_mask = (*bit_mask) ^ idx_mask;\n    mutex_unlock(&(allocator_block->allocator_block_mutex));\n}\n\nvoid *get_free_chunk(allocator_block_t *allocator_block,\n                     unsigned int required_size) {\n    int i;\n    int chunk_size = allocator_block->chunk_size;\n    if (chunk_size < required_size)\n        return NULL;\n    int chunk_num = allocator_block->chunk_num;\n    unsigned char *bit_masks = allocator_block->bit_masks;\n\n    int idx = -1;\n    mutex_lock(&(allocator_block->allocator_block_mutex));\n    for (i = 0; i < chunk_num / NUM_BITS_PER_BYTE; i += 1) {\n        unsigned char bit_mask = bit_masks[i];\n        if (bit_mask == 0) {\n            mutex_unlock(&(allocator_block->allocator_block_mutex));\n            continue;\n        }\n        idx = get_free_chunk_idx(bit_mask, bit_masks + i,\n                                 &(allocator_block->allocator_block_mutex));\n        idx += i * NUM_BITS_PER_BYTE;\n        break;\n    }\n\n    if (idx >= 0) {\n        void *chunk_ptr = (allocator_block->data\n                           + (chunk_size + sizeof(allocator_block_t **)) * idx\n                           + sizeof(allocator_block_t **));\n        return chunk_ptr;\n    } else {\n        return NULL;\n    }\n}\n\nunsigned int get_free_chunk_idx(unsigned char bit_mask,\n                                unsigned char *bit_mask_ptr,\n                                mutex_t *allocator_block_mutex) {\n    unsigned char idx_mask = bit_mask ^ (bit_mask & (bit_mask - 1));\n    *bit_mask_ptr = bit_mask ^ idx_mask;\n    mutex_unlock(allocator_block_mutex);\n    unsigned int idx = 0;\n    while (idx_mask >>= 1)\n        idx++;\n    return idx;\n}\n\nint add_new_block_to_front(allocator_t *allocator,\n                           unsigned int required_size,\n                           unsigned int new_chunk_num) {\n    int block_node_size = (sizeof(allocator_node_t))\n                          + (sizeof(allocator_block_t))\n                          + (sizeof(allocator_block_t **) + required_size)\n                          * new_chunk_num;\n    int i, ret;\n    allocator_node_t *block_node = malloc(block_node_size);\n    memset(block_node, 0, block_node_size);\n    allocator_block_t *allocator_block = (allocator_block_t *)block_node->data;\n    allocator_block->chunk_size = required_size;\n    allocator_block->chunk_num = new_chunk_num;\n    ret = mutex_init(&(allocator_block->allocator_block_mutex));\n    if (ret != SUCCESS) {\n        return ERROR_ALLOCATOR_ADD_BLOCK_FAILED;\n    }\n    memset(allocator_block->bit_masks, 0xff, MAX_CHUNK_NUM / NUM_BITS_PER_BYTE);\n    void *data = allocator_block->data;\n    unsigned int offset = (sizeof(allocator_block_t **) + required_size);\n    for (i = 0; i < new_chunk_num; i++) {\n        allocator_block_t **allocator_block_back_ptr = NULL;\n        allocator_block_back_ptr = data + offset * i;\n        *allocator_block_back_ptr = allocator_block;\n    }\n    mutex_lock(&(allocator->allocator_mutex));\n    add_node_to_head(allocator->list, block_node);\n    mutex_unlock(&(allocator->allocator_mutex));\n\n    return SUCCESS;\n}\n\nunsigned char *get_bit_mask(void *chunk_ptr) {\n    allocator_block_t *allocator_block = get_allocator_block(chunk_ptr);\n    unsigned int idx = get_chunk_idx(chunk_ptr);\n    unsigned int bit_mask_idx = idx / NUM_BITS_PER_BYTE;\n    mutex_lock(&(allocator_block->allocator_block_mutex));\n    unsigned char *bit_mask = &allocator_block->bit_masks[bit_mask_idx];\n    return bit_mask;\n}\n\nunsigned int get_chunk_idx(void *chunk_ptr) {\n\n    allocator_block_t *allocator_block = get_allocator_block(chunk_ptr);\n    void *data = allocator_block->data;\n    unsigned int idx =\n        (chunk_ptr - data)\n        / (allocator_block->chunk_size + sizeof(allocator_block_t **));\n    return idx;\n}\n\nallocator_block_t *get_allocator_block(void *chunk_ptr) {\n    return *(allocator_block_t **)(chunk_ptr - sizeof(allocator_block_t **));\n}\n",
+			"file": "user/libthread/allocator.c",
+			"file_size": 6181,
+			"file_write_time": 131321100320000000,
+			"settings":
+			{
+				"buffer_size": 6201,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "{\n\t\"folders\":\n\t[\n\t\t{\n\t\t\t\"path\": \".\"\n\t\t}\n\t],\n    \"SublimeLinter\":\n    {\n        \"linters\":\n        {\n            \"clang\": {\n                \"extra_flags\": \"\",\n                \"include_dirs\": [\n                    \"$project_folder\",\n                    \"$project_folder/kern/inc\",\n                    \"$project_folder/410kern/lib/inc\",\n                    \"$project_folder/410user/lib/inc\",\n                    \"$project_folder/410user/inc\",\n                    \"$project_folder/user/inc\",\n                    \"$project_folder/user/libthread\",\n                    \"$project_folder/user/lib/cond\",\n                    \"$project_folder/spec\",\n                ]\n            }\n        }\n    },\n}",
+			"file": "p2.sublime-project",
+			"file_size": 689,
+			"file_write_time": 131321101120000000,
+			"settings":
+			{
+				"buffer_size": 689,
+				"line_ending": "Unix"
+			}
+		}
 	],
 	"build_system": "",
 	"build_system_choices":
@@ -392,12 +414,16 @@
 	"command_palette":
 	{
 		"height": 320.0,
-		"last_filter": "package control ",
+		"last_filter": "Package Control: ",
 		"selected_items":
 		[
 			[
+				"Package Control: ",
+				"Package Control: List Packages"
+			],
+			[
 				"package control ",
-				"Package Control: Install Package"
+				"Package Control: List Packages"
 			],
 			[
 				" in",
@@ -414,10 +440,6 @@
 			[
 				"Package Control: in",
 				"Package Control: Install Package"
-			],
-			[
-				"Package Control: ",
-				"Package Control: Remove Package"
 			],
 			[
 				"Package Control: In",
@@ -449,19 +471,38 @@
 	},
 	"expanded_folders":
 	[
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2"
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/libthread"
 	],
 	"file_history":
 	[
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/libthread/thread.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/p2.sublime-project",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/libthread/list.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/inc/error_type.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/lib/cond/cond_type_internal.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/inc/cond_type.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/libthread/thread.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/410user/libstdlib/stdlib.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/410kern/inc/malloc.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/410user/libstring/memset.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/libthread/allocator.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/inc/list.h",
+		"/Users/dengqiaoyu/Library/Application Support/Sublime Text 3/Packages/SublimeLinter-contrib-clang/README.md",
+		"/Users/dengqiaoyu/Library/Application Support/Sublime Text 3/Packages/User/SublimeLinter.sublime-settings",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/410user/inc/cond.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/inc/allocator.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/libthread/allocator_internal.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/libthread/thread_table.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/spec/syscall_int.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/libthread/old_table.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/inc/allocator_pri.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/inc/thread_error.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/410user/inc/malloc.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/inc/list.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/.gitignore",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/inc/error_type.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo/0/p0/605_p0.sublime-project",
+		"/Users/dengqiaoyu/Library/Application Support/Sublime Text 3/Packages/SublimeLinter/README.md",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/scratch/pebble-master/15-410/prj_02/src/p2/p2.sublime-project",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/inc/thread_error.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/libthread/malloc.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/410user/libmalloc/user.mk",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/user/libthread/mutex.c",
@@ -494,6 +535,34 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"${project_folder}",
+			"kernel_tid",
+			"join_thr_id",
+			"get_bit_mask",
+			"thread_t",
+			"}\n",
+			"allocator_block_t *",
+			"get_bit_mask",
+			"get_free_chunk",
+			"add_new_block_to_front",
+			"get_free_chunk_idx",
+			"char",
+			"get_free_chunk",
+			"get_bit_mask",
+			"get_free_chunk_idx",
+			"}\n",
+			"get_free_chunk",
+			"add_new_block_to_front",
+			"malloc",
+			"add_new_block_to_front",
+			"inline ",
+			"struct ",
+			"get_bit_mask",
+			"add_new_block_to_front",
+			"}\n",
+			"add_new_block_to_front",
+			"${project_path}",
+			"-I",
 			"get_free_chunk_idx",
 			"get_free_chunk",
 			"add_new_block_to_front",
@@ -593,35 +662,7 @@
 			"kernelRenderPixel",
 			"kernelBoxRecursive",
 			"sideLen",
-			"One",
-			"kernelBoxRecursive",
-			"printCircleIdxInBox",
-			"kernelBoxRecursive",
-			"BOX_SIDE_LENGTH",
-			"0",
-			"NUM_CIRCLE_SHRAED_BOX",
-			"offsetIdxC",
-			"kernelBoxRecursive",
-			"width / ",
-			"height /",
-			"kernelBoxRecursive",
-			"printCircleIdxInBox",
-			"kernelBoxRecursive",
-			"printCircleIdxInBox",
-			"kernelBoxRecursive",
-			"srcNumCirBox",
-			"kernelBoxRecursive",
-			"numCInBox1",
-			"kernelBoxRecursive",
-			"numCirclesTatol",
-			"gBox",
-			"kernelBox",
-			"sharedIdxCInBox",
-			"IdxCInBoxLen",
-			"position",
-			"crt0.c",
-			"THREAD_INIT",
-			"block_free"
+			"One"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -661,8 +702,238 @@
 	"groups":
 	[
 		{
+			"selected": 1,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "user/libthread/allocator.c",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6201,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								13,
+								13
+							]
+						],
+						"settings":
+						{
+							"bracket_highlighter.busy": false,
+							"bracket_highlighter.locations":
+							{
+								"close":
+								{
+								},
+								"icon":
+								{
+								},
+								"open":
+								{
+								},
+								"unmatched":
+								{
+								}
+							},
+							"bracket_highlighter.regions":
+							[
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content"
+							],
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"synced": true,
+							"syntax": "Packages/C Improved/C Improved.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "p2.sublime-project",
+					"semi_transient": true,
+					"settings":
+					{
+						"buffer_size": 689,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"bracket_highlighter.busy": false,
+							"bracket_highlighter.locations":
+							{
+								"close":
+								{
+									"1":
+									[
+										688,
+										689
+									]
+								},
+								"icon":
+								{
+									"1":
+									[
+										"Packages/BracketHighlighter/icons/curly_bracket.png",
+										"brackethighlighter.default"
+									]
+								},
+								"open":
+								{
+									"1":
+									[
+										0,
+										1
+									]
+								},
+								"unmatched":
+								{
+								}
+							},
+							"bracket_highlighter.regions":
+							[
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content"
+							],
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"synced": false,
+							"syntax": "Packages/zzz A File Icon zzz/aliases/JSON (Sublime).sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
 			]
 		}
 	],

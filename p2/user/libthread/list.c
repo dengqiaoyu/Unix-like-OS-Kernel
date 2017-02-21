@@ -57,3 +57,13 @@ node_t *get_last_node(list_t *list) {
     else
         return NULL;
 }
+
+node_t *pop_first_node(list_t *list) {
+    node_t *first_node = list->head->next;
+    list->head->next = first_node->next;
+    first_node->next->prev = list->head;
+    first_node->prev = NULL;
+    first_node->next = NULL;
+
+    return first_node;
+}
