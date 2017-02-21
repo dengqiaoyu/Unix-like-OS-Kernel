@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <mutex.h>
+#include <simics.h>
 #include "thr_internals.h"
 #include "thread_table.h"
 #include "allocator.h"
@@ -49,6 +50,7 @@ thr_info *thread_table_insert(int tid) {
     allocator_t *allocator = thread_allocators[THREAD_ALLOCATOR_INDEX(tid)];
     assert(allocator != NULL);
 
+    /*BUG sizeof(table_node_t) << 4K, waste of space*/
     table_node_t *new_node = (table_node_t *)allocator_alloc(allocator);
     if (new_node == NULL) return NULL;
     new_node->prev = NULL;
@@ -56,8 +58,7 @@ thr_info *thread_table_insert(int tid) {
     if (thread_table[tid_list] == NULL) {
         thread_table[tid_list] = new_node;
         new_node->next = NULL;
-    }
-    else {
+    } else {
         new_node->next = thread_table[tid_list];
         thread_table[tid_list] = new_node;
     }
@@ -72,8 +73,7 @@ thr_info *thread_table_find(int tid) {
     while (temp != NULL) {
         if (temp->tinfo.tid == tid) {
             return &(temp->tinfo);
-        }
-        else temp = temp->next;
+        } else temp = temp->next;
     }
     return (thr_info *)0;
 }

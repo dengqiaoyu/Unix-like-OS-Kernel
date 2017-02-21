@@ -3,6 +3,8 @@
  */
 
 #include <stdlib.h>
+/* printf() */
+#include <stdio.h>
 #include <types.h>
 #include <assert.h>
 #include <simics.h>
@@ -41,6 +43,22 @@ int thr_init(unsigned int size) {
     }
 
     if (thread_table_init(stack_size) < 0) return -1;
+
+    /* Added by Qiaoyu */
+    int root_tid = gettid();
+    mutex_t *mutex = thread_table_get_mutex(root_tid);
+    mutex_lock(mutex);
+    thr_info *tinfo = thread_table_insert(root_tid);
+    if (tinfo == NULL) return -1;
+    tinfo->tid = root_tid;
+    tinfo->counter_value = thread_counter;
+    tinfo->stack = NULL;
+    tinfo->state = RUNNABLE;
+    tinfo->join_tid = 0;
+    cond_init(&(tinfo->cond));
+    mutex_unlock(mutex);
+    /* Added by Qiaoyu */
+
     return 0;
 }
 
@@ -69,7 +87,7 @@ int thr_create(void *(*func)(void *), void *args) {
     tinfo->stack = stack_chunk;
     tinfo->state = RUNNABLE;
     tinfo->join_tid = 0;
-    //cond_init(&(tinfo->cond));
+    cond_init(&(tinfo->cond));
     mutex_unlock(mutex);
 
     return tid;
@@ -81,7 +99,10 @@ int thr_join(int tid, void **statusp) {
     thr_info *thr_to_join = thread_table_find(tid);
     if (thr_to_join == NULL) {
         mutex_unlock(mutex);
-        if (tid > thread_counter) return ERROR_THREAD_NOT_CREATED;
+        mutex_lock(&counter_mutex);
+        int thread_counter_local = thread_counter;
+        mutex_lock(&counter_mutex);
+        if (tid > thread_counter_local) return ERROR_THREAD_NOT_CREATED;
         else return ERROR_THREAD_ALREADY_JOINED;
     }
 
@@ -90,12 +111,11 @@ int thr_join(int tid, void **statusp) {
         mutex_unlock(mutex);
         return ERROR_THREAD_ALREADY_JOINED;
     }
-    thr_to_join->join_tid = thr_getid();
+    thr_to_join->join_tid = gettid();
     if (thr_to_join->state != EXITED) {
-        ;//cond_wait(&(thr_to_join->cond), mutex);
+        cond_wait(&(thr_to_join->cond), mutex);
     }
     *statusp = thr_to_join->status;
-
     allocator_free(thr_to_join->stack);
     thread_table_delete(thr_to_join);
     mutex_unlock(mutex);
@@ -103,21 +123,19 @@ int thr_join(int tid, void **statusp) {
 }
 
 void thr_exit(void *status) {
-    int tid = thr_getid();
+    int tid = gettid();
     mutex_t *mutex = thread_table_get_mutex(tid);
     mutex_lock(mutex);
     thr_info *thr_to_exit = thread_table_find(tid);
     assert(thr_to_exit != NULL);
-
+    /* BUG what if root thread */
     check_canaries(thr_to_exit);
     thr_to_exit->state = EXITED;
     thr_to_exit->status = status;
-
     if (thr_to_exit->join_tid > 0) {
         mutex_unlock(mutex);
-        //cond_signal(&(thr_to_exit->cond));
-    }
-    else mutex_unlock(mutex);
+        cond_signal(&(thr_to_exit->cond));
+    } else mutex_unlock(mutex);
     vanish();
 }
 
@@ -138,6 +156,9 @@ void set_canaries(void *stack_chunk) {
 }
 
 void check_canaries(thr_info *tinfo) {
+    assert(tinfo != NULL);
+    if (tinfo->stack == NULL) return; // stack may be free
+
     int *top_canary = (int *)(tinfo->stack);
     if (*top_canary != CANARY_VALUE) {
         lprintf("thread %d: stack may have overflowed\n", tinfo->tid);
