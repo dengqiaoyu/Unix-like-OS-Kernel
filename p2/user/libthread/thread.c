@@ -3,6 +3,8 @@
  */
 
 #include <stdlib.h>
+/* printf() */
+#include <stdio.h>
 #include <types.h>
 #include <assert.h>
 #include <simics.h>
@@ -130,7 +132,6 @@ void thr_exit(void *status) {
     check_canaries(thr_to_exit);
     thr_to_exit->state = EXITED;
     thr_to_exit->status = status;
-
     if (thr_to_exit->join_tid > 0) {
         mutex_unlock(mutex);
         cond_signal(&(thr_to_exit->cond));

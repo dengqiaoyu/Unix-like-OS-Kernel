@@ -8,11 +8,11 @@
 #include <syscall.h>
 #include <malloc.h>
 #include <simics.h>
+#include <stdio.h>
 #include "cond_type.h"
 #include "cond_type_internal.h"
 
 int cond_init(cond_t *cv) {
-    //@BUG if ini_list cannot malloc more memory.
     cv->wait_list = init_list();
     mutex_init(&(cv->mutex));
     cv->is_act = 1;
@@ -41,6 +41,7 @@ void cond_wait(cond_t *cv, mutex_t *mp) {
 void cond_signal(cond_t *cv) {
     mutex_lock(&(cv->mutex));
     wait_list_item_t *wait_list_item = cond_deq(cv->wait_list);
+    if (wait_list_item == NULL) return;
     wait_list_item->is_not_runnable = 1;
     make_runnable(wait_list_item->tid);
     mutex_unlock(&(cv->mutex));
@@ -66,6 +67,8 @@ wait_list_node_t *cond_enq(wait_list_t *wait_list, int tid) {
 }
 
 wait_list_item_t *cond_deq(wait_list_t *wait_list) {
-    return (wait_list_item_t *)(pop_first_node(wait_list)->data);
+    wait_list_node_t *wait_list_node = pop_first_node(wait_list);
+    if (wait_list_node == NULL) return NULL;
+    return (wait_list_item_t *)(wait_list_node->data);
 }
 
