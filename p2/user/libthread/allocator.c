@@ -27,14 +27,15 @@ int allocator_init(allocator_t **allocator,
     return SUCCESS;
 }
 
-void *allocator_alloc(allocator_t *allocator,
-                      unsigned int required_size,
-                      unsigned int new_chunk_num) {
+void *allocator_alloc(allocator_t *allocator) {
     allocator_node_t *node_rover = get_first_node(allocator->list);
+    allocator_block_t *allocator_block = (allocator_block_t *)(node_rover->data);
+    unsigned int chunk_size = allocator_block->chunk_size;
+    unsigned int chunk_num = allocator_block->chunk_num;
     while (node_rover != NULL) {
         allocator_block_t *allocator_block =
             (allocator_block_t *)node_rover->data;
-        void *chunk_ptr = get_free_chunk(allocator_block, required_size);
+        void *chunk_ptr = get_free_chunk(allocator_block, chunk_size);
         if (chunk_ptr != NULL) {
             return chunk_ptr;
         } else {
@@ -44,11 +45,11 @@ void *allocator_alloc(allocator_t *allocator,
 
     /* Did not find free chunk */
     //TODO if add_new_block_to_front failed due to malloc
-    add_new_block_to_front(allocator, required_size, new_chunk_num);
+    add_new_block_to_front(allocator, chunk_size, chunk_num);
     void *chunk_ptr =
         get_free_chunk(
             (allocator_block_t *)get_first_node(allocator->list)->data,
-            required_size);
+            chunk_size);
     return chunk_ptr;
 }
 
@@ -109,8 +110,8 @@ unsigned int get_free_chunk_idx(unsigned char bit_mask,
 int add_new_block_to_front(allocator_t *allocator,
                            unsigned int required_size,
                            unsigned int new_chunk_num) {
-    int block_node_size = (sizeof(allocator_node_t) - sizeof(char))
-                          + (sizeof(allocator_block_t) - sizeof(char))
+    int block_node_size = (sizeof(allocator_node_t))
+                          + (sizeof(allocator_block_t))
                           + (sizeof(allocator_block_t **) + required_size)
                           * new_chunk_num;
     int i, ret;

@@ -2,7 +2,7 @@
 #define __ALLOCATOR_H__
 
 #include "list.h"
-#include "mutex.h"
+#include <mutex.h>
 
 #define MAX_CHUNK_NUM 1024
 
@@ -14,9 +14,7 @@ typedef struct allocator_t {
 int allocator_init(allocator_t **allocator,
                    unsigned int chunk_size,
                    unsigned int chunk_num);
-void *allocator_alloc(allocator_t *allocator,
-                      unsigned int required_size,
-                      unsigned int new_chunk_num);
+void *allocator_alloc(allocator_t *allocator);
 void allocator_free(void *chunk_ptr);
 
 #endif

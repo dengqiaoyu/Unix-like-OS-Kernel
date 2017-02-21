@@ -6,6 +6,7 @@
  */
 
 #include <malloc.h>
+#include <string.h>
 #include "list.h"
 
 list_t *init_list() {

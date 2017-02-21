@@ -6,8 +6,8 @@
 #include <types.h>
 #include <thread.h>
 #include <syscall.h>
-#include "mutex.h"
-#include "cond.h"
+#include <mutex.h>
+#include <cond.h>
 #include "thr_internals.h"
 #include "thread_table.h"
 #include "allocator.h"
@@ -79,8 +79,8 @@ int thr_join(int tid, void **statusp) {
     }
 
     thr_to_join->join_tid = thr_getid();
-    if (thr_to_join->state != EXITED) {
-        cond_wait(&(thr_to_join->cond), thread_table_get_mutex_addr(tid));
+    while (thr_to_join->state != EXITED) {
+        cond_wait(&(thr_to_join->cond), thread_table_get_mutex(tid));
     }
 
     if (thr_to_join->status != NULL) {
@@ -103,8 +103,9 @@ void thr_exit( void *status ) {
     if (thr_to_exit->join_tid > 0) {
         thread_table_unlock(tid);
         cond_signal(&(thr_to_exit->cond));
+    } else {
+        thread_table_unlock(tid);
     }
-    thread_table_unlock(tid);
     vanish();
 }
 
