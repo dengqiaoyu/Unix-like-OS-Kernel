@@ -6,15 +6,23 @@
 
 #define MAX_CHUNK_NUM 1024
 
-typedef struct allocator_t {
+#define ERROR_ALLOCATOR_INIT_FAILED -1
+#define ERROR_ALLOCATOR_ADD_BLOCK_FAILED -2
+
+#define SUCCESS 0
+
+typedef struct allocator allocator_t;
+struct allocator {
     list_t *list;
     mutex_t allocator_mutex;
-} allocator_t;
+};
 
 int allocator_init(allocator_t **allocator,
                    unsigned int chunk_size,
                    unsigned int chunk_num);
+
 void *allocator_alloc(allocator_t *allocator);
+
 void allocator_free(void *chunk_ptr);
 
 #endif

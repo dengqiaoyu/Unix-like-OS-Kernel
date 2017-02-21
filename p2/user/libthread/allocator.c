@@ -1,6 +1,7 @@
 #include <malloc.h>
 #include <string.h>
-#include "error_type.h"
+#include <assert.h>
+#include <simics.h>
 #include "list.h"
 #include "allocator.h"
 #include "allocator_internal.h"

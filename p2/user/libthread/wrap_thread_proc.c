@@ -6,6 +6,6 @@
 
 void wrap_thread_proc(void *(*func)(void *), void *args)
 {
-  func(args);
-  thr_exit((void *)1);
+    func(args);
+    thr_exit((void *)1);
 }
