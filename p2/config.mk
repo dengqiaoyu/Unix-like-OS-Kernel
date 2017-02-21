@@ -98,7 +98,7 @@ STUDENTTESTS = print_test malloc_test create_test
 ###########################################################################
 # Object files for your thread library
 ###########################################################################
-THREAD_OBJS = malloc.o panic.o mutex.o thread.o start_thread.o wrap_thread_proc.o tid_table.o
+THREAD_OBJS = malloc.o panic.o mutex.o thread.o start_thread.o wrap_thread_proc.o thread_table.o allocator.o mutex_asm.o list.o
 
 # Thread Group Library Support.
 #
