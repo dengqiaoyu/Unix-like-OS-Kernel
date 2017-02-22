@@ -101,7 +101,6 @@ int thr_join(int tid, void **statusp) {
         if (tid > thread_counter_local) return ERROR_THREAD_NOT_CREATED;
         else return ERROR_THREAD_ALREADY_JOINED;
     }
-
     check_canaries(thr_to_join);
     if (thr_to_join->join_tid > 0) {
         mutex_unlock(mutex);
@@ -113,6 +112,16 @@ int thr_join(int tid, void **statusp) {
     }
     *statusp = thr_to_join->status;
 
+    while (1) {
+        //BUG
+        // why make_runnable?
+        // maybe race if the thread is calling cond_wait?
+        int ret = make_runnable(tid);
+        if (ret < 0) {
+            ret = yield(tid);
+            if (ret < 0) break;
+        }
+    }
     if (thr_to_join->stack != NULL) allocator_free(thr_to_join->stack);
     thread_table_delete(thr_to_join);
 
@@ -126,6 +135,13 @@ void thr_exit(void *status) {
     mutex_lock(mutex);
 
     thr_info *thr_to_exit = thread_table_find(tid);
+
+    while (thr_to_exit == NULL) {
+        mutex_unlock(mutex);
+        // BUG BUG BUG
+        mutex_lock(mutex);
+        thr_to_exit = thread_table_find(tid);
+    }
     assert(thr_to_exit != NULL);
     check_canaries(thr_to_exit);
     thr_to_exit->state = EXITED;
