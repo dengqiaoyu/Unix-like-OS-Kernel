@@ -10,19 +10,16 @@
 int allocator_init(allocator_t **allocator,
                    unsigned int chunk_size,
                    unsigned int chunk_num) {
-    int ret = SUCCESS;
-    //BUG check return of malloc
+    int ret;
     allocator_t *allocator_ptr = malloc(sizeof(allocator_t));
+    if (allocator_ptr == NULL) return ERROR_ALLOCATOR_INIT_FAILED;
+
     allocator_ptr->list = init_list();
     ret = mutex_init(&(allocator_ptr->allocator_mutex));
-    if (ret != SUCCESS) {
-        return ERROR_ALLOCATOR_INIT_FAILED;
-    }
+    if (ret != SUCCESS) return ERROR_ALLOCATOR_INIT_FAILED;
     ret = add_new_block_to_front(allocator_ptr, chunk_size,
                                  ROUNDUP(chunk_num, NUM_BITS_PER_BYTE));
-    if (ret != SUCCESS) {
-        return ERROR_ALLOCATOR_INIT_FAILED;
-    }
+    if (ret != SUCCESS) return ERROR_ALLOCATOR_INIT_FAILED;
 
     *allocator = allocator_ptr;
     return SUCCESS;
@@ -55,7 +52,7 @@ void *allocator_alloc(allocator_t *allocator) {
 }
 
 void allocator_free(void* chunk_ptr) {
-    if (chunk_ptr == NULL) return;
+    assert(chunk_ptr != NULL);
     allocator_block_t *allocator_block = get_allocator_block(chunk_ptr);
     unsigned int idx = get_chunk_idx(chunk_ptr);
     unsigned char idx_mask = 1 << (idx % NUM_BITS_PER_BYTE);

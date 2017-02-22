@@ -168,8 +168,10 @@ void set_canaries(void *stack_chunk) {
 }
 
 void check_canaries(thr_info *tinfo) {
+    assert(tinfo != NULL);
+    if (tinfo->stack == NULL) return; // stack may be free
+
     int *top_canary = (int *)(tinfo->stack);
-    if (top_canary == NULL) return;
     if (*top_canary != CANARY_VALUE) {
         lprintf("thread %d: stack may have overflowed\n", tinfo->tid);
     }
