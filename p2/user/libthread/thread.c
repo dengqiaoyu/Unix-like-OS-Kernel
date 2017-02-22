@@ -46,6 +46,7 @@ int thr_init(unsigned int size) {
 
     /* Added by Qiaoyu */
     int root_tid = gettid();
+    lprintf("root_tid: %d\n", root_tid);
     mutex_t *mutex = thread_table_get_mutex(root_tid);
     mutex_lock(mutex);
     thr_info *tinfo = thread_table_insert(root_tid);
@@ -89,7 +90,10 @@ int thr_create(void *(*func)(void *), void *args) {
     tinfo->join_tid = 0;
     cond_init(&(tinfo->cond));
     mutex_unlock(mutex);
+    // lprintf("%d is going to be runnable\n", tid);
+    // make_runnable(tid);
 
+    lprintf("tid in thr_create: %d\n", tid);
     return tid;
 }
 
@@ -97,6 +101,7 @@ int thr_join(int tid, void **statusp) {
     mutex_t *mutex = thread_table_get_mutex(tid);
     mutex_lock(mutex);
     thr_info *thr_to_join = thread_table_find(tid);
+    // assert(thr_to_join != NULL);
     if (thr_to_join == NULL) {
         mutex_unlock(mutex);
         mutex_lock(&counter_mutex);
@@ -105,37 +110,62 @@ int thr_join(int tid, void **statusp) {
         if (tid > thread_counter_local) return ERROR_THREAD_NOT_CREATED;
         else return ERROR_THREAD_ALREADY_JOINED;
     }
-
+    // lprintf("line 112 in thr_join\n");
     check_canaries(thr_to_join);
     if (thr_to_join->join_tid > 0) {
         mutex_unlock(mutex);
         return ERROR_THREAD_ALREADY_JOINED;
     }
     thr_to_join->join_tid = gettid();
+    // lprintf("thr_to_join->join_tid: %d\n", thr_to_join->join_tid);
     if (thr_to_join->state != EXITED) {
+        // lprintf("line 121 in thr_join in thread.c\n");
         cond_wait(&(thr_to_join->cond), mutex);
     }
+    // lprintf("line 122 in thr_join\n");
     *statusp = thr_to_join->status;
+    while (1) {
+        int ret = make_runnable(tid);
+        // lprintf("make_runnable: %d\n", ret);
+        if (ret < 0) {
+            ret = yield(tid);
+            // lprintf("yield: %d\n", ret);
+            if (ret < 0) break;
+        }
+    }
     allocator_free(thr_to_join->stack);
     thread_table_delete(thr_to_join);
     mutex_unlock(mutex);
+    lprintf("thread %d has been freed\n", tid);
     return SUCCESS;
 }
 
 void thr_exit(void *status) {
     int tid = gettid();
+    // int zero = 0;
     mutex_t *mutex = thread_table_get_mutex(tid);
     mutex_lock(mutex);
     thr_info *thr_to_exit = thread_table_find(tid);
+
+    while (thr_to_exit == NULL) {
+        mutex_unlock(mutex);
+        // lprintf("tid: %d is going to deschedule\n", tid);
+        // deschedule(&zero);
+        // BUG BUG BUG
+        mutex_lock(mutex);
+        thr_to_exit = thread_table_find(tid);
+    }
     assert(thr_to_exit != NULL);
     /* BUG what if root thread */
     check_canaries(thr_to_exit);
     thr_to_exit->state = EXITED;
     thr_to_exit->status = status;
+    // lprintf("tid: %d is going to signal\n", tid);
     if (thr_to_exit->join_tid > 0) {
         mutex_unlock(mutex);
         cond_signal(&(thr_to_exit->cond));
     } else mutex_unlock(mutex);
+    lprintf("thread %d is going to exit\n", tid);
     vanish();
 }
 

@@ -19,7 +19,7 @@ int cond_init(cond_t *cv) {
     return SUCCESS;
 }
 
-void cond_destory(cond_t *cv) {
+void cond_destroy(cond_t *cv) {
     if (cv->is_act == 0 || cv->wait_list->node_cnt != 0)
         return;
 
