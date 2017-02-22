@@ -43,20 +43,16 @@ int thr_init(unsigned int size) {
 
     if (thread_table_init(stack_size) < 0) return -1;
 
-    /* Added by Qiaoyu */
+    // anything else we could do here?
     int root_tid = gettid();
-    mutex_t *mutex = thread_table_get_mutex(root_tid);
-    mutex_lock(mutex);
     thr_info *tinfo = thread_table_insert(root_tid);
     if (tinfo == NULL) return -1;
     tinfo->tid = root_tid;
-    tinfo->counter_value = thread_counter;
+    tinfo->counter_value = thread_counter++;
     tinfo->stack = NULL;
     tinfo->state = RUNNABLE;
     tinfo->join_tid = 0;
     cond_init(&(tinfo->cond));
-    mutex_unlock(mutex);
-    /* Added by Qiaoyu */
 
     return 0;
 }
@@ -128,12 +124,13 @@ void thr_exit(void *status) {
     int tid = gettid();
     mutex_t *mutex = thread_table_get_mutex(tid);
     mutex_lock(mutex);
+
     thr_info *thr_to_exit = thread_table_find(tid);
     assert(thr_to_exit != NULL);
-
     check_canaries(thr_to_exit);
     thr_to_exit->state = EXITED;
     thr_to_exit->status = status;
+
     if (thr_to_exit->join_tid > 0) {
         mutex_unlock(mutex);
         cond_signal(&(thr_to_exit->cond));

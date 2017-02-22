@@ -72,7 +72,7 @@ UPDATE_METHOD = afs
 # they exist, but we will grade you against the binary versions.
 # This should be fine.
 #
-410REQBINPROGS = #init shell
+410REQBINPROGS =
 
 ###########################################################################
 # WARNING: When we test your code, the two TESTS variables below will be
@@ -106,7 +106,7 @@ THREAD_OBJS = malloc.o panic.o thread.o start_thread.o wrap_thread_proc.o thread
 # P2" we give you can't build libthrgrp.a.  Once you set up your thread
 # library and fix THREAD_OBJS above, uncomment this line to enable building
 # libthrgrp.a:
-#410USER_LIBS_EARLY += libthrgrp.a
+410USER_LIBS_EARLY += libthrgrp.a
 
 ###########################################################################
 # Object files for your syscall wrappers

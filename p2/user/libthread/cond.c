@@ -7,6 +7,7 @@
 
 #include <syscall.h>
 #include <malloc.h>
+#include <assert.h>
 #include <simics.h>
 #include <stdio.h>
 #include "cond_type.h"
@@ -19,7 +20,7 @@ int cond_init(cond_t *cv) {
     return SUCCESS;
 }
 
-void cond_destory(cond_t *cv) {
+void cond_destroy(cond_t *cv) {
     if (cv->is_act == 0 || cv->wait_list->node_cnt != 0)
         return;
 
@@ -43,7 +44,7 @@ void cond_signal(cond_t *cv) {
     wait_list_item_t *wait_list_item = cond_deq(cv->wait_list);
 
     //BUG needs to crash thread
-    assert(wait_list_item != NULL);
+    if (wait_list_item == NULL) return;
     wait_list_item->is_not_runnable = 1;
     make_runnable(wait_list_item->tid);
     mutex_unlock(&(cv->mutex));

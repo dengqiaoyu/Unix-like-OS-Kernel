@@ -52,13 +52,14 @@ thr_info *thread_table_insert(int tid) {
 
     table_node_t *new_node = (table_node_t *)allocator_alloc(allocator);
     if (new_node == NULL) return NULL;
-    new_node->prev = NULL;
 
+    new_node->prev = NULL;
     if (thread_table[tid_list] == NULL) {
         thread_table[tid_list] = new_node;
         new_node->next = NULL;
     }
     else {
+        thread_table[tid_list]->prev = new_node;
         new_node->next = thread_table[tid_list];
         thread_table[tid_list] = new_node;
     }
