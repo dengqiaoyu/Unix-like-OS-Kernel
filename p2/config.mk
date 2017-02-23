@@ -85,7 +85,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the 410user/progs
 # directory
 #
-410TESTS = getpid_test1 cat halt_test startle misbehave_wrap thr_exit_join join_specific_test multitest agility_drill cyclone largetest mandelbrot
+410TESTS = cvar_test cyclone join_specific_test thr_exit_join startle
 
 ###########################################################################
 # Test programs you have written which you wish to run
@@ -94,7 +94,7 @@ UPDATE_METHOD = afs
 # directory
 #
 
-STUDENTTESTS = print_test malloc_test create_test q w e t
+STUDENTTESTS = 
 
 ###########################################################################
 # Object files for your thread library

@@ -110,17 +110,21 @@ int thr_join(int tid, void **statusp) {
     if (thr_to_join->state != EXITED) {
         cond_wait(&(thr_to_join->cond), mutex);
     }
-    *statusp = thr_to_join->status;
+    if (statusp != NULL) *statusp = thr_to_join->status;
 
-    // while (1) {
-    //     int ret = make_runnable(tid);
-    //     if (ret < 0) {
-    //         ret = yield(tid);
-    //         if (ret < 0) break;
-    //     }
-    // }
+    mutex_unlock(mutex);
+    while (1) {
+        int ret = make_runnable(tid);
+        if (ret < 0) {
+            ret = yield(tid);
+            if (ret < 0) {
+                mutex_lock(mutex);
+                break;
+            }
+        }
+    }
 
-    while (yield(tid) == 0) {}
+    // while (yield(tid) == 0) {}
     if (thr_to_join->stack != NULL) allocator_free(thr_to_join->stack);
     thread_table_delete(thr_to_join);
     mutex_unlock(mutex);
