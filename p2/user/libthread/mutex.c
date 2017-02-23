@@ -21,13 +21,28 @@ void mutex_destroy(mutex_t *mp) {
 void mutex_lock(mutex_t *mp) {
     int tid = gettid();
     int ret = mutex_lock_asm(mp, tid);
+    /*
+    int yield_flag = 1;
     while (ret != 0) {
-        if (mp->holder_tid == -1) {
+        if (yield_flag) {
+            if (mp->holder_tid != -1) {
+                if (yield(mp->holder_tid) < 0) yield_flag = 0;
+            }
+            else {
+                if (yield(-1) < 0) yield_flag = 0;
+            }
+        }
+        ret = mutex_lock_asm(mp, tid);
+    }
+    */
+    while (ret != 0) {
+        if (mp->holder_tid != -1) {
+            yield(mp->holder_tid);
             ret = mutex_lock_asm(mp, tid);
         }
         else {
-            yield(mp->holder_tid);
-            ret = mutex_lock_asm(mp, tid);;
+            yield(-1);
+            ret = mutex_lock_asm(mp, tid);
         }
     }
 }
