@@ -2,33 +2,23 @@
  *
  */
 
-.global mutex_lock
-.global mutex_unlock
+.global mutex_lock_asm
+.global mutex_unlock_asm
 
-mutex_lock:
-    pushl %ebp              /* store old base pointer */
-    movl  %esp, %ebp        /* move new stack base to %ebp */
-    pushl %esi              /* store %esi (callee-save) */
-    movl  8(%ebp), %esi     /* store mutex address in %esi */
+mutex_lock_asm:
+    movl  4(%esp), %ecx     /* store mutex address in %esi */
+    movl  8(%esp), %edx     /* store mutex address in %esi */
     movl  $1, %eax          /* prepare to lock */
-loop:
-    xchg  %eax, (%esi)      /* exchange %eax with mutex */
-    testl %eax, %eax        /* test exchanged value */
-    jne   loop              /* loop if %eax > 0 (lock not acquired) */
-    movl  -4(%ebp), %esi    /* restore %esi */
-    movl  %ebp, %esp        /* restore %esp */
-    popl  %ebp              /* restore old base pointer */
+    xchg  %eax, (%ecx)      /* exchange %eax with mutex */
+    testl %eax, %eax
+    jne   exit
+    movl  %edx, 4(%ecx)
+exit:
     ret
 
-mutex_unlock:
-    pushl %ebp              /* store old base pointer */
-    movl  %esp, %ebp        /* move new stack base to %ebp */
-    pushl %esi              /* store %esi (callee-save) */
-    movl  8(%ebp), %esi     /* store mutex address in %esi */
+mutex_unlock_asm:
+    movl  4(%esp), %ecx     /* store mutex address in %esi */
     movl  $0, %eax          /* prepare to unlock */
-    xchg  %eax, (%esi)      /* exchange %eax with mutex */
-    movl  -4(%ebp), %esi    /* restore %esi */
-    movl  %ebp, %esp        /* restore %esp */
-    popl  %ebp              /* restore old base pointer */
+    xchg  %eax, (%ecx)      /* exchange %eax with mutex */
     ret
 

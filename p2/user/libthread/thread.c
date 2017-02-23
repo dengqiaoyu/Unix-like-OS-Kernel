@@ -3,7 +3,6 @@
  */
 
 #include <stdlib.h>
-/* printf() */
 #include <stdio.h>
 #include <types.h>
 #include <assert.h>
@@ -44,20 +43,16 @@ int thr_init(unsigned int size) {
 
     if (thread_table_init(stack_size) < 0) return -1;
 
-    /* Added by Qiaoyu */
+    // anything else we could do here?
     int root_tid = gettid();
-    mutex_t *mutex = thread_table_get_mutex(root_tid);
-    mutex_lock(mutex);
     thr_info *tinfo = thread_table_insert(root_tid);
     if (tinfo == NULL) return -1;
     tinfo->tid = root_tid;
-    tinfo->counter_value = thread_counter;
+    tinfo->counter_value = thread_counter++;
     tinfo->stack = NULL;
     tinfo->state = RUNNABLE;
     tinfo->join_tid = 0;
     cond_init(&(tinfo->cond));
-    mutex_unlock(mutex);
-    /* Added by Qiaoyu */
 
     return 0;
 }
@@ -96,6 +91,7 @@ int thr_create(void *(*func)(void *), void *args) {
 int thr_join(int tid, void **statusp) {
     mutex_t *mutex = thread_table_get_mutex(tid);
     mutex_lock(mutex);
+
     thr_info *thr_to_join = thread_table_find(tid);
     if (thr_to_join == NULL) {
         mutex_unlock(mutex);
@@ -115,6 +111,7 @@ int thr_join(int tid, void **statusp) {
         cond_wait(&(thr_to_join->cond), mutex);
     }
     *statusp = thr_to_join->status;
+
     // while (1) {
     //     int ret = make_runnable(tid);
     //     if (ret < 0) {
@@ -124,8 +121,7 @@ int thr_join(int tid, void **statusp) {
     // }
 
     while (yield(tid) == 0) {}
-
-    allocator_free(thr_to_join->stack);
+    if (thr_to_join->stack != NULL) allocator_free(thr_to_join->stack);
     thread_table_delete(thr_to_join);
     mutex_unlock(mutex);
     return SUCCESS;
@@ -135,6 +131,7 @@ void thr_exit(void *status) {
     int tid = gettid();
     mutex_t *mutex = thread_table_get_mutex(tid);
     mutex_lock(mutex);
+
     thr_info *thr_to_exit = thread_table_find(tid);
 
     while (thr_to_exit == NULL) {
@@ -147,6 +144,7 @@ void thr_exit(void *status) {
     check_canaries(thr_to_exit);
     thr_to_exit->state = EXITED;
     thr_to_exit->status = status;
+
     if (thr_to_exit->join_tid > 0) {
         mutex_unlock(mutex);
         cond_signal(&(thr_to_exit->cond));
@@ -172,7 +170,7 @@ void set_canaries(void *stack_chunk) {
 
 void check_canaries(thr_info *tinfo) {
     assert(tinfo != NULL);
-    if (tinfo->stack == NULL) return; // stack may be free
+    if (tinfo->stack == NULL) return;
 
     int *top_canary = (int *)(tinfo->stack);
     if (*top_canary != CANARY_VALUE) {

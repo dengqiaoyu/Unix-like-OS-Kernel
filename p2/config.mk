@@ -72,7 +72,7 @@ UPDATE_METHOD = afs
 # they exist, but we will grade you against the binary versions.
 # This should be fine.
 #
-410REQBINPROGS = #init shell
+410REQBINPROGS =
 
 ###########################################################################
 # WARNING: When we test your code, the two TESTS variables below will be
@@ -85,7 +85,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the 410user/progs
 # directory
 #
-410TESTS = getpid_test1 cat halt_test startle misbehave_wrap thr_exit_join join_specific_test
+410TESTS = getpid_test1 cat halt_test startle misbehave_wrap thr_exit_join join_specific_test multitest agility_drill cyclone largetest mandelbrot
 
 ###########################################################################
 # Test programs you have written which you wish to run
@@ -94,8 +94,7 @@ UPDATE_METHOD = afs
 # directory
 #
 
-STUDENTTESTS = print_test malloc_test create_test t e
-
+STUDENTTESTS = print_test malloc_test create_test q w e t
 
 ###########################################################################
 # Object files for your thread library
@@ -108,7 +107,7 @@ THREAD_OBJS = malloc.o panic.o thread.o start_thread.o wrap_thread_proc.o thread
 # P2" we give you can't build libthrgrp.a.  Once you set up your thread
 # library and fix THREAD_OBJS above, uncomment this line to enable building
 # libthrgrp.a:
-#410USER_LIBS_EARLY += libthrgrp.a
+410USER_LIBS_EARLY += libthrgrp.a
 
 ###########################################################################
 # Object files for your syscall wrappers

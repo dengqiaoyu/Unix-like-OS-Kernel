@@ -32,10 +32,10 @@ void add_node_to_head(list_t *list, node_t *node) {
 
 void add_node_to_tail(list_t *list, node_t *node) {
     list->node_cnt++;
-    node->next = list->tail;
-    list->tail->prev = node;
     node->prev = list->tail->prev;
     node->prev->next = node;
+    node->next = list->tail;
+    list->tail->prev = node;
 }
 
 void delete_node(list_t *list, node_t *node) {
@@ -63,6 +63,7 @@ node_t *get_last_node(list_t *list) {
 
 node_t *pop_first_node(list_t *list) {
     if (list->node_cnt == 0) return NULL;
+    list->node_cnt--;
     node_t *first_node = list->head->next;
     list->head->next = first_node->next;
     first_node->next->prev = list->head;

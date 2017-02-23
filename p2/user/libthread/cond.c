@@ -7,6 +7,7 @@
 
 #include <syscall.h>
 #include <malloc.h>
+#include <assert.h>
 #include <simics.h>
 #include <stdio.h>
 #include "cond_type.h"
@@ -41,6 +42,8 @@ void cond_wait(cond_t *cv, mutex_t *mp) {
 void cond_signal(cond_t *cv) {
     mutex_lock(&(cv->mutex));
     wait_list_item_t *wait_list_item = cond_deq(cv->wait_list);
+
+    //BUG needs to crash thread
     if (wait_list_item == NULL) return;
     wait_list_item->is_not_runnable = 1;
     make_runnable(wait_list_item->tid);
