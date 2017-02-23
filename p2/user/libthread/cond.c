@@ -46,7 +46,6 @@ void cond_signal(cond_t *cv) {
     mutex_lock(&(cv->mutex));
     wait_list_item_t *wait_list_item = cond_deq(&(cv->wait_list));
 
-    //BUG needs to crash thread
     if (wait_list_item == NULL) {
         mutex_unlock(&(cv->mutex));
         return;
