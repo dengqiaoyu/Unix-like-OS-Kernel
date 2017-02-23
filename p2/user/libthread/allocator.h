@@ -8,12 +8,13 @@
 
 #define ERROR_ALLOCATOR_INIT_FAILED -1
 #define ERROR_ALLOCATOR_ADD_BLOCK_FAILED -2
+#define ERROR_ALLOCATOR_MALLOC_NEW_BLOCK_FAILED -3
 
 #define SUCCESS 0
 
 typedef struct allocator allocator_t;
 struct allocator {
-    list_t *list;
+    list_t list;
     mutex_t allocator_mutex;
 };
 
@@ -22,7 +23,7 @@ int allocator_init(allocator_t **allocator,
                    unsigned int chunk_num);
 
 void *allocator_alloc(allocator_t *allocator);
-
 void allocator_free(void *chunk_ptr);
+void destroy_allocator(allocator_t *allocator);
 
 #endif

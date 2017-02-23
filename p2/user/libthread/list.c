@@ -8,18 +8,51 @@
 #include <malloc.h>
 #include <string.h>
 #include <simics.h>
+#include <syscall.h>
+#include <stdio.h>
 #include "list.h"
 
-list_t *init_list() {
-    list_t *list = calloc(1, sizeof(list_t));
+// list_t *init_list() {
+//     list_t *list = calloc(1, sizeof(list_t));
+//     if (list == NULL) {
+//         printf("Cannot create more ");
+//     }
+//     node_t *head_node = calloc(1, sizeof(node_t));
+//     list->head = head_node;
+//     node_t *tail_node = calloc(1, sizeof(node_t));
+//     list->tail = tail_node;
+
+//     head_node->next = tail_node;
+//     tail_node->prev = head_node;
+//     return list;
+// }
+//
+
+int init_list(list_t *list) {
+
     node_t *head_node = calloc(1, sizeof(node_t));
+    if (head_node == NULL) {
+        int tid = gettid();
+        sim_breakpoint();
+        printf("Cannot allocate more memory for thread %d\n", tid);
+        return ERROR_INIT_LIST_CALLOC_FAILED;
+    }
     list->head = head_node;
+
     node_t *tail_node = calloc(1, sizeof(node_t));
+    if (tail_node == NULL) {
+        free(head_node);
+        list->head = NULL;
+        int tid = gettid();
+        printf("Cannot allocate more memory for thread %d\n", tid);
+        return ERROR_INIT_LIST_CALLOC_FAILED;
+    }
     list->tail = tail_node;
 
     head_node->next = tail_node;
     tail_node->prev = head_node;
-    return list;
+
+    return SUCCESS;
 }
 
 void add_node_to_head(list_t *list, node_t *node) {
@@ -71,4 +104,19 @@ node_t *pop_first_node(list_t *list) {
     first_node->next = NULL;
 
     return first_node;
+}
+
+void clear_list(list_t *list) {
+    if (list->node_cnt == 0) return;
+    node_t *node_rover = get_first_node(list);
+    node_t *next = NULL;
+    while (node_rover != NULL) {
+        next = node_rover->next;
+        free(node_rover);
+        node_rover = next;
+    }
+
+    free(list->head);
+    free(list->tail);
+    memset(list, 0, sizeof(list_t));
 }

@@ -1,6 +1,9 @@
 #ifndef __LIST_H__
 #define __LIST_H__
 
+#define SUCCESS 0
+#define ERROR_INIT_LIST_CALLOC_FAILED -1
+
 typedef struct node node_t;
 struct node {
     node_t *prev;
@@ -13,14 +16,15 @@ struct list {
     int node_cnt;
     node_t *head;
     node_t *tail;
-}; 
+};
 
-list_t *init_list();
+int init_list(list_t *list);
 void add_node_to_head(list_t *list, node_t *node);
 void add_node_to_tail(list_t *list, node_t *node);
 void delete_node(list_t *list, node_t *node);
 node_t *get_first_node(list_t *list);
 node_t *get_last_node(list_t *list);
 node_t *pop_first_node(list_t *list);
+void clear_list(list_t *list);
 
 #endif

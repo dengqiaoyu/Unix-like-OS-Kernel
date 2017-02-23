@@ -10,13 +10,15 @@
 #include "autostack_internal.h"
 
 swexn_handler_t swexn_handler = autostack;
+excepetion_stack_info_t global_excepetion_stack_info = {0};
+char exeception_stack_bottom[EXECEPTION_STACK_SIZE + WORD_SIZE] = {0};
 
 void
 install_autostack(void *stack_high, void *stack_low) {
+    lprintf("thread %d installs autostack\n", gettid());
     excepetion_stack_info_t *excepetion_stack_info =
-        malloc(sizeof(excepetion_stack_info_t));
-    excepetion_stack_info->exeception_stack_bottom =
-        malloc(INITIAL_STACK_SIZE + WORD_SIZE);
+        &global_excepetion_stack_info;
+    excepetion_stack_info->exeception_stack_bottom = exeception_stack_bottom;
     excepetion_stack_info->esp3 =
         excepetion_stack_info->exeception_stack_bottom
         + INITIAL_STACK_SIZE + WORD_SIZE - 1;
@@ -30,6 +32,7 @@ install_autostack(void *stack_high, void *stack_low) {
 }
 
 void autostack(void *arg, ureg_t *ureg) {
+    lprintf("trapped!\n");
     excepetion_stack_info_t *excepetion_stack_info = arg;
     void *page_fault_addr = (void *)ureg->cr2;
     if (ureg->cause != SWEXN_CAUSE_PAGEFAULT && (ureg->error_code & 0x1) != 0) {
@@ -70,5 +73,9 @@ void autostack(void *arg, ureg_t *ureg) {
     }
     swexn(excepetion_stack_info->esp3,
           swexn_handler, excepetion_stack_info, ureg);
+
+}
+
+void vanish_gracefully(void *arg, ureg_t *ureg) {
 
 }

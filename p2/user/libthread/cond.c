@@ -14,14 +14,15 @@
 #include "cond_type_internal.h"
 
 int cond_init(cond_t *cv) {
-    cv->wait_list = init_list();
+    int ret = init_list(&(cv->wait_list));
+    if (ret != SUCCESS) return ERROR_CVAR_INIT_FAILED;
     mutex_init(&(cv->mutex));
     cv->is_act = 1;
     return SUCCESS;
 }
 
 void cond_destroy(cond_t *cv) {
-    if (cv->is_act == 0 || cv->wait_list->node_cnt != 0)
+    if (cv->is_act == 0 || cv->wait_list.node_cnt != 0)
         return;
 
     cv->is_act = 0;
@@ -30,18 +31,20 @@ void cond_destroy(cond_t *cv) {
 void cond_wait(cond_t *cv, mutex_t *mp) {
     int tid = gettid();
     mutex_lock(&(cv->mutex));
-    wait_list_node_t *node_enqed = cond_enq(cv->wait_list, tid);
+    wait_list_node_t *node_enqed = cond_enq(&(cv->wait_list), tid);
     wait_list_item_t *wait_list_item = (wait_list_item_t *)node_enqed->data;
     mutex_unlock(mp);
     mutex_unlock(&(cv->mutex));
     deschedule(&(wait_list_item->is_not_runnable));
+    mutex_lock(&(cv->mutex));
+    mutex_unlock(&(cv->mutex));
     mutex_lock(mp);
     free(node_enqed);
 }
 
 void cond_signal(cond_t *cv) {
     mutex_lock(&(cv->mutex));
-    wait_list_item_t *wait_list_item = cond_deq(cv->wait_list);
+    wait_list_item_t *wait_list_item = cond_deq(&(cv->wait_list));
 
     //BUG needs to crash thread
     if (wait_list_item == NULL) {
@@ -56,7 +59,7 @@ void cond_signal(cond_t *cv) {
 void cond_broadcast(cond_t *cv) {
     int i;
     mutex_lock(&(cv->mutex));
-    int current_wait_leng = cv->wait_list->node_cnt;
+    int current_wait_leng = cv->wait_list.node_cnt;
     mutex_unlock(&(cv->mutex));
 
     for (i = 0; i < current_wait_leng; i++)
