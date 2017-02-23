@@ -400,7 +400,7 @@
 	"buffers":
 	[
 		{
-			"file": "spec/syscall.h",
+			"file": "/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/spec/syscall.h",
 			"settings":
 			{
 				"buffer_size": 2237,
@@ -408,7 +408,7 @@
 			}
 		},
 		{
-			"file": "user/libautostack/autostack.c",
+			"file": "autostack.c",
 			"settings":
 			{
 				"buffer_size": 408,
@@ -417,7 +417,7 @@
 			}
 		},
 		{
-			"file": "410user/libmalloc/memlib.c",
+			"file": "/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/410user/libmalloc/memlib.c",
 			"settings":
 			{
 				"buffer_size": 1838,
@@ -425,7 +425,7 @@
 			}
 		},
 		{
-			"file": "410user/crt0.c",
+			"file": "/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/410user/crt0.c",
 			"settings":
 			{
 				"buffer_size": 525,
@@ -699,7 +699,7 @@
 			[
 				{
 					"buffer": 0,
-					"file": "spec/syscall.h",
+					"file": "/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/spec/syscall.h",
 					"semi_transient": false,
 					"settings":
 					{
@@ -819,7 +819,7 @@
 				},
 				{
 					"buffer": 1,
-					"file": "user/libautostack/autostack.c",
+					"file": "autostack.c",
 					"semi_transient": false,
 					"settings":
 					{
@@ -940,7 +940,7 @@
 				},
 				{
 					"buffer": 2,
-					"file": "410user/libmalloc/memlib.c",
+					"file": "/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/410user/libmalloc/memlib.c",
 					"semi_transient": false,
 					"settings":
 					{
@@ -1053,7 +1053,7 @@
 			[
 				{
 					"buffer": 3,
-					"file": "410user/crt0.c",
+					"file": "/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p2/410user/crt0.c",
 					"semi_transient": true,
 					"settings":
 					{

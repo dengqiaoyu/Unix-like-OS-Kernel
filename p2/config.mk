@@ -94,7 +94,7 @@ UPDATE_METHOD = afs
 # directory
 #
 
-STUDENTTESTS = print_test malloc_test create_test
+STUDENTTESTS = print_test malloc_test create_test t e
 
 
 ###########################################################################
