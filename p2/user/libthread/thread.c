@@ -112,6 +112,7 @@ int thr_join(int tid, void **statusp) {
     }
     if (statusp != NULL) *statusp = thr_to_join->status;
 
+    // *statusp = thr_to_join->status;
     mutex_unlock(mutex);
     while (1) {
         int ret = make_runnable(tid);
