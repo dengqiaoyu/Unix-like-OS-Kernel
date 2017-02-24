@@ -61,7 +61,6 @@ int thr_init(unsigned int size) {
 }
 
 int thr_create(void *(*func)(void *), void *args) {
-    int mtid = gettid();
     mutex_lock(&counter_mutex);
     int count = counter++;
     mutex_unlock(&counter_mutex);
@@ -87,7 +86,6 @@ int thr_create(void *(*func)(void *), void *args) {
     tinfo->join_tid = 0;
     cond_init(&(tinfo->cond));
     if (cond_init(&(tinfo->cond)) != SUCCESS) {
-        printf("thread %d should not be here\n", mtid);
         thread_table_delete(tinfo);
         return -1;
     }

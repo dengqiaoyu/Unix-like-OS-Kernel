@@ -20,5 +20,8 @@ typedef struct excepetion_stack_info_t {
 } excepetion_stack_info_t;
 
 void autostack(void *arg, ureg_t *ureg);
+void install_vanish_gracefully(void *stack_base);
+void vanish_gracefully(void *arg, ureg_t *ureg);
+void print_error_msg(int cause, void *addr);
 
 #endif /* __AUTOSTACK_INTERNAL_H__ */
