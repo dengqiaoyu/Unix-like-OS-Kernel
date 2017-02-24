@@ -14,25 +14,34 @@ int allocator_init(allocator_t **allocator,
     allocator_t *allocator_ptr = malloc(sizeof(allocator_t));
     if (allocator_ptr == NULL) return ERROR_ALLOCATOR_INIT_FAILED;
 
-    allocator_ptr->list = init_list();
+    ret = init_list(&(allocator_ptr->list));
+    if (ret != SUCCESS) {
+        free(allocator_ptr);
+        return ERROR_ALLOCATOR_INIT_FAILED;
+    }
     ret = mutex_init(&(allocator_ptr->allocator_mutex));
-    if (ret != SUCCESS) return ERROR_ALLOCATOR_INIT_FAILED;
+    if (ret != SUCCESS) {
+        free(allocator_ptr);
+        return ERROR_ALLOCATOR_INIT_FAILED;
+    }
     ret = add_new_block_to_front(allocator_ptr, chunk_size,
                                  ROUNDUP(chunk_num, NUM_BITS_PER_BYTE));
-    if (ret != SUCCESS) return ERROR_ALLOCATOR_INIT_FAILED;
+    if (ret != SUCCESS) {
+        free(allocator_ptr);
+        return ERROR_ALLOCATOR_INIT_FAILED;
+    }
 
     *allocator = allocator_ptr;
     return SUCCESS;
 }
 
 void *allocator_alloc(allocator_t *allocator) {
-    allocator_node_t *node_rover = get_first_node(allocator->list);
+    allocator_node_t *node_rover = get_first_node(&(allocator->list));
     allocator_block_t *allocator_block = (allocator_block_t *)(node_rover->data);
     unsigned int chunk_size = allocator_block->chunk_size;
     unsigned int chunk_num = allocator_block->chunk_num;
-    while (node_rover != NULL) {
-        allocator_block_t *allocator_block =
-            (allocator_block_t *)node_rover->data;
+    while (node_rover->next != NULL) {
+        allocator_block = (allocator_block_t *)node_rover->data;
         void *chunk_ptr = get_free_chunk(allocator_block, chunk_size);
         if (chunk_ptr != NULL) {
             return chunk_ptr;
@@ -47,7 +56,7 @@ void *allocator_alloc(allocator_t *allocator) {
     }
     void *chunk_ptr =
         get_free_chunk(
-            (allocator_block_t *)get_first_node(allocator->list)->data,
+            (allocator_block_t *)get_first_node(&(allocator->list))->data,
             chunk_size);
     return chunk_ptr;
 }
@@ -60,6 +69,11 @@ void allocator_free(void* chunk_ptr) {
     unsigned char *bit_mask = get_bit_mask(chunk_ptr);
     *bit_mask = (*bit_mask) ^ idx_mask;
     mutex_unlock(&(allocator_block->allocator_block_mutex));
+}
+
+void destroy_allocator(allocator_t *allocator) {
+    clear_list(&(allocator->list));
+    mutex_destroy(&(allocator->allocator_mutex));
 }
 
 void *get_free_chunk(allocator_block_t *allocator_block,
@@ -117,7 +131,7 @@ int add_new_block_to_front(allocator_t *allocator,
     int i, ret;
     allocator_node_t *block_node = malloc(block_node_size);
     if (block_node == NULL) {
-        return ERROR_ALLOCATOR_ADD_BLOCK_FAILED;
+        return ERROR_ALLOCATOR_MALLOC_NEW_BLOCK_FAILED;
     }
     memset(block_node, 0, block_node_size);
     allocator_block_t *allocator_block = (allocator_block_t *)block_node->data;
@@ -125,6 +139,7 @@ int add_new_block_to_front(allocator_t *allocator,
     allocator_block->chunk_num = new_chunk_num;
     ret = mutex_init(&(allocator_block->allocator_block_mutex));
     if (ret != SUCCESS) {
+        free(block_node);
         return ERROR_ALLOCATOR_ADD_BLOCK_FAILED;
     }
     memset(allocator_block->bit_masks, 0xff, MAX_CHUNK_NUM / NUM_BITS_PER_BYTE);
@@ -136,8 +151,9 @@ int add_new_block_to_front(allocator_t *allocator,
         *allocator_block_back_ptr = allocator_block;
     }
     mutex_lock(&(allocator->allocator_mutex));
-    add_node_to_head(allocator->list, block_node);
+    add_node_to_head(&(allocator->list), block_node);
     mutex_unlock(&(allocator->allocator_mutex));
+
 
     return SUCCESS;
 }

@@ -7,26 +7,26 @@
  * **> NeedsWork: No
  * **> Authors: tchitten
  *
- * @brief creates succesfully larger waves of threads until something bad 
- * happens. 
+ * @brief creates succesfully larger waves of threads until something bad
+ * happens.
  *
  * This test continually tries to create larger and larger thread waves until
  * something bad happens at which point it exits. The purpose of this test is
- * to determine if that "bad thing" is the "expected thing."  On some 
+ * to determine if that "bad thing" is the "expected thing."  On some
  * implementations it has been observed to reach approximately 7000 threads
  * (round 13) before thr_create fails.
- * 
+ *
  * Each round works by spawning a single thread, which goes on to spawn two
  * threads, each of whom spawn two more threads until 2^n-1 threads have been
  * spawned.  Each of these threads does a bit of work and puts its tid at a
  * pseudo random index in the free_order table.  This index is determined by
- * running I rounds of an N-bit LFSR where I is the creation index of the 
- * thread, and N is the round number (corresponding to the 2^n-1 thread). 
+ * running I rounds of an N-bit LFSR where I is the creation index of the
+ * thread, and N is the round number (corresponding to the 2^n-1 thread).
  * Using a proper feedback term, each iteration of the LFSR will produce a
- * unique index between 1 and 2^N-1 for the first 2^N-1 iterations, at which 
- * point it will wrap.  Thanks to Professor Koopman for hosting the LFSR terms! 
+ * unique index between 1 and 2^N-1 for the first 2^N-1 iterations, at which
+ * point it will wrap.  Thanks to Professor Koopman for hosting the LFSR terms!
  *
- * Once the threads have been spawned and have put their TIDs in their 
+ * Once the threads have been spawned and have put their TIDs in their
  * pseudo random index, the main thread then proceeds to join on each thread
  * in this random order.  If at any point a thread cannot be created it sets
  * the error flag and all threads stop.  The main thread then proceeds to join
@@ -117,19 +117,19 @@ int next_pow2(int n) {
 int lfsr(int round, int seed, int n) {
     assert(LFSR_MINTERM <= round && round <= LFSR_MAXTERM);
     assert(seed != 0 && seed <= pow2(round));
-    
+
     int i, cur = seed, feedback = terms[round - LFSR_MINTERM];
-    for(i = 0; i < n; i++) {
-        if(cur & 1) { cur = (cur >> 1) ^ feedback; }
-        else        { cur = (cur >> 1); }   
+    for (i = 0; i < n; i++) {
+        if (cur & 1) { cur = (cur >> 1) ^ feedback; }
+        else        { cur = (cur >> 1); }
     }
-    
+
     assert(cur != 0);
     return cur;
 }
 
 void* thr(void *arg) {
-    
+
     int i, idx = (int)arg;
 
     // Get the next power of 2.
@@ -138,15 +138,17 @@ void* thr(void *arg) {
     // We haven't generated all the threads yet, create some more!
     if (!error && bidx < pow2(round)) {
         // Get our relative index from the current base.
-        int ridx = idx - bidx/2;
-        
+        int ridx = idx - bidx / 2;
+
         // Get the indices of our children.
-        int idx1 = bidx + 2*ridx;
-        int idx2 = bidx + 2*ridx + 1;
+        int idx1 = bidx + 2 * ridx;
+        int idx2 = bidx + 2 * ridx + 1;
 
         // Try to create the first thread. Set error on fail.
         int res1 = thr_create(thr, (void*)idx1);
-        if(res1 < 0) {
+
+        if (res1 < 0) {
+            lprintf("thr_create fails for thread %d\n", gettid());
             error = 1;
             goto ret;
         } else {
@@ -155,7 +157,7 @@ void* thr(void *arg) {
 
         // Try to create the second thread. Set error on fail.
         int res2 = thr_create(thr, (void*)idx2);
-        if(res2 < 0) {
+        if (res2 < 0) {
             error = 1;
             goto ret;
         } else {
@@ -169,14 +171,14 @@ void* thr(void *arg) {
 
     // And do some work.
     switch (idx % 2) {
-        case SLEEP_SOME:
-            sleep(idx % 100);
-            break;
-        case YIELD_SOME:
-            for(i = 0; i < 5; i++) {
-                yield(-1);
-            }
-            break;
+    case SLEEP_SOME:
+        sleep(idx % 100);
+        break;
+    case YIELD_SOME:
+        for (i = 0; i < 5; i++) {
+            yield(-1);
+        }
+        break;
     }
 
 ret:
@@ -189,21 +191,22 @@ int main() {
 
     // Given 32K stack sizes, it should be impossible to generate 2^16 threads
     // on a machine with 256 MB memory.
-    thr_init(32*1024);
+    thr_init(32 * 1024);
     REPORT_START_ABORT;
 
     // For each term in our LFSR feedback table, spawn 2^n-1 threads.
     for (round = LFSR_MINTERM; !error && round <= LFSR_MAXTERM; round++) {
         int nthreads = pow2(round) - 1;
-
+        lprintf("round: %d\n, need create/reap %d threads", round, nthreads);
         free_order = calloc(nthreads, sizeof(int));
         spawn_order = calloc(nthreads, sizeof(int));
-        if(free_order == NULL || spawn_order == NULL) {
-            lprintf("ROUND %d: error allocating %d byte buffers\n", 
-                round, nthreads*sizeof(int));
+        if (free_order == NULL || spawn_order == NULL) {
+            lprintf("ROUND %d: error allocating %d byte buffers\n",
+                    round, nthreads * sizeof(int));
         }
 
         // Spawn the first thread.
+        // lprintf("ready to create first thread by %d\n", gettid());
         res = thr_create(thr, (void*)1);
         if (res < 0) {
             lprintf("ROUND %d: failed before spawning 1 thread\n", round);
@@ -218,7 +221,7 @@ int main() {
         for (i = 0; i < nthreads; i++) {
             while (free_order[i] == 0) {
                 if (error) {
-                    // Someone has encountered an error condition, break out 
+                    // Someone has encountered an error condition, break out
                     // and join on the threads sequentially.
                     break;
                 }
@@ -232,19 +235,19 @@ int main() {
                 break;
             }
 
-            // Join on the thread and clear it in the spawn_order array. This 
+            // Join on the thread and clear it in the spawn_order array. This
             // prevents us from joining on a thread twice in case there's an error.
             int thr_idx;
-
+            // lprintf("ready to join by %d\n", gettid());
             res = thr_join(free_order[i], (void*)&thr_idx);
             if ( res < 0 ) {
                 // There was an error joining on the thread! Bail out and
                 // finish by joining in creation order.
-                lprintf("ROUND %d: failed to join on thread %d!\n", 
-                            round, free_order[i]);
+                lprintf("ROUND %d: failed to join on thread %d!\n",
+                        round, free_order[i]);
                 error = 1;
             } else {
-                // Succesfully joined. Clear this thread from the spawn array 
+                // Succesfully joined. Clear this thread from the spawn array
                 // to prevent joining on it twice in case there's an error.
                 spawn_order[thr_idx - 1] = 0;
                 successes++;
@@ -252,26 +255,26 @@ int main() {
         }
 
         if (error) {
-            // Join on every thread we've created. We know if thread 'i' has 
-            // finished then thread 'i+1' has an entry in the spawn_order 
+            // Join on every thread we've created. We know if thread 'i' has
+            // finished then thread 'i+1' has an entry in the spawn_order
             // array (or failed to be created)
             for (i = 0; i < nthreads; i++) {
-                if(spawn_order[i] != 0) {
+                if (spawn_order[i] != 0) {
                     thr_join(spawn_order[i], NULL);
                     successes++;
                 }
             }
-            lprintf("ROUND %d: failed after spawning %d threads\n", 
-                        round, successes);
+            lprintf("ROUND %d: failed after spawning %d threads\n",
+                    round, successes);
             break;
 
         } else {
-            lprintf("ROUND %d: succesfully spawned/reaped %d threads\n", 
-                        round, successes);
+            lprintf("ROUND %d: succesfully spawned/reaped %d threads\n",
+                    round, successes);
             assert (nthreads == successes);
         }
 
-        // Generate some new pseudorandom seed and free the old arrays. 
+        // Generate some new pseudorandom seed and free the old arrays.
         lfsr_seed = lfsr(round, lfsr_seed, round);
         free(free_order);
         free(spawn_order);
@@ -280,7 +283,7 @@ int main() {
     if (error) {
         REPORT_END_FAIL;
     } else {
-        // You managed to find 2 GB of thread stacks out of 256 MB of memory, 
+        // You managed to find 2 GB of thread stacks out of 256 MB of memory,
         // good job.
         REPORT_END_SUCCESS;
     }

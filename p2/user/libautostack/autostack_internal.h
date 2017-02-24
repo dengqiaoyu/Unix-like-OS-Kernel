@@ -8,6 +8,7 @@
 #include <syscall.h>
 
 #define ROUNDED(x, y) ((x) + (y) - 1) / (y) * (y)
+#define MIN(x, y) (x) < (y) ? (x) : (y)
 
 #define SUCCESS 0
 

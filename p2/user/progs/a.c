@@ -77,10 +77,6 @@ void * sleeper_thread(void * arg) {
 void *maniac(void *arg) {
     int tid = thr_getid();
 
-    // char *null_ptr = NULL;
-    // if (tid == 15) {
-    //     *null_ptr = 'c';
-    // }
     mutex_lock(&big_global_mutex);
 
     lprintf("%d sleeping! on A", tid);
@@ -104,6 +100,7 @@ void *maniac(void *arg) {
 
     mutex_unlock(&big_global_mutex);
 
+    lprintf("tid: %d exit\n", tid);
     /* this has to be a return now, need to exit on grp*/
     return NULL;
 }
@@ -163,9 +160,11 @@ int main( int argc, char *argv[] ) {
     for (i = 0; i < NR_MANIACS; ++i)
         thrgrp_join(&maniac_grp, NULL);
 
+    // lprintf("line 163\n");
     done = 1;
     cond_signal(&c);
 
+    // lprintf("line 165 line 165 line 165 line 165 line 165 line 165\n");
     thr_join(sleeper_tid, NULL);
     cleanup = 1;
     thr_join(instigator_tid, NULL);

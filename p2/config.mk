@@ -93,8 +93,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the user/progs
 # directory
 #
-
-STUDENTTESTS = print_test malloc_test create_test
+STUDENTTESTS = allocator_test
 
 ###########################################################################
 # Object files for your thread library

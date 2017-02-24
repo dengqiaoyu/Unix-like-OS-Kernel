@@ -71,8 +71,7 @@ void thread_table_insert(int tid, thr_info *tinfo) {
     if (thread_table[tid_list] == NULL) {
         thread_table[tid_list] = new_node;
         new_node->next = NULL;
-    }
-    else {
+    } else {
         thread_table[tid_list]->prev = new_node;
         new_node->next = thread_table[tid_list];
         thread_table[tid_list] = new_node;
@@ -87,8 +86,7 @@ thr_info *thread_table_find(int tid) {
     while (temp != NULL) {
         if (temp->tinfo.tid == tid) {
             return &(temp->tinfo);
-        }
-        else temp = temp->next;
+        } else temp = temp->next;
     }
     return (thr_info *)0;
 }
