@@ -20,9 +20,10 @@ start_thread:
     movl  %esp, %ebp        /* move new stack base to %ebp */
     pushl %esi              /* store %esi (callee-save) */
     pushl %edi              /* store %edi (callee-save) */
+    pushl %ebx              /* store %ebx (callee-save) */
     movl  8(%ebp), %esi     /* store child stack base in %esi */
-    movl  12(%ebp), %edi    /* store thread_info pointer in %edi */
-    movl  16(%ebp), %ebx    /* store spinlock pointer in %ebx */
+    movl  12(%ebp), %edi    /* store alternate stack base in %edi */
+    movl  16(%ebp), %ebx    /* store thread_info pointer in %ebx */
     movl  20(%ebp), %ecx    /* store child thread procedure in %ecx */
     movl  24(%ebp), %edx    /* store child thread parameter in %edx */
     int   $THREAD_FORK_INT  /* trap instruction for thread_fork */
@@ -31,6 +32,7 @@ start_thread:
 parent:
     movl  -4(%ebp), %esi    /* restore %esi */
     movl  -8(%ebp), %edi    /* restore %edi */
+    movl  -12(%ebp), %ebx   /* restore %ebx */
     movl  %ebp, %esp        /* restore %esp */
     popl  %ebp              /* restore old base pointer */
     ret
@@ -38,7 +40,7 @@ child:
     movl  %esi, %esp        /* set child stack pointer */
     pushl %edx              /* load child thread parameter argument */
     pushl %ecx              /* load child thread procedure argument */
-    pushl %ebx              /* load spinlock pointer argument */
-    pushl %edi              /* load thread_info pointer argument */
+    pushl %ebx              /* load thread_info pointer argument */
+    pushl %edi              /* load alternate stack base argument */
     call  wrap_thread_proc  /* begin executing child thread procedure */
                             /* wrap_thread_proc should never return */

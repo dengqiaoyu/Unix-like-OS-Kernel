@@ -59,4 +59,5 @@ temp/
 #qdeng's user define
 sftp-config.json
 p2.sublime-project
+p2.sublime-workspace
 qdeng_test/

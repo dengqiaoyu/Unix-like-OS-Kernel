@@ -32,7 +32,7 @@ int thr_init(unsigned int size) {
     stack_allocators = (allocator_t **)temp;
     if (stack_allocators == NULL) return -1;
 
-    int stack_chunk_size = stack_size + 2 * sizeof(int);
+    int stack_chunk_size = stack_size + 2 * sizeof(int) + ALT_STACK_SIZE;
     int i;
     for (i = 0; i < NUM_STACK_ALLOCATORS; i++) {
         allocator_t **allocatorp = &(stack_allocators[i]);
@@ -74,24 +74,22 @@ int thr_create(void *(*func)(void *), void *args) {
         return -1;
     }
     set_canaries(stack_chunk);
-    void *stack_base = (void *)((char *)stack_chunk + stack_size + sizeof(int));
+    void *stack_base = (char *)stack_chunk + stack_size + sizeof(int);
+    void *alt_stack_base = (char *)stack_base + sizeof(int) + ALT_STACK_SIZE;
 
     thr_info *tinfo = thread_table_alloc();
-    if (tinfo == NULL) {
+    if (tinfo == NULL)
         return -1;
-    }
-    int spinlock = 1;
+
     tinfo->stack = stack_chunk;
     tinfo->state = RUNNABLE;
     tinfo->join_tid = 0;
-    cond_init(&(tinfo->cond));
-    if (cond_init(&(tinfo->cond)) != SUCCESS) {
+    if (cond_init(&(tinfo->cond)) < 0) {
         thread_table_delete(tinfo);
         return -1;
     }
-    int tid = start_thread(stack_base, tinfo, &spinlock, func, args);
-    if (tid < 0) return tid;
 
+    int tid = start_thread(stack_base, alt_stack_base, tinfo, func, args);
     return tid;
 }
 
@@ -101,20 +99,16 @@ int thr_join(int tid, void **statusp) {
     mutex_lock(mutex);
 
     thr_info *thr_to_join = thread_table_find(tid);
-    /*
-        while (thr_to_join == NULL) {
-            mutex_unlock(mutex);
-            int ret = yield(tid);
-            thr_to_join = thread_table_find(tid);
-            if (ret != 0) return ERROR_THREAD_NOT_FOUND;
-            mutex_lock(mutex);
-        }
-    */
     while (thr_to_join == NULL) {
+        mutex_unlock(mutex);
         int ret = yield(tid);
+        mutex_lock(mutex);
+        if (ret != 0) {
+            thr_to_join = thread_table_find(tid);
+            if (thr_to_join != NULL) break;
+            return ERROR_THREAD_NOT_FOUND;
+        }
         thr_to_join = thread_table_find(tid);
-        if (thr_to_join != NULL) break;
-        if (ret != 0) return ERROR_THREAD_NOT_FOUND;
     }
     check_canaries(thr_to_join);
     if (thr_to_join->join_tid > 0) {
@@ -126,18 +120,6 @@ int thr_join(int tid, void **statusp) {
         cond_wait(&(thr_to_join->cond), mutex);
     }
     if (statusp != NULL) *statusp = thr_to_join->status;
-
-    mutex_unlock(mutex);
-    while (1) {
-        int ret = make_runnable(tid);
-        if (ret < 0) {
-            ret = yield(tid);
-            if (ret < 0) {
-                mutex_lock(mutex);
-                break;
-            }
-        }
-    }
 
     if (thr_to_join->stack != NULL) allocator_free(thr_to_join->stack);
     thread_table_delete(thr_to_join);

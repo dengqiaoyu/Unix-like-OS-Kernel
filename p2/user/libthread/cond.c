@@ -24,13 +24,15 @@ int cond_init(cond_t *cv) {
 }
 
 void cond_destroy(cond_t *cv) {
-    if (cv->is_act == 0 || cv->wait_list.node_cnt != 0)
-        return;
-
+    assert(cv != NULL);
+    assert(cv->is_act = 1);
+    assert(cv->wait_list.node_cnt == 0);
     cv->is_act = 0;
 }
 
 void cond_wait(cond_t *cv, mutex_t *mp) {
+    assert(cv != NULL);
+    assert(cv->is_act = 1);
     int tid = gettid();
     mutex_lock(&(cv->mutex));
     wait_list_node_t *node_enqed = cond_enq(&(cv->wait_list), tid);
@@ -43,6 +45,8 @@ void cond_wait(cond_t *cv, mutex_t *mp) {
 }
 
 void cond_signal(cond_t *cv) {
+    assert(cv != NULL);
+    assert(cv->is_act = 1);
     mutex_lock(&(cv->mutex));
     wait_list_item_t *wait_list_item = cond_deq(&(cv->wait_list));
 
@@ -56,6 +60,8 @@ void cond_signal(cond_t *cv) {
 }
 
 void cond_broadcast(cond_t *cv) {
+    assert(cv != NULL);
+    assert(cv->is_act = 1);
     int i;
     mutex_lock(&(cv->mutex));
     int current_wait_leng = cv->wait_list.node_cnt;

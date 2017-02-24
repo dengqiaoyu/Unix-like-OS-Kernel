@@ -35,8 +35,7 @@ void autostack(void *arg, ureg_t *ureg) {
     excepetion_stack_info_t *excepetion_stack_info = arg;
     void *page_fault_addr = (void *)ureg->cr2;
     if (ureg->cause != SWEXN_CAUSE_PAGEFAULT && (ureg->error_code & 0x1) != 0) {
-        print_error_msg(ureg->cr2, (void *)(ureg->eip));
-        task_vanish(-1);
+        vanish_gracefully(excepetion_stack_info->esp3, ureg);
     } else if (page_fault_addr == NULL) {
         printf("Cannot derefrence NULL pointer, crashing the whole task.\n");
         task_vanish(-1);
@@ -74,60 +73,70 @@ void autostack(void *arg, ureg_t *ureg) {
 
 void install_vanish_gracefully(void *stack_base) {
     void *esp3 = stack_base + WORD_SIZE;
-    swexn(esp3, vanish_gracefully_handler, NULL, NULL);
+    swexn(esp3, vanish_gracefully_handler, esp3, NULL);
 }
 
 void vanish_gracefully(void *arg, ureg_t *ureg) {
-    print_error_msg(ureg->cause, (void *)(ureg->eip));
-    task_vanish(-1);
+    int cause = ureg->cause;
+    switch (cause) {
+    case SWEXN_CAUSE_DEBUG:
+    case SWEXN_CAUSE_BREAKPOINT:
+    case SWEXN_CAUSE_OVERFLOW:
+    case SWEXN_CAUSE_BOUNDCHECK:
+        swexn(arg, vanish_gracefully_handler, NULL, ureg);
+        break;
+    default:
+        print_error_msg(cause, (void *)(ureg->eip));
+        task_vanish(-1);
+    }
 }
 
 void print_error_msg(int cause, void *addr) {
     printf("At address %p, ", addr);
     switch (cause) {
     case SWEXN_CAUSE_DIVIDE:
-        printf("SWEXN_CAUSE_DIVIDE error, terminated the task\n");
+        printf("SWEXN_CAUSE_DIVIDE ERROR\n");
         break;
     case SWEXN_CAUSE_DEBUG:
-        printf("SWEXN_CAUSE_DEBUG error, terminated the task\n");
+        printf("SWEXN_CAUSE_DEBUG ERROR\n");
         break;
     case SWEXN_CAUSE_BREAKPOINT:
-        printf("SWEXN_CAUSE_BREAKPOINT error, terminated the task\n");
+        printf("SWEXN_CAUSE_BREAKPOINT ERROR\n");
         break;
     case SWEXN_CAUSE_OVERFLOW:
-        printf("SWEXN_CAUSE_OVERFLOW error, terminated the task\n");
+        printf("SWEXN_CAUSE_OVERFLOW ERROR\n");
         break;
     case SWEXN_CAUSE_BOUNDCHECK:
-        printf("SWEXN_CAUSE_BOUNDCHECK error, terminated the task\n");
+        printf("SWEXN_CAUSE_BOUNDCHECK ERROR\n");
         break;
     case SWEXN_CAUSE_OPCODE:
-        printf("SWEXN_CAUSE_OPCODE error, terminated the task\n");
+        printf("SWEXN_CAUSE_OPCODE ERROR\n");
         break;
     case SWEXN_CAUSE_NOFPU:
-        printf("SWEXN_CAUSE_NOFPU error, terminated the task\n");
+        printf("SWEXN_CAUSE_NOFPU ERROR\n");
         break;
     case SWEXN_CAUSE_SEGFAULT:
-        printf("SWEXN_CAUSE_SEGFAULT error, terminated the task\n");
+        printf("SWEXN_CAUSE_SEGFAULT ERROR\n");
         break;
     case SWEXN_CAUSE_STACKFAULT:
-        printf("SWEXN_CAUSE_STACKFAULT error, terminated the task\n");
+        printf("SWEXN_CAUSE_STACKFAULT ERROR\n");
         break;
     case SWEXN_CAUSE_PROTFAULT:
-        printf("SWEXN_CAUSE_PROTFAULT error, terminated the task\n");
+        printf("SWEXN_CAUSE_PROTFAULT ERROR\n");
         break;
     case SWEXN_CAUSE_PAGEFAULT:
-        printf("SWEXN_CAUSE_PAGEFAULT error, terminated the task\n");
+        printf("SWEXN_CAUSE_PAGEFAULT ERROR\n");
         break;
     case SWEXN_CAUSE_FPUFAULT:
-        printf("SWEXN_CAUSE_FPUFAULT error, terminated the task\n");
+        printf("SWEXN_CAUSE_FPUFAULT ERROR\n");
         break;
     case SWEXN_CAUSE_ALIGNFAULT:
-        printf("SWEXN_CAUSE_ALIGNFAULT error, terminated the task\n");
+        printf("SWEXN_CAUSE_ALIGNFAULT ERROR\n");
         break;
     case SWEXN_CAUSE_SIMDFAULT:
-        printf("SWEXN_CAUSE_SIMDFAULT error, terminated the task\n");
+        printf("SWEXN_CAUSE_SIMDFAULT ERROR\n");
         break;
     default:
-        printf("UNKNOWN ERROR, terminated the task\n");
+        printf("UNKNOWN ERROR\n");
     }
 }

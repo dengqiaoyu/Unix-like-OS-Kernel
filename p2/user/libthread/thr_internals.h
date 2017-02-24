@@ -20,6 +20,7 @@
 #define STACK_ALLOCATOR_INDEX(tid) ((tid) % NUM_STACK_ALLOCATORS)
 #define STACK_BLOCK_SIZE 8
 
+#define ALT_STACK_SIZE 256
 #define CANARY_VALUE 0xfeedbeef
 
 #define ERROR_THREAD_ALREADY_JOINED -1
@@ -27,10 +28,10 @@
 
 #define SUCCESS 0
 
-int start_thread(void *stack_base, thr_info *tinfo, int *spinlock,
+int start_thread(void *stack_base, void *alt_stack_base, thr_info *tinfo,
                  void *(*func)(void *), void *args);
-void wrap_thread_proc(thr_info *tinfo, int *spinlock, void *(*func)(void *),
-                      void *args);
+void wrap_thread_proc(void *alt_stack_base, thr_info *tinfo,
+                      void *(*func)(void *), void *args);
 
 #endif /* THR_INTERNALS_H */
 

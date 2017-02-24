@@ -51,9 +51,7 @@ void *allocator_alloc(allocator_t *allocator) {
     }
 
     /* Did not find free chunk */
-    //TODO if add_new_block_to_front failed due to malloc
-    int ret = add_new_block_to_front(allocator, chunk_size, chunk_num);
-    if (ret != SUCCESS) {
+    if (add_new_block_to_front(allocator, chunk_size, chunk_num) != SUCCESS) {
         return NULL;
     }
     void *chunk_ptr =
