@@ -77,10 +77,10 @@ void * sleeper_thread(void * arg) {
 void *maniac(void *arg) {
     int tid = thr_getid();
 
-    char *null_ptr = NULL;
-    if (tid == 15) {
-        *null_ptr = 'c';
-    }
+    // char *null_ptr = NULL;
+    // if (tid == 15) {
+    //     *null_ptr = 'c';
+    // }
     mutex_lock(&big_global_mutex);
 
     lprintf("%d sleeping! on A", tid);

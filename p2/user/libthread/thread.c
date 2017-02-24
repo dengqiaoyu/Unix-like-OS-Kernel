@@ -17,7 +17,7 @@
 #include "allocator.h"
 
 int stack_size;
-int thread_counter;
+int counter;
 mutex_t counter_mutex;
 allocator_t **stack_allocators;
 
@@ -26,9 +26,8 @@ void check_canaries(thr_info *tinfo);
 
 int thr_init(unsigned int size) {
     stack_size = size;
-    thread_counter = 0;
+    counter = 0;
     if (mutex_init(&counter_mutex) != 0) return -1;
-
     void *temp = calloc(NUM_STACK_ALLOCATORS, sizeof(void *));
     stack_allocators = (allocator_t **)temp;
     if (stack_allocators == NULL) return -1;
@@ -38,7 +37,6 @@ int thr_init(unsigned int size) {
     for (i = 0; i < NUM_STACK_ALLOCATORS; i++) {
         allocator_t **allocatorp = &(stack_allocators[i]);
         if (allocator_init(allocatorp, stack_chunk_size, STACK_BLOCK_SIZE)) {
-            lprintf("line 41 in thr_init\n");
             return -1;
         }
     }
@@ -47,29 +45,25 @@ int thr_init(unsigned int size) {
 
     // anything else we could do here?
     int root_tid = gettid();
-    thr_info *tinfo = thread_table_insert(root_tid);
+    thr_info *tinfo = thread_table_alloc();
     if (tinfo == NULL) return -1;
+    thread_table_insert(root_tid, tinfo);
     tinfo->tid = root_tid;
-    tinfo->counter_value = thread_counter++;
     tinfo->stack = NULL;
     tinfo->state = RUNNABLE;
     tinfo->join_tid = 0;
     if (cond_init(&(tinfo->cond)) != SUCCESS) {
         destroy_allocator(temp);
         thread_table_delete(tinfo);
-        lprintf("line 60 in thr_init\n");
         return -1;
     }
-    // sim_breakpoint();
-    lprintf("line 64 in thr_init\n");
     return 0;
 }
 
 int thr_create(void *(*func)(void *), void *args) {
     int mtid = gettid();
-    lprintf("thread %d ready to create new thread\n", mtid);
     mutex_lock(&counter_mutex);
-    int count = thread_counter++;
+    int count = counter++;
     mutex_unlock(&counter_mutex);
 
     assert(stack_allocators != NULL);
@@ -78,61 +72,53 @@ int thr_create(void *(*func)(void *), void *args) {
 
     void *stack_chunk = allocator_alloc(allocator);
     if (stack_chunk == NULL) {
-        lprintf("line 79 in thr_create\n");
         return -1;
     }
     set_canaries(stack_chunk);
+    void *stack_base = (void *)((char *)stack_chunk + stack_size + sizeof(int));
 
-    lprintf("creating thread in line 86 in thr_create as thread %d\n", mtid);
-
-    void *stack_bottom = (void *)((char *)stack_chunk + stack_size + sizeof(int));
-    int tid = start_thread(stack_bottom, func, args);
-
-    mutex_t *mutex = thread_table_get_mutex(tid);
-    mutex_lock(mutex);
-    thr_info *tinfo = thread_table_insert(tid);
-    lprintf("creating thread in line 94 in thr_create as thread %d\n", mtid);
+    thr_info *tinfo = thread_table_alloc();
     if (tinfo == NULL) {
-        mutex_unlock(mutex);
         return -1;
     }
-    tinfo->tid = tid;
-    tinfo->counter_value = count;
+    int spinlock = 1;
     tinfo->stack = stack_chunk;
     tinfo->state = RUNNABLE;
     tinfo->join_tid = 0;
     cond_init(&(tinfo->cond));
     if (cond_init(&(tinfo->cond)) != SUCCESS) {
-        lprintf("thread %d should not be here\n", mtid);
-        mutex_unlock(mutex);
+        printf("thread %d should not be here\n", mtid);
         thread_table_delete(tinfo);
         return -1;
     }
-    mutex_unlock(mutex);
+    int tid = start_thread(stack_base, tinfo, &spinlock, func, args);
+    if (tid < 0) return tid;
 
-    lprintf("thread %d created by %d\n", tid, mtid);
     return tid;
 }
 
 int thr_join(int tid, void **statusp) {
-    lprintf("thread %d is ready to join %d\n", gettid(), tid);
     mutex_t *mutex = thread_table_get_mutex(tid);
 
     mutex_lock(mutex);
-    lprintf("get mutex\n");
 
     thr_info *thr_to_join = thread_table_find(tid);
-    if (thr_to_join == NULL) {
-        lprintf("cannot find thr_info\n");
-        mutex_unlock(mutex);
-        mutex_lock(&counter_mutex);
-        int thread_counter_local = thread_counter;
-        mutex_lock(&counter_mutex);
-        if (tid > thread_counter_local) return ERROR_THREAD_NOT_CREATED;
-        else return ERROR_THREAD_ALREADY_JOINED;
+    /*
+        while (thr_to_join == NULL) {
+            mutex_unlock(mutex);
+            int ret = yield(tid);
+            thr_to_join = thread_table_find(tid);
+            if (ret != 0) return ERROR_THREAD_NOT_FOUND;
+            mutex_lock(mutex);
+        }
+    */
+    while (thr_to_join == NULL) {
+        int ret = yield(tid);
+        thr_to_join = thread_table_find(tid);
+        if (thr_to_join != NULL) break;
+        if (ret != 0) return ERROR_THREAD_NOT_FOUND;
     }
     check_canaries(thr_to_join);
-    lprintf("thread %d after get tidinfo for %d\n", gettid(), tid);
     if (thr_to_join->join_tid > 0) {
         mutex_unlock(mutex);
         return ERROR_THREAD_ALREADY_JOINED;
@@ -143,9 +129,7 @@ int thr_join(int tid, void **statusp) {
     }
     if (statusp != NULL) *statusp = thr_to_join->status;
 
-    // *statusp = thr_to_join->status;
     mutex_unlock(mutex);
-    lprintf("thread %d after cond_wait for %d\n", gettid(), tid);
     while (1) {
         int ret = make_runnable(tid);
         if (ret < 0) {
@@ -157,13 +141,9 @@ int thr_join(int tid, void **statusp) {
         }
     }
 
-    lprintf("thread %d after ensure vanish for %d\n", gettid(), tid);
-
-    // while (yield(tid) == 0) {}
     if (thr_to_join->stack != NULL) allocator_free(thr_to_join->stack);
     thread_table_delete(thr_to_join);
     mutex_unlock(mutex);
-    lprintf("thread %d got cleared\n", tid);
     return SUCCESS;
 }
 
@@ -174,12 +154,6 @@ void thr_exit(void *status) {
 
     thr_info *thr_to_exit = thread_table_find(tid);
 
-    while (thr_to_exit == NULL) {
-        mutex_unlock(mutex);
-        yield(-1);
-        mutex_lock(mutex);
-        thr_to_exit = thread_table_find(tid);
-    }
     assert(thr_to_exit != NULL);
     check_canaries(thr_to_exit);
     thr_to_exit->state = EXITED;
@@ -189,7 +163,6 @@ void thr_exit(void *status) {
         mutex_unlock(mutex);
         cond_signal(&(thr_to_exit->cond));
     } else mutex_unlock(mutex);
-    lprintf("thread %d exit\n", tid);
     vanish();
 }
 

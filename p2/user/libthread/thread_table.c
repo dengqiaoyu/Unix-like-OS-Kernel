@@ -17,11 +17,16 @@ struct table_node {
     table_node_t *next;
 };
 
-table_node_t **thread_table;
+int counter;
+mutex_t counter_mutex;
 allocator_t **thread_allocators;
+table_node_t **thread_table;
 mutex_t *table_mutexes;
 
 int thread_table_init() {
+    counter = 0;
+    if (mutex_init(&counter_mutex) != 0) return -1;
+
     void *temp = calloc(THREAD_TABLE_SIZE, sizeof(void *));
     thread_table = (table_node_t **)temp;
     if (thread_table == NULL) return -1;
@@ -44,26 +49,33 @@ int thread_table_init() {
     return 0;
 }
 
-thr_info *thread_table_insert(int tid) {
-    int tid_list = THREAD_TABLE_INDEX(tid);
+thr_info *thread_table_alloc() {
+    mutex_lock(&counter_mutex);
+    int count = counter++;
+    mutex_unlock(&counter_mutex);
+
     assert(thread_allocators != NULL);
-    allocator_t *allocator = thread_allocators[THREAD_ALLOCATOR_INDEX(tid)];
+    allocator_t *allocator = thread_allocators[THREAD_ALLOCATOR_INDEX(count)];
     assert(allocator != NULL);
 
-    table_node_t *new_node = (table_node_t *)allocator_alloc(allocator);
+    thr_info *new_node = allocator_alloc(allocator);
     if (new_node == NULL) return NULL;
+    return new_node;
+}
+
+void thread_table_insert(int tid, thr_info *tinfo) {
+    int tid_list = THREAD_TABLE_INDEX(tid);
+    table_node_t *new_node = (table_node_t *)tinfo;
 
     new_node->prev = NULL;
     if (thread_table[tid_list] == NULL) {
         thread_table[tid_list] = new_node;
         new_node->next = NULL;
-    }
-    else {
+    } else {
         thread_table[tid_list]->prev = new_node;
         new_node->next = thread_table[tid_list];
         thread_table[tid_list] = new_node;
     }
-    return &(new_node->tinfo);
 }
 
 thr_info *thread_table_find(int tid) {
@@ -74,8 +86,7 @@ thr_info *thread_table_find(int tid) {
     while (temp != NULL) {
         if (temp->tinfo.tid == tid) {
             return &(temp->tinfo);
-        }
-        else temp = temp->next;
+        } else temp = temp->next;
     }
     return (thr_info *)0;
 }

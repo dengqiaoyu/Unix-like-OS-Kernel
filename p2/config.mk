@@ -94,7 +94,7 @@ UPDATE_METHOD = afs
 # directory
 #
 
-STUDENTTESTS = 
+STUDENTTESTS = allocator_test
 
 ###########################################################################
 # Object files for your thread library

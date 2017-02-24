@@ -12,28 +12,11 @@
 #include <stdio.h>
 #include "list.h"
 
-// list_t *init_list() {
-//     list_t *list = calloc(1, sizeof(list_t));
-//     if (list == NULL) {
-//         printf("Cannot create more ");
-//     }
-//     node_t *head_node = calloc(1, sizeof(node_t));
-//     list->head = head_node;
-//     node_t *tail_node = calloc(1, sizeof(node_t));
-//     list->tail = tail_node;
-
-//     head_node->next = tail_node;
-//     tail_node->prev = head_node;
-//     return list;
-// }
-//
-
 int init_list(list_t *list) {
 
     node_t *head_node = calloc(1, sizeof(node_t));
     if (head_node == NULL) {
         int tid = gettid();
-        sim_breakpoint();
         printf("Cannot allocate more memory for thread %d\n", tid);
         return ERROR_INIT_LIST_CALLOC_FAILED;
     }

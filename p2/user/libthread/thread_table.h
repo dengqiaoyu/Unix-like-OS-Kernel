@@ -15,7 +15,6 @@
 typedef struct thread_info thr_info;
 struct thread_info {
     int tid;
-    int counter_value;
     void *stack;
     int state;
     int join_tid;
@@ -24,7 +23,8 @@ struct thread_info {
 };
 
 int thread_table_init();
-thr_info *thread_table_insert(int tid);
+thr_info *thread_table_alloc();
+void thread_table_insert(int tid, thr_info *tinfo);
 thr_info *thread_table_find(int tid);
 void thread_table_delete(thr_info *tinfo);
 mutex_t *thread_table_get_mutex(int tid);

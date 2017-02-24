@@ -15,7 +15,9 @@
 
 int cond_init(cond_t *cv) {
     int ret = init_list(&(cv->wait_list));
-    if (ret != SUCCESS) return ERROR_CVAR_INIT_FAILED;
+    if (ret != SUCCESS) {
+        return ERROR_CVAR_INIT_FAILED;
+    }
     mutex_init(&(cv->mutex));
     cv->is_act = 1;
     return SUCCESS;
@@ -36,8 +38,6 @@ void cond_wait(cond_t *cv, mutex_t *mp) {
     mutex_unlock(mp);
     mutex_unlock(&(cv->mutex));
     deschedule(&(wait_list_item->is_not_runnable));
-    mutex_lock(&(cv->mutex));
-    mutex_unlock(&(cv->mutex));
     mutex_lock(mp);
     free(node_enqed);
 }

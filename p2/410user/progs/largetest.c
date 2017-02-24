@@ -148,6 +148,7 @@ void* thr(void *arg) {
         int res1 = thr_create(thr, (void*)idx1);
 
         if (res1 < 0) {
+            lprintf("thr_create fails for thread %d\n", gettid());
             error = 1;
             goto ret;
         } else {
@@ -205,7 +206,7 @@ int main() {
         }
 
         // Spawn the first thread.
-        lprintf("ready to create first thread by %d\n", gettid());
+        // lprintf("ready to create first thread by %d\n", gettid());
         res = thr_create(thr, (void*)1);
         if (res < 0) {
             lprintf("ROUND %d: failed before spawning 1 thread\n", round);
@@ -237,7 +238,7 @@ int main() {
             // Join on the thread and clear it in the spawn_order array. This
             // prevents us from joining on a thread twice in case there's an error.
             int thr_idx;
-            lprintf("ready to join by %d\n", gettid());
+            // lprintf("ready to join by %d\n", gettid());
             res = thr_join(free_order[i], (void*)&thr_idx);
             if ( res < 0 ) {
                 // There was an error joining on the thread! Bail out and

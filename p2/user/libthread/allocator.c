@@ -16,20 +16,17 @@ int allocator_init(allocator_t **allocator,
 
     ret = init_list(&(allocator_ptr->list));
     if (ret != SUCCESS) {
-        // lprintf("line 19 in allocator_init\n");
         free(allocator_ptr);
         return ERROR_ALLOCATOR_INIT_FAILED;
     }
     ret = mutex_init(&(allocator_ptr->allocator_mutex));
     if (ret != SUCCESS) {
-        // lprintf("line 25 in allocator_init\n");
         free(allocator_ptr);
         return ERROR_ALLOCATOR_INIT_FAILED;
     }
     ret = add_new_block_to_front(allocator_ptr, chunk_size,
                                  ROUNDUP(chunk_num, NUM_BITS_PER_BYTE));
     if (ret != SUCCESS) {
-        // lprintf("line 32 in allocator_init\n");
         free(allocator_ptr);
         return ERROR_ALLOCATOR_INIT_FAILED;
     }
@@ -43,9 +40,8 @@ void *allocator_alloc(allocator_t *allocator) {
     allocator_block_t *allocator_block = (allocator_block_t *)(node_rover->data);
     unsigned int chunk_size = allocator_block->chunk_size;
     unsigned int chunk_num = allocator_block->chunk_num;
-    while (node_rover != NULL) {
-        allocator_block_t *allocator_block =
-            (allocator_block_t *)node_rover->data;
+    while (node_rover->next != NULL) {
+        allocator_block = (allocator_block_t *)node_rover->data;
         void *chunk_ptr = get_free_chunk(allocator_block, chunk_size);
         if (chunk_ptr != NULL) {
             return chunk_ptr;
@@ -136,14 +132,15 @@ int add_new_block_to_front(allocator_t *allocator,
                           * new_chunk_num;
     int i, ret;
     allocator_node_t *block_node = malloc(block_node_size);
-    if (block_node == NULL) return ERROR_ALLOCATOR_MALLOC_NEW_BLOCK_FAILED;
+    if (block_node == NULL) {
+        return ERROR_ALLOCATOR_MALLOC_NEW_BLOCK_FAILED;
+    }
     memset(block_node, 0, block_node_size);
     allocator_block_t *allocator_block = (allocator_block_t *)block_node->data;
     allocator_block->chunk_size = required_size;
     allocator_block->chunk_num = new_chunk_num;
     ret = mutex_init(&(allocator_block->allocator_block_mutex));
     if (ret != SUCCESS) {
-        // lprintf("line 146 in add_new_block_to_front\n");
         free(block_node);
         return ERROR_ALLOCATOR_ADD_BLOCK_FAILED;
     }
