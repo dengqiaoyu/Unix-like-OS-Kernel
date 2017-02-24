@@ -26,7 +26,7 @@ int cond_init(cond_t *cv) {
 void cond_destroy(cond_t *cv) {
     assert(cv != NULL);
     assert(cv->is_act = 1);
-    assert(cv->wait_list->node_cnt == 0);
+    assert(cv->wait_list.node_cnt == 0);
     cv->is_act = 0;
 }
 

@@ -23,6 +23,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <simics.h>
+#include <syscall.h>
 
 /*
  * This function is called by the assert() macro defined in assert.h;

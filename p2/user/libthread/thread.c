@@ -61,7 +61,6 @@ int thr_init(unsigned int size) {
 }
 
 int thr_create(void *(*func)(void *), void *args) {
-    int mtid = gettid();
     mutex_lock(&counter_mutex);
     int count = counter++;
     mutex_unlock(&counter_mutex);
