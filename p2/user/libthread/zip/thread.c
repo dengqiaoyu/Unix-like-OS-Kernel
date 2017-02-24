@@ -74,13 +74,16 @@ int thr_create(void *(*func)(void *), void *args) {
     thr_info *tinfo = thread_table_alloc();
     if (tinfo == NULL) return -1;
 
+    int spinlock = 1;
+    int tid = start_thread(stack_base, tinfo, &spinlock, func, args);
+    if (tid < 0) return tid;
+
     tinfo->stack = stack_chunk;
     tinfo->state = RUNNABLE;
     tinfo->join_tid = 0;
     if (cond_init(&(tinfo->cond)) < 0) return -1;
 
-    int spinlock = 1;
-    int tid = start_thread(stack_base, tinfo, &spinlock, func, args);
+    lprintf("%d\n", tid);
     while (spinlock == 1) yield(tid);
     return tid;
 }

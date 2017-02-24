@@ -12,6 +12,7 @@ swexn_handler_t swexn_handler = autostack;
 
 void
 install_autostack(void *stack_high, void *stack_low) {
+    /*
     excepetion_stack_info_t *excepetion_stack_info =
         malloc(sizeof(excepetion_stack_info_t));
     excepetion_stack_info->exeception_stack_bottom =
@@ -26,6 +27,7 @@ install_autostack(void *stack_high, void *stack_low) {
           swexn_handler,
           excepetion_stack_info,
           NULL);
+          */
 }
 
 void autostack(void *arg, ureg_t *ureg) {
@@ -52,5 +54,4 @@ void autostack(void *arg, ureg_t *ureg) {
     }
     swexn(excepetion_stack_info->esp3,
           swexn_handler, excepetion_stack_info, ureg);
-
 }
