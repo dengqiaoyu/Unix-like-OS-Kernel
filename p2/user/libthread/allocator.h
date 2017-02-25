@@ -9,17 +9,12 @@
 #ifndef __ALLOCATOR_H__
 #define __ALLOCATOR_H__
 
-#include "list.h"  /* list_t */
-#include <mutex.h> /* mutex_t */
+#include "list.h"
+#include <mutex.h>
+#include "return_type.h"
 
 /* max number of chunks inside a block */
 #define MAX_CHUNK_NUM 1024
-
-#define ERROR_ALLOCATOR_INIT_FAILED -1
-#define ERROR_ALLOCATOR_ADD_BLOCK_FAILED -2
-#define ERROR_ALLOCATOR_MALLOC_NEW_BLOCK_FAILED -3
-
-#define SUCCESS 0
 
 /* see allocator.c for details */
 typedef struct allocator allocator_t;

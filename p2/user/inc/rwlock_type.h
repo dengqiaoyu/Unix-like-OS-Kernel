@@ -9,10 +9,7 @@
 #define _RWLOCK_TYPE_H
 
 #include <sem.h> /* sem_t, sem_init, sem_destroy, sem_wait, sem_signal */
-
-#define SUCCESS 0
-#define ERROR_RWLOCK_INIT_FAILED -1
-#define ERROR_RWLOCK_DESTROY_FAILED -2
+#include "return_type.h"
 
 typedef struct rwlock {
     /* the number of readers that has enter critical section */

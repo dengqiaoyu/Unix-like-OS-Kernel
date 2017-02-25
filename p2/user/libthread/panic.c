@@ -25,9 +25,8 @@
 #include <simics.h>
 #include <syscall.h>
 
-/*
- * This function is called by the assert() macro defined in assert.h;
- * it's also a nice simple general-purpose panic function.
+/* Assertion failures and other calls to panic() will simply print the
+ * error message and then cause the panicking task to vanish.
  */
 void panic(const char *fmt, ...) {
     va_list vl;

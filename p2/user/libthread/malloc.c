@@ -1,8 +1,8 @@
-/*
- * these functions should be thread safe.
- * It is up to you to rewrite them
- * to make them thread safe.
- *
+/** @file malloc.c
+ *  @brief Implements thread safe malloc().
+ *  @author Newton Xie (ncx)
+ *  @author Qiaoyu Deng (qdeng)
+ *  @bug none known
  */
 
 #include <stdlib.h>

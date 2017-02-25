@@ -7,6 +7,7 @@
 
 #include <mutex.h>
 #include <cond.h>
+#include "return_type.h"
 
 typedef struct sem {
     int count;
