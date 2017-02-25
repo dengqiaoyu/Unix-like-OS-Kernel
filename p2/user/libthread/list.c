@@ -6,9 +6,11 @@
  * @bug No known bugs
  */
 
-#include <malloc.h> /* calloc */
-#include <string.h> /* memset */
-#include "list.h"   /* header file of this code */
+#include <malloc.h>     /* calloc */
+#include <string.h>     /* memset */
+#include <stdio.h>      /* printf() */
+#include <syscall.h>    /* gettid() */
+#include "list.h"       /* header file of this code */
 
 /**
  * Initailize the list.

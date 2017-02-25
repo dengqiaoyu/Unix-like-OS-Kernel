@@ -26,7 +26,7 @@ typedef struct allocator allocator_t;
 struct allocator {
     list_t list;
     mutex_t allocator_mutex;
-} allocator_t;
+};
 
 /**
  * Initialize the allocator and create the first block for future use.

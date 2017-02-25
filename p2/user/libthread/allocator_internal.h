@@ -20,7 +20,7 @@
 /* see allocator.c for details */
 typedef node_t allocator_node_t;
 typedef struct allocator_block allocator_block_t;
-typedef struct allocator_block {
+struct allocator_block {
     unsigned int chunk_num;
     unsigned int chunk_size;
     unsigned char bit_masks[MAX_CHUNK_NUM / 8];

@@ -69,6 +69,8 @@ void cond_wait(cond_t *cv, mutex_t *mp) {
      * thread get suspended.
      */
     deschedule(&(wait_list_item->is_not_runnable));
+    mutex_lock(&(cv->mutex));
+    mutex_unlock(&(cv->mutex));
     /* reacquire mutex*/
     mutex_lock(mp);
     free(node_enqed);
