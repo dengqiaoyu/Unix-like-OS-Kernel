@@ -137,7 +137,6 @@ int thr_create(void *(*func)(void *), void *args) {
     if (cond_init(&(tinfo->cond)) < 0) return -1;
 
     int tid = start_thread(stack_base, alt_stack_base, tinfo, func, args);
-    lprintf("thread %d created\n", tid);
     return tid;
 }
 
@@ -203,7 +202,6 @@ int thr_join(int tid, void **statusp) {
     }
     thread_table_delete(thr_to_join);
     mutex_unlock(mutex);
-    lprintf("thread %d got reaped\n", tid);
     return SUCCESS;
 }
 
@@ -232,7 +230,6 @@ void thr_exit(void *status) {
         mutex_unlock(mutex);
         cond_signal(&(thr_to_exit->cond));
     } else mutex_unlock(mutex);
-    lprintf("thread %d exited\n", tid);
     vanish();
 }
 
