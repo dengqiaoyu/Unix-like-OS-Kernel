@@ -90,6 +90,7 @@ int thr_create(void *(*func)(void *), void *args) {
     }
 
     int tid = start_thread(stack_base, alt_stack_base, tinfo, func, args);
+    lprintf("thread %d created\n", tid);
     return tid;
 }
 
@@ -124,6 +125,7 @@ int thr_join(int tid, void **statusp) {
     if (thr_to_join->stack != NULL) allocator_free(thr_to_join->stack);
     thread_table_delete(thr_to_join);
     mutex_unlock(mutex);
+    lprintf("thread %d got reaped\n", tid);
     return SUCCESS;
 }
 
@@ -143,6 +145,7 @@ void thr_exit(void *status) {
         mutex_unlock(mutex);
         cond_signal(&(thr_to_exit->cond));
     } else mutex_unlock(mutex);
+    lprintf("thread %d exited\n", tid);
     vanish();
 }
 
