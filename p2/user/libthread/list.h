@@ -1,8 +1,7 @@
 #ifndef __LIST_H__
 #define __LIST_H__
 
-#define SUCCESS 0
-#define ERROR_INIT_LIST_CALLOC_FAILED -1
+#include "return_type.h"
 
 typedef struct node node_t;
 struct node {

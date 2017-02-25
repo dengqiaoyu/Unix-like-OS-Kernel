@@ -1,8 +1,17 @@
-/**
- * @file sem.c
- * @brief semaphore implementation
- * @author Newton Xie(ncx) Qiaoyu Deng(qdeng)
- * @bug No known bugs
+/** @file sem.c
+ *  @brief Implements semaphores.
+ *
+ *  Uses a straightforward implementation of semaphores with a mutex,
+ *  a conditional variable, and a count variable. The mutex protects
+ *  the count variable from unsafe accesses. The sem_wait() function
+ *  simply decrements the count variable, blocking on the conditional
+ *  variable first if necessary. The sem_signal() function increments
+ *  the count variable and attempts to wake a waiter if the count was
+ *  incremented from zero to one.
+ *
+ *  @author Newton Xie (ncx)
+ *  @author Qiaoyu Deng (qdeng)
+ *  @bug none known
  */
 
 #include <syscall.h>
@@ -13,10 +22,10 @@
 #include <sem_type.h>
 
 int sem_init(sem_t *sem, int count) {
-    if (mutex_init(&(sem->mutex)) < 0) return -1;
+    if (mutex_init(&(sem->mutex)) < 0) return ERROR_SEM_INIT_FAILED;
     if (cond_init(&(sem->cond)) < 0) {
         mutex_destroy(&(sem->mutex));
-        return -1;
+        return ERROR_SEM_INIT_FAILED;
     }
     sem->count = count;
     sem->is_act = 1;

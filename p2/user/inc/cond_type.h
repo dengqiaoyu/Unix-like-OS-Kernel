@@ -6,9 +6,7 @@
 #define __COND_TYPE_H__
 #include <mutex.h>
 #include "cond_type_internal.h"
-
-#define SUCCESS 0
-#define ERROR_CVAR_INIT_FAILED -1
+#include "return_type.h"
 
 typedef struct cond_t {
     wait_list_t wait_list;

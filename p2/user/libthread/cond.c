@@ -16,7 +16,7 @@
 int cond_init(cond_t *cv) {
     int ret = init_list(&(cv->wait_list));
     if (ret != SUCCESS) {
-        return ERROR_CVAR_INIT_FAILED;
+        return ERROR_COND_INIT_FAILED;
     }
     mutex_init(&(cv->mutex));
     cv->is_act = 1;

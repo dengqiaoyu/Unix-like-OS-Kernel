@@ -3,14 +3,9 @@
 
 #include "list.h"
 #include <mutex.h>
+#include "return_type.h"
 
 #define MAX_CHUNK_NUM 1024
-
-#define ERROR_ALLOCATOR_INIT_FAILED -1
-#define ERROR_ALLOCATOR_ADD_BLOCK_FAILED -2
-#define ERROR_ALLOCATOR_MALLOC_NEW_BLOCK_FAILED -3
-
-#define SUCCESS 0
 
 typedef struct allocator allocator_t;
 struct allocator {

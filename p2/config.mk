@@ -85,7 +85,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the 410user/progs
 # directory
 #
-410TESTS = getpid_test1 cat halt_test startle misbehave_wrap thr_exit_join join_specific_test multitest agility_drill cyclone largetest mandelbrot racer cvar_test stack_test1 switzerland rwlock_downgrade_read_test
+410TESTS = getpid_test1 cat halt_test startle misbehave_wrap thr_exit_join join_specific_test multitest agility_drill cyclone largetest mandelbrot racer cvar_test stack_test1 switzerland rwlock_downgrade_read_test paraguay actual_wait
 
 
 ###########################################################################

@@ -1,5 +1,21 @@
 /** @file thread_table.c
+ *  @brief Implements the thread table used by the thread library.
  *
+ *  The thread table is a "hash table" which stores thread control blocks.
+ *  It is an array of linked lists which indexes thread blocks by tid.
+ *  Distinct linked lists can safely be searched and updated in parallel.
+ *  The initializer also create an array of mutexes of the same size as
+ *  the table, and clients must lock these mutexes to ensure thread safety
+ *  within the linked lists.
+ *
+ *  The table handles allocation of memory for thread blocks using block
+ *  allocators (defined in allocator.c). These allocators allow several
+ *  thread blocks to be created in parallel. The table assumes that all
+ *  insertions use thread blocks allocated by the table interface.
+ *
+ *  @author Newton Xie (ncx)
+ *  @author Qiaoyu Deng (qdeng)
+ *  @bug none known
  */
 
 #include <stdlib.h>
@@ -10,6 +26,7 @@
 #include "thread_table.h"
 #include "allocator.h"
 
+/* struct for table entry which allows casting from thr_info pointer */
 typedef struct table_node table_node_t;
 struct table_node {
     thr_info tinfo;
@@ -17,8 +34,10 @@ struct table_node {
     table_node_t *next;
 };
 
-int counter;
+/* counter to distribute allocation load evenly across allocators */
+unsigned int counter;
 mutex_t counter_mutex;
+
 allocator_t **thread_allocators;
 table_node_t **thread_table;
 mutex_t *table_mutexes;
@@ -27,21 +46,19 @@ int thread_table_init() {
     counter = 0;
     if (mutex_init(&counter_mutex) != 0) return -1;
 
-    void *temp = calloc(THREAD_TABLE_SIZE, sizeof(void *));
-    thread_table = (table_node_t **)temp;
+    thread_table = calloc(THREAD_TABLE_SIZE, sizeof(void *));
     if (thread_table == NULL) return -1;
 
-    temp = calloc(NUM_THREAD_ALLOCATORS, sizeof(void *));
-    thread_allocators = (allocator_t **)temp;
+    thread_allocators = calloc(NUM_THREAD_ALLOCATORS, sizeof(void *));
     if (thread_allocators == NULL) return -1;
     int i;
     for (i = 0; i < NUM_THREAD_ALLOCATORS; i++) {
-        allocator_t **allocatorp = &(thread_allocators[i]);
-        if (allocator_init(allocatorp, sizeof(table_node_t), THREAD_BLOCK_SIZE))
+        allocator_t **ptr = &(thread_allocators[i]);
+        if (allocator_init(ptr, sizeof(table_node_t), THREAD_ALLOCATOR_SIZE))
             return -1;
     }
 
-    table_mutexes = (mutex_t *)calloc(THREAD_TABLE_SIZE, sizeof(mutex_t));
+    table_mutexes = calloc(THREAD_TABLE_SIZE, sizeof(mutex_t));
     if (table_mutexes == NULL) return -1;
     for (i = 0; i < THREAD_TABLE_SIZE; i++) {
         if (mutex_init(&(table_mutexes[i])) != 0) return -1;
@@ -64,6 +81,8 @@ thr_info *thread_table_alloc() {
 }
 
 void thread_table_insert(int tid, thr_info *tinfo) {
+    assert(tinfo != NULL);
+    assert(thread_table != NULL);
     int tid_list = THREAD_TABLE_INDEX(tid);
     table_node_t *new_node = (table_node_t *)tinfo;
 
@@ -79,6 +98,7 @@ void thread_table_insert(int tid, thr_info *tinfo) {
 }
 
 thr_info *thread_table_find(int tid) {
+    assert(thread_table != NULL);
     int tid_list = THREAD_TABLE_INDEX(tid);
     table_node_t *temp;
 
@@ -88,11 +108,12 @@ thr_info *thread_table_find(int tid) {
             return &(temp->tinfo);
         } else temp = temp->next;
     }
-    return (thr_info *)0;
+    return NULL;
 }
 
 void thread_table_delete(thr_info *tinfo) {
     assert(tinfo != NULL);
+    assert(thread_table != NULL);
     int tid_list = THREAD_TABLE_INDEX(tinfo->tid);
     table_node_t *temp = (table_node_t *)tinfo;
 

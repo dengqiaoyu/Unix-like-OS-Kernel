@@ -6,11 +6,7 @@
 #define _RWLOCK_TYPE_H
 
 #include <sem.h>
-
-#define SUCCESS 0
-#define ERROR_RWLOCK_INIT_FAILED -1
-#define ERROR_RWLOCK_DESTROY_FAILED -2
-
+#include "return_type.h"
 
 typedef struct rwlock {
     unsigned int reader_in_cri_sec;

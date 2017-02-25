@@ -6,8 +6,6 @@
 
 typedef list_t wait_list_t;
 typedef node_t wait_list_node_t;
-#define SUCCESS 0
-#define COND_INIT_FAIL -1
 
 typedef struct wait_list_item_t {
     int tid;
