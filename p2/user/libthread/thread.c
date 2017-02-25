@@ -229,8 +229,7 @@ void thr_exit(void *status) {
     if (thr_to_exit->join_tid > 0) {
         mutex_unlock(mutex);
         cond_signal(&(thr_to_exit->cond));
-    }
-    else mutex_unlock(mutex);
+    } else mutex_unlock(mutex);
     vanish();
 }
 

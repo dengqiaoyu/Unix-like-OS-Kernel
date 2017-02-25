@@ -45,6 +45,21 @@ II. THREAD TABLE
     is only enforced when multiple threads are trying to write to the same
     list.
 
+III. BLOCK ALLOCATORS
+
+    First, the reason why we need an allocator is the concern that malloc is
+    protected by a global mutex, so if every time we need a new chunk if memory
+    we need malloc memory again and again, which means we can have only one
+    thread malloc at the time, which is very inefficient. What we do in the
+    block is that we pre-allocate a big chunk of memory, and separate it to
+    many fixed-size chunk, and we manage those chunk with bitmask to indicate
+    whether that chunk has been used. In order to automatically grow the maximum
+    memory that an allocator can allocate, we link those big chunks of memory in
+    list as a form of block, so in the block there will be multiple chunks of
+    memory that can be assigned to user. When we free the chunk, we actually do
+    not call free(), instead we mark it as free for future use by others, this
+    can make us more efficiently use memory.
+
 IV. MUTEXES
 
     Our mutexes have a very simple implementation. Upon initialization, a
@@ -59,6 +74,15 @@ IV. MUTEXES
     This implementation does not achieve or approximate bounded waiting, but
     was found in practice to be more effective than more "fair" approaches.
 
+V. CONDITIONAL VARIABLES
+
+    The basic idea for cvar is that we use linked list as a FIFO queue. When a
+    new thread need to wait on a cvar, it adds itself into the the last of queue
+    and then got descheduled by the kernel. When the condition is fulfilled, 
+    the thread that meet that condition will be responsible for wake threads in
+    the queue by calling make runnable to that suspended thread. Thread that is
+    waken is responsible for freeing the node's memory in the queue.
+
 VI. SEMAPHORES
 
     Our semaphores are built very simply on top of our other primitives.
@@ -72,4 +96,32 @@ VI. SEMAPHORES
     A signaling thread locks the semaphore mutex and increments the counter.
     It then unlocks the mutex and attempts to wake a thread waiting on the
     conditional variable if the counter was incremented from 0 to 1.
+
+VII. READERS/WRITERS LOCKS
+
+    We use third reader and writer problem as our base algorithm, that is, no
+    reader and writer should be starved after a bounded time. So we can ensure
+    that every thread has a fair chance to get the lock. The main design is that
+    we use a semaphore as a FIFO queue, so the order they are added into the
+    semaphore or queue, is mostly the order they get the lock, the reader does
+    not need to get any lock when they enter the critical section by just adding
+    numbers for how many readers has get into the critical section. The reader
+    just need to protect this number and when they exit the critical section,
+    they should increment another number which is the number of reader that has
+    exited the critical section, thus by comparing those two numbers we can tell
+    whether a reader has entered critical section. For the writer, we can first
+    enqueue it into the semaphore(queue), and then check whether there is any
+    reader in the critical section. If it is true, we can let the writer wait on
+    another semaphore which performs like a mutex, and this semaphore is firstly
+    set as 0, and the writer cannot signal that semaphore itself, but need a
+    reader signal that semaphore when exiting critical section. So in that way, 
+    we can prevent many writers making reader starving readers like in the
+    second reader and writer problem. So, the entering condition for a writer is
+    :1. there is no readers in the critical section, and no other writers. or 2.
+    a reader that just completes critical section let a writer get the lock. For
+    writer lock downgrade, we just need to increment the "in" counter for reader
+    and signal the queue, if the very first group is readers they can be waked
+    immediately after writer lock is release, which can improve the efficiency
+    greatly.
+
 */
