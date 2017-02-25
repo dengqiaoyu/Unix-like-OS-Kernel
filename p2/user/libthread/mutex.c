@@ -33,13 +33,8 @@ void mutex_lock(mutex_t *mp) {
     int tid = gettid();
     int ret = mutex_lock_asm(mp, tid);
     while (ret != 0) {
-        if (mp->holder_tid != -1) {
-            yield(mp->holder_tid);
-            ret = mutex_lock_asm(mp, tid);
-        } else {
-            yield(-1);
-            ret = mutex_lock_asm(mp, tid);
-        }
+        yield(mp->holder_tid);
+        ret = mutex_lock_asm(mp, tid);
     }
 }
 

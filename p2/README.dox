@@ -5,7 +5,48 @@
 @author Newton Xie (ncx)
 @author Qiaoyu Deng (qdeng)
 
-III. Allocator
+I. THREAD MANAGEMENT
+
+    The thread management library must keep track of the status of all
+    threads running on a system so that calls to thr_create(), thr_join(),
+    and thr_exit() are synchronized and perform as expected. Our solution
+    to this problem is to create a thread_info struct (control block)
+    when forking a thread and throw it into a list. Upon initialization,
+    our library sets up this list, and every time a new thread is spawned,
+    a control block is created with attributes for the thread's running
+    status, join status, and return value.
+    
+    The thread is marked as "runnable" when it begins execution. The
+    thr_exit() function will change this status to "exited" and populate
+    the exit status field of the struct. Calls to thr_join() look into
+    the thread list for this information; if the block for the target
+    thread is found and has not yet been joined, then it is marked as
+    "joined" with the calling thread's tid. Then, depending on the running
+    status of the target thread, the caller decides whether to block and
+    wait for exit or free the thread's resources. It is the exit function's
+    responsibility to wake any joiner which is waiting on the joinee.
+
+    We chose to identify our threads by the number assigned by the kernel
+    during thread_fork. This decision was made in the interest of keeping
+    the thr_getid() and thr_yield() functions as simple as possible.
+
+    Our thread management library aims to achieve as much parallelism
+    as possible. We judged (a) mutually exclusive thread list accesses
+    and (b) calls to malloc() and its relatives to be the main barriers
+    to concurrency. These issues led to the designs of our thread table
+    and memory allocators.
+
+II. THREAD TABLE
+
+    Our thread control block "list" is an array of linked lists. When
+    inserting or finding thread information, we index into this array by
+    simply taking the target thread tid modulo the size of the array. Each
+    linked list can be accessed and updated in parallel, so mutual exclusion
+    is only enforced when multiple threads are trying to write to the same
+    list.
+
+III. BLOCK ALLOCATORS
+
     First, the reason why we need an allocator is the concern that malloc is
     protected by a global mutex, so if every time we need a new chunk if memory
     we need malloc memory again and again, which means we can have only one
@@ -19,7 +60,22 @@ III. Allocator
     not call free(), instead we mark it as free for future use by others, this
     can make us more efficiently use memory.
 
-IIII. Conditional Variable
+IV. MUTEXES
+
+    Our mutexes have a very simple implementation. Upon initialization, a
+    mutex contains a lock set to 0 and a holder_tid set to -1. When a thread
+    calls mutex_lock(), it atomically exchanges a 1 with the mutex lock. If
+    the thread recovers a 0, then it has acquired the lock and proceeds to
+    update the holder_tid to its own tid. Otherwise, the thread yields and
+    tries again. If the holder_tid field is populated during the lock attempt,
+    then this yield call is made to the mutex holder's tid. Unlocking the
+    mutex is a simple exchange of a 0 with the lock.
+
+    This implementation does not achieve or approximate bounded waiting, but
+    was found in practice to be more effective than more "fair" approaches.
+
+V. CONDITIONAL VARIABLES
+
     The basic idea for cvar is that we use linked list as a FIFO queue. When a
     new thread need to wait on a cvar, it adds itself into the the last of queue
     and then got descheduled by the kernel. When the condition is fulfilled, 
@@ -27,7 +83,22 @@ IIII. Conditional Variable
     the queue by calling make runnable to that suspended thread. Thread that is
     waken is responsible for freeing the node's memory in the queue.
 
-V. Reader and writer lock
+VI. SEMAPHORES
+
+    Our semaphores are built very simply on top of our other primitives.
+    The semaphore data type consists of a mutex, a conditional variable, and
+    a counter field. The counter is initialized to the second paramter when
+    sem_init() is called. When a thread waits on a semaphore, it locks the
+    mutex and reads the counter. If the counter is nonzero, it is decremented,
+    and the mutex is unlocked. Otherwise, the thread waits on the conditional
+    variable.
+
+    A signaling thread locks the semaphore mutex and increments the counter.
+    It then unlocks the mutex and attempts to wake a thread waiting on the
+    conditional variable if the counter was incremented from 0 to 1.
+
+VII. READERS/WRITERS LOCKS
+
     We use third reader and writer problem as our base algorithm, that is, no
     reader and writer should be starved after a bounded time. So we can ensure
     that every thread has a fair chance to get the lock. The main design is that
