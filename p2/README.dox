@@ -95,7 +95,7 @@ VI. SEMAPHORES
 
     A signaling thread locks the semaphore mutex and increments the counter.
     It then unlocks the mutex and attempts to wake a thread waiting on the
-    conditional variable if the counter was incremented from 0 to 1.
+    conditional variable.
 
 VII. READERS/WRITERS LOCKS
 

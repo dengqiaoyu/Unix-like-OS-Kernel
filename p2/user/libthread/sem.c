@@ -6,8 +6,7 @@
  *  the count variable from unsafe accesses. The sem_wait() function
  *  simply decrements the count variable, blocking on the conditional
  *  variable first if necessary. The sem_signal() function increments
- *  the count variable and attempts to wake a waiter if the count was
- *  incremented from zero to one.
+ *  the count variable and attempts to wake a waiter.
  *
  *  @author Newton Xie (ncx)
  *  @author Qiaoyu Deng (qdeng)
@@ -55,9 +54,8 @@ void sem_signal(sem_t *sem) {
     assert(sem != NULL);
     assert(sem->is_act == 1);
     mutex_lock(&(sem->mutex));
-    int count = sem->count++;
+    sem->count++;
+    cond_signal(&(sem->cond));
     mutex_unlock(&(sem->mutex));
-    if (count == 0)
-        cond_signal(&(sem->cond));
 }
 
