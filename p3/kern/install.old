@@ -1,0 +1,129 @@
+/** @file install.c
+ *  @author Newton Xie (ncx)
+ *  @bug No known bugs.
+ */
+
+#include <stdlib.h>
+#include "asm_handlers.h"
+#include "x86/asm.h"
+#include "x86/seg.h"
+#include "x86/timer_defines.h"
+#include "x86/keyhelp.h"
+#include "x86/interrupt_defines.h"
+
+static int tick_count = 0;
+static void (*tick_callback)(unsigned int) = NULL;
+
+static char_queue *scancode_queue;
+
+/** @brief Timer interrupt handler
+ *
+ *  Increments the tick counter, calls callback function, and acknowledges
+ *  interrupt. Assumes acknowledgement of interrupt before next tick.
+ *
+ *  @return void
+ **/
+void timer_handler()
+{
+    tick_count++;
+    tick_callback(tick_count);
+    outb(INT_CTL_PORT, INT_ACK_CURRENT);
+}
+
+/** @brief Key interrupt handler top half
+ *
+ *  Retrieves input scancode, enqueues, and acknowledges interrupt. Assumes
+ *  acknowledgement of interrupt before next key event.
+ *
+ *  @return void
+ **/
+void key_handler()
+{
+    char c = (char)inb(KEYBOARD_PORT);
+    // enqueue(scancode_queue, c);
+    outb(INT_CTL_PORT, INT_ACK_CURRENT);
+}
+
+/** @brief Key interrupt handler bottom half
+ *
+ *  Disables interrupts to prevent race conditions, then attempts to retrieve
+ *  oldest scancode in queue. If the scancode exists and corresponds to a char,
+ *  the functions returns the char.
+ *
+ *  @return input character
+ **/
+    int
+readchar(void)
+{
+    char c;
+    disable_interrupts();
+    /*
+       if (is_empty(scancode_queue)) {
+       enable_interrupts();
+       return -1;
+       }
+       char c = dequeue(scancode_queue);
+       */
+    enable_interrupts();
+
+    int aug = process_scancode(c);
+    if (KH_HASDATA(aug) && KH_ISMAKE(aug)) return KH_GETCHAR(aug);
+    return -1;
+}
+
+/** @brief Packs high bits of IDT entry
+ *
+ *  @param offset handler address
+ *  @param dpl privilege level
+ *  @size size parameter
+ *  @return packed high bits
+ **/
+int pack_idt_high(void *offset, int dpl, int size)
+{
+    int packed = (int)offset & 0xffff0000;
+    packed |= 1 << 15;
+    packed |= dpl << 13;
+    packed |= size << 11;
+    packed |= 3 << 9;
+    return packed;
+}
+
+/** @brief Packs low bits of IDT entry
+ *
+ *  @param selector segment selector
+ *  @param offset handler address
+ *  @return packed low bits
+ **/
+int pack_idt_low(int selector, void *offset)
+{
+    int packed = (int)offset & 0xffff;
+    packed |= selector << 16;
+    return packed;
+}
+
+/** @brief Installs timer and key interrupt handlers
+ *
+ *  @param tickback pointer to timer interrupt callback function
+ *  @return 0 
+ **/
+int handler_install(void (*tickback)(unsigned int))
+{
+    tick_callback = tickback;
+    int ten_ms = (TIMER_RATE + 50) / 100;
+    outb(TIMER_MODE_IO_PORT, TIMER_SQUARE_WAVE);
+    outb(TIMER_PERIOD_IO_PORT, ten_ms & 0xff);
+    outb(TIMER_PERIOD_IO_PORT, ten_ms >> 8);
+
+    int *timer_idt = (int *)idt_base() + 2 * TIMER_IDT_ENTRY;
+    *timer_idt = pack_idt_low(SEGSEL_KERNEL_CS, (void *)asm_timer_handler);
+    *(timer_idt+1) = pack_idt_high((void *)asm_timer_handler, 0, 1);
+
+    scancode_queue = &sc_queue;
+    scancode_queue->front = NULL;
+    scancode_queue->back = NULL;
+
+    int *key_idt = (int *)idt_base() + 2 * KEY_IDT_ENTRY;
+    *key_idt = pack_idt_low(SEGSEL_KERNEL_CS, (void *)asm_key_handler);
+    *(key_idt+1) = pack_idt_high((void *)asm_key_handler, 0, 1);
+}
+

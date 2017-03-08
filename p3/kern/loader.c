@@ -35,12 +35,17 @@
  */
 int getbytes( const char *filename, int offset, int size, char *buf )
 {
-
-    /*
-     * You fill in this function.
-     */
-
-  return -1;
+    int i, j;
+    for (i = 0; i < MAX_NUM_APP_ENTRIES; i++) {
+        const exec2obj_userapp_TOC_entry *entry = &exec2obj_userapp_TOC[i];
+        if (!strcmp(filename, entry->execname)) {
+            for (j = 0; j < size && j < entry->execlen; j++) {
+                buf[j] = entry->execbytes[offset + j];
+            }
+            return j;
+        }
+    }
+    return -1;
 }
 
 /*@}*/
