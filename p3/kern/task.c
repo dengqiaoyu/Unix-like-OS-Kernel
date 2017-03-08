@@ -23,6 +23,7 @@ extern uint32_t *kern_page_dir;
 task_t *task_init(const char *fname)
 {
     task_t *task = malloc(sizeof(task_t));
+    task = malloc(sizeof(task_t));
     task->task_id = task_id_counter++;
     task->main_thread = thread_init();
     task->main_thread->task = task;
@@ -58,12 +59,13 @@ int load_program(simple_elf_t *header, uint32_t *page_dir)
 {
     set_cr3((uint32_t)page_dir);
 
+    // BUG need to make these read only, but how?
     load_elf_section(header->e_fname, header->e_txtstart, header->e_txtlen,
-                     header->e_txtoff, PTE_USER, page_dir);
+                     header->e_txtoff, PTE_USER | PTE_WRITE, page_dir);
     load_elf_section(header->e_fname, header->e_datstart, header->e_datlen,
                      header->e_datoff, PTE_USER | PTE_WRITE, page_dir);
     load_elf_section(header->e_fname, header->e_rodatstart, header->e_rodatlen,
-                     header->e_rodatoff, PTE_USER, page_dir);
+                     header->e_rodatoff, PTE_USER | PTE_WRITE, page_dir);
     load_elf_section(header->e_fname, header->e_bssstart, header->e_bsslen,
                      -1, PTE_USER | PTE_WRITE, page_dir);
     load_elf_section(header->e_fname, USER_STACK_LOW, USER_STACK_SIZE,
@@ -78,17 +80,19 @@ int load_elf_section(const char *fname, unsigned long start, unsigned long len,
                      long offset, int pte_flags, uint32_t *page_dir)
 {
     uint32_t low = (uint32_t)start & PAGE_MASK;
+    uint32_t high = (uint32_t)(start + len) & PAGE_MASK;
     
-    uint32_t i = 0;
-    do {
+    uint32_t addr = low;
+    while (addr <= high) {
         uint32_t *page = get_free_page();
-        set_pte(page_dir, low + i, page, pte_flags);
-        i += PAGE_SIZE;
-    } while (i < len);
+        set_pte(page_dir, addr, page, pte_flags);
+        addr += PAGE_SIZE;
+    }
 
+    // BUG can't memset the read only pages
     memset((void *)start, 0, len);
     if (offset != -1) {
-        getbytes(fname, offset, len, (void *)start);
+        getbytes(fname, offset, len, (char *)start);
     }
 
     return 0;

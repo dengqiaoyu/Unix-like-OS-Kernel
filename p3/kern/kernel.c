@@ -40,6 +40,11 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp)
 
     vm_init();
 
+    /*
+    task_t *init = task_init("ck1");
+    kern_to_user(init->main_thread->user_sp, init->main_thread->ip);
+    */
+
     task_t *init = task_init("init");
     kern_to_user(init->main_thread->user_sp, init->main_thread->ip);
 
