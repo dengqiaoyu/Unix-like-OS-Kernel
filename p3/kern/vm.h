@@ -26,7 +26,7 @@ typedef struct page {
 
 void vm_init();
 
-uint32_t *get_pte(uint32_t *page_dir, uint32_t page_va);
+uint32_t get_pte(uint32_t *page_dir, uint32_t page_va);
 
 void set_pte(uint32_t *page_dir, uint32_t page_va, uint32_t *page, int flags);
 

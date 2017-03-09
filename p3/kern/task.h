@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <elf_410.h>
 
-#define USER_STACK_LOW 0xFFFFE000
+#define USER_STACK_LOW 0xFFB00000
 #define USER_STACK_SIZE (1 << 12)
 #define KERN_STACK_SIZE (1 << 12)
 

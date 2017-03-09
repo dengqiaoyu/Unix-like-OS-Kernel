@@ -22,15 +22,19 @@ void pf_handler()
 {
     uint32_t pf_addr = get_cr2();
     uint32_t *page_dir = (uint32_t *)get_cr3();
-    uint32_t pf_page_addr = pf_addr & PAGE_MASK;
-    uint32_t *pte_p = get_pte(page_dir, pf_page_addr);
+    uint32_t pte = get_pte(page_dir, pf_addr);
 
-    if (pte_p == NULL || !(*pte_p & PTE_PRESENT)) {
+    MAGIC_BREAK;
+
+    if (!(pte & PTE_PRESENT)) {
         uint32_t *page = get_free_page();
-        int flags = PTE_PRESENT | PTE_WRITE | PTE_USER;
-        set_pte(page_dir, pf_page_addr, page, flags);
+        int flags = PTE_WRITE | PTE_USER;
+        set_pte(page_dir, pf_addr, page, flags);
     }
-    else roll_over();
+    else {
+        MAGIC_BREAK;
+        roll_over();
+    }
 
     return;
 }
