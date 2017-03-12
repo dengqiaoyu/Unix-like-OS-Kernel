@@ -22,5 +22,5 @@ asm_pf_handler:
     popl    %es
     popl    %ds
     popa    
-    // addl    $4, %esp
+    addl    $4, %esp
     iret

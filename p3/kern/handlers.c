@@ -24,7 +24,7 @@ void pf_handler()
     uint32_t *page_dir = (uint32_t *)get_cr3();
     uint32_t pte = get_pte(page_dir, pf_addr);
 
-    MAGIC_BREAK;
+    // MAGIC_BREAK;
 
     if (!(pte & PTE_PRESENT)) {
         uint32_t *page = get_free_page();
@@ -32,7 +32,7 @@ void pf_handler()
         set_pte(page_dir, pf_addr, page, flags);
     }
     else {
-        MAGIC_BREAK;
+        // MAGIC_BREAK;
         roll_over();
     }
 

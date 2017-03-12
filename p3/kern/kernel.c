@@ -42,7 +42,7 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp)
 
     vm_init();
 
-    task_t *init = task_init("cp1");
+    task_t *init = task_init("ck1");
     set_cr3((uint32_t)init->page_dir);
     set_esp0(init->main_thread->kern_sp);
     kern_to_user(init->main_thread->user_sp, init->main_thread->ip);
