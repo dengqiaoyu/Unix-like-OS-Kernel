@@ -9,7 +9,7 @@
 kern_to_user:
     movl    4(%esp), %ecx
     movl    8(%esp), %edx
-    movl    $SEGSEL_USER_DS, %eax
+    movl    $SEGSEL_USER_DS, %eax // Why DS? 
     movl    %eax, %ds
     movl    %eax, %es
     movl    %eax, %fs

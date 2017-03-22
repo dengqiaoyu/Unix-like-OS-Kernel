@@ -18,8 +18,7 @@ int page_array_size;
 
 uint32_t *kern_page_dir;
 
-void vm_init()
-{
+void vm_init() {
     int sys_frames = machine_phys_frames();
     page_array_size = sys_frames * sizeof(page_t);
     page_array = malloc(page_array_size);
@@ -40,6 +39,7 @@ void vm_init()
     }
 
     uint32_t page_addr = 0;
+    // Do we need to set CR4_PGE ?
     int flags = PTE_PRESENT | PTE_WRITE;
     int j;
     for (i = 0; i < NUM_KERN_TABLES; i++) {
@@ -64,8 +64,7 @@ void vm_init()
 }
 
 // takes physical page_dir !!!!!!!!!! assumes it's in cr3
-uint32_t get_pte(uint32_t *page_dir, uint32_t page_va)
-{
+uint32_t get_pte(uint32_t *page_dir, uint32_t page_va) {
     // can macro these
     int page_dir_index = (page_va >> 22) & 0x3FF;
     int page_tab_index = (page_va >> PAGE_SHIFT) & 0x3FF;
@@ -82,8 +81,7 @@ uint32_t get_pte(uint32_t *page_dir, uint32_t page_va)
     return pt_va[page_tab_index];
 }
 
-void set_pte(uint32_t *page_dir, uint32_t page_va, uint32_t *page, int flags)
-{
+void set_pte(uint32_t *page_dir, uint32_t page_va, uint32_t *page, int flags) {
     // can macro these
     int page_dir_index = (page_va >> 22) & 0x3FF;
     int page_tab_index = (page_va >> PAGE_SHIFT) & 0x3FF;
@@ -99,8 +97,7 @@ void set_pte(uint32_t *page_dir, uint32_t page_va, uint32_t *page, int flags)
     pt_va[page_tab_index] = (uint32_t)page | flags | PTE_PRESENT;
 }
 
-uint32_t *get_free_page()
-{
+uint32_t *get_free_page() {
     int i;
     for (i = 0; i < page_array_size; i++) {
         if (page_array[i].used == 0) {
