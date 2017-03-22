@@ -20,6 +20,8 @@
 
 /* x86 specific includes */
 #include <x86/asm.h>                /* enable_interrupts() */
+#include <x86/cr.h>
+#include <x86/eflags.h>
 
 #include "handlers.h"
 #include "vm.h"
@@ -40,15 +42,14 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp)
 
     vm_init();
 
-    /*
     task_t *init = task_init("ck1");
-    kern_to_user(init->main_thread->user_sp, init->main_thread->ip);
-    */
-
-    task_t *init = task_init("init");
+    set_cr3((uint32_t)init->page_dir);
+    set_esp0(init->main_thread->kern_sp);
     kern_to_user(init->main_thread->user_sp, init->main_thread->ip);
 
     task_t *idle = task_init("idle");
+    set_cr3((uint32_t)idle->page_dir);
+    set_esp0(idle->main_thread->kern_sp);
     kern_to_user(idle->main_thread->user_sp, idle->main_thread->ip);
 
     while (1) {
