@@ -2,6 +2,7 @@
 #include <mutex.h>      /* mutex */
 #include <asm.h>        /* disable_interrupts enable_interrupts */
 #include <x86/cr.h>
+#include <simics.h>     /* lprintf */
 
 #include "scheduler.h"
 #include "task.h"       /* thread_t */
@@ -85,6 +86,7 @@ void sche_yield() {
 }
 
 sche_node_t *get_mainthr_sche_node(task_t *psb) {
-    node_t *main_thread = (void *)psb->main_thread;
+    uint32_t *main_thread = (void *)psb->main_thread;
+    lprintf("&&&&&&&main_thread: %p\n", main_thread);
     return (sche_node_t *)(main_thread - 4);
 }

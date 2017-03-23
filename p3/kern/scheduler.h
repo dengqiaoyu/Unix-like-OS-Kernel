@@ -9,7 +9,7 @@
 #define GET_TCB_TB_NODE(sche_node)\
         (tcb_tb_node_t *)((sche_node)->data))
 #define GET_TCB(sche_node)\
-        ((thread_t *)((tcb_tb_node_t *)((sche_node)->data))->data)
+        (thread_t *)(((tcb_tb_node_t *)((sche_node)->data))->data)
 
 typedef struct schedule_list_struct schedule_t;
 

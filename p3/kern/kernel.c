@@ -53,11 +53,13 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
 
     lprintf("!!!before task_init\n");
     task_t *init = task_init("ck1");
-    // task_t *idle = task_init("idle");
+    task_t *idle = task_init("idle");
     lprintf("!!!after task_init\n");
 
+    lprintf("idle: %p\n", idle);
     lprintf("@@@before get_mainthr_sche_node\n");
-    // cur_sche_node = get_mainthr_sche_node(init);
+    cur_sche_node = get_mainthr_sche_node(init);
+    lprintf("########cur_sche_node: %p\n", cur_sche_node);
     // append_to_scheduler(get_mainthr_sche_node(idle));
     lprintf("@@@after append_to_scheduler\n");
     init->main_thread->status = RUNNABLE;
