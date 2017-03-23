@@ -29,13 +29,12 @@
 #include "asm_switch.h"
 
 /** @brief Kernel entrypoint.
- *  
+ *
  *  This is the entrypoint for the kernel.
  *
  * @return Does not return
  */
-int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp)
-{
+int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     lprintf( "Hello from a brand new kernel!" );
 
     install_handlers();

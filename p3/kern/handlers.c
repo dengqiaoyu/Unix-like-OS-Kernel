@@ -27,7 +27,7 @@ void pf_handler() {
     uint32_t pf_addr = get_cr2();
     uint32_t *page_dir = (uint32_t *)get_cr3();
     uint32_t pte = get_pte(page_dir, pf_addr);
-    lprintf("123456\n");
+    // lprintf("123456\n");
     // MAGIC_BREAK;
 
     if (!(pte & PTE_PRESENT)) {
@@ -76,10 +76,12 @@ int pack_idt_low(int selector, void *offset) {
  *  @return
  */
 int install_handlers() {
+    // Maybe we need split system interrupt and trap handlers with driver.
     uint32_t *pf_idt = (uint32_t *)idt_base() + 2 * IDT_PF;
     *pf_idt = pack_idt_low(SEGSEL_KERNEL_CS, (void *)asm_pf_handler);
     *(pf_idt + 1) = pack_idt_high((void *)asm_pf_handler, 0, 1);
 
+    // driver
     init_timer(cnt_seconds);
     uint32_t *timer_idt = (uint32_t *)idt_base() + 2 * TIMER_IDT_ENTRY;
     *timer_idt = pack_idt_low(SEGSEL_KERNEL_CS, (void *)timer_handler);
