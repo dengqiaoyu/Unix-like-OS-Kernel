@@ -129,4 +129,4 @@ KERNEL_OBJS = fake_console.o kernel.o loader.o malloc_wrappers.o asm_handlers.o\
 # kernel in, or else your tweaked version will run and the test harness
 # won't.
 #
-STUDENTREQPROGS =
+STUDENTREQPROGS = ck1_user idle_user

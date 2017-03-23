@@ -59,14 +59,18 @@ void sche_yield() {
     sche_node_t *new_sche_node = pop_scheduler_active();
 
     if (new_sche_node != NULL) {
+        lprintf("entering yield!!!\n");
         thread_t *new_tcb_ptr = GET_TCB(new_sche_node);
-        cur_sche_node = new_sche_node;
         append_to_scheduler(cur_sche_node);
+        cur_sche_node = new_sche_node;
         set_esp0(new_tcb_ptr->kern_sp);
         if (new_tcb_ptr->status == RUNNABLE) {
+            lprintf("begin context switch\n\n\n");
             int original_task_id = cur_tcb_ptr->task->task_id;
             int new_task_id = new_tcb_ptr->task->task_id;
             if (new_task_id != original_task_id) {
+                lprintf("set cr3, new_task_id: %d\noriginal_task_id: %d\n",
+                        new_task_id, original_task_id);
                 set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
             }
             __asm__("PUSHA");

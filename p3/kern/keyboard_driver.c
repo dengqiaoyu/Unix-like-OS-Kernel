@@ -26,19 +26,31 @@ static int buf_ending = 0;
 /* the position where the last character has been read */
 static int buf_cursor = 0;
 
+// static int temp_ctx_cnter = 0;
+
 /* functions definition */
 /**
  * @brief Read from keyboard port and put it into a buffer for further handling.
  */
 void add_to_kb_buf(void) {
-    uint8_t temp_code = inb(KEYBOARD_PORT);
-    // if (buf_ending + 1 == buf_cursor)
+    // temp_ctx_cnter++;
+    // lprintf("temp_ctx_cnter: %d\n", temp_ctx_cnter);
+    // if (temp_ctx_cnter % 2 == 0) {
+    //     outb(INT_ACK_CURRENT, INT_CTL_PORT);
     //     return;
-    // buf[buf_ending] = inb(KEYBOARD_PORT);
-    // buf_ending = (buf_ending + 1) % KB_BUF_LEN;
-    outb(INT_ACK_CURRENT, INT_CTL_PORT);
+    // }
+    uint8_t temp_code = inb(KEYBOARD_PORT);
+    if (buf_ending + 1 == buf_cursor)
+        return;
+    buf[buf_ending] = inb(KEYBOARD_PORT);
+    buf_ending = (buf_ending + 1) % KB_BUF_LEN;
+    char ch = readchar();
     lprintf("keyboard pressed, %d\n", temp_code);
-    // sche_yield();
+    if (ch == 'a') {
+        outb(INT_ACK_CURRENT, INT_CTL_PORT);
+        sche_yield();
+    }
+    outb(INT_ACK_CURRENT, INT_CTL_PORT);
 }
 
 /**
