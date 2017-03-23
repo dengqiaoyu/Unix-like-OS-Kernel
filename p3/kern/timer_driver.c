@@ -11,12 +11,14 @@
 /* x86 includes */
 #include <asm.h>                /* outb() */
 #include <interrupt_defines.h>  /* INT_ACK_CURRENT, INT_CTL_PORT */
+#include <stdio.h>              /* NULL */
 
 /* debug includes */
 #include <simics.h>             /* lprintf() */
 
 /* user defined includes */
 #include "inc/timer_driver.h"
+#include "scheduler.h"
 
 
 static int numTicks;
@@ -25,6 +27,7 @@ static int seconds = 0;
 int if_cnt_time = 1;
 /* to store the address of callback function */
 void (*callback_func)();
+extern sche_node_t *cur_sche_node;
 
 /**
  * @brief Initialize timer.
@@ -57,8 +60,11 @@ void ticktock() {
  * @param numTicks the number of 10 ms that is triggered.
  */
 void cnt_seconds(unsigned int numTicks) {
-    if (numTicks % 100 == 0 && if_cnt_time)
+    if (numTicks % 100 == 0 && if_cnt_time) {
+        // lprintf("time: %d", seconds);
         seconds++;
+    }
+    sche_yield();
 }
 
 /**

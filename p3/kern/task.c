@@ -12,6 +12,8 @@
 
 #include "vm.h"
 #include "task.h"
+#include "allocator.h"
+#include "scheduler.h"
 
 int task_id_counter = 0;
 int thread_id_counter = 0;
@@ -19,12 +21,14 @@ task_t *cur_task;
 thread_t *cur_thread;
 
 extern uint32_t *kern_page_dir;
+extern allocator_t *sche_allocator;
 
 task_t *task_init(const char *fname) {
     task_t *task = malloc(sizeof(task_t));
     task->task_id = task_id_counter++;
     task->main_thread = thread_init();
     task->main_thread->task = task;
+    task->main_thread->status = INITIALIZED;
 
     task->page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);
     lprintf("task page dir is %p\n", task->page_dir);
@@ -47,7 +51,8 @@ task_t *task_init(const char *fname) {
 }
 
 thread_t *thread_init() {
-    thread_t *thread = malloc(sizeof(thread_t));
+    sche_node_t *sche_node = allocator_alloc(sche_allocator);
+    thread_t *thread = GET_TCB(sche_node);
     thread->tid = thread_id_counter++;
 
     void *kern_stack = malloc(KERN_STACK_SIZE);

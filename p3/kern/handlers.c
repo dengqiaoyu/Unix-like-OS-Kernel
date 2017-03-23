@@ -90,8 +90,6 @@ int install_handlers() {
     uint32_t *keyboard_idt = (uint32_t *)idt_base() + 2 * KEY_IDT_ENTRY;
     *keyboard_idt = pack_idt_low(SEGSEL_KERNEL_CS, (void *)keyboard_handler);
     *(keyboard_idt + 1) = pack_idt_high((void *)keyboard_handler, 0, 1);
-
-    enable_interrupts();
     return 0;
 }
 
