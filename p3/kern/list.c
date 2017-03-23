@@ -21,8 +21,8 @@
 int init_list(list_t *list) {
     node_t *head_node = calloc(1, sizeof(node_t));
     if (head_node == NULL) {
-        int tid = gettid();
-        printf("Cannot allocate more memory for thread %d\n", tid);
+        // int tid = gettid();
+        // printf("Cannot allocate more memory for thread %d\n", tid);
         return ERROR_INIT_LIST_CALLOC_FAILED;
     }
     /* this is the dummy head for easy iterate */
@@ -32,8 +32,8 @@ int init_list(list_t *list) {
     if (tail_node == NULL) {
         free(head_node);
         list->head = NULL;
-        int tid = gettid();
-        printf("Cannot allocate more memory for thread %d\n", tid);
+        // int tid = gettid();
+        // printf("Cannot allocate more memory for thread %d\n", tid);
         return ERROR_INIT_LIST_CALLOC_FAILED;
     }
     /* this is the dummy head for easy iterate */

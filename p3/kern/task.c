@@ -52,7 +52,11 @@ task_t *task_init(const char *fname) {
 
 thread_t *thread_init() {
     sche_node_t *sche_node = allocator_alloc(sche_allocator);
-    thread_t *thread = GET_TCB(sche_node);
+    lprintf("sche_node: %p\n", sche_node);
+    thread_t *thread = (thread_t *)(((tcb_tb_node_t *)(sche_node->data))->data);
+    lprintf("thread: %p\n", thread);
+    // thread_t *thread = GET_TCB(sche_node);
+
     thread->tid = thread_id_counter++;
 
     void *kern_stack = malloc(KERN_STACK_SIZE);

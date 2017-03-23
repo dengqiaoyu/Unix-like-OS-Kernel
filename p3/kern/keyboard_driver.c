@@ -18,6 +18,7 @@
 
 /* user defined include */
 #include "keyboard_driver.h"
+#include "scheduler.h"
 
 static uint8_t buf[KB_BUF_LEN] = {0};
 /* the position where the last character can be read */
@@ -37,6 +38,7 @@ void add_to_kb_buf(void) {
     // buf_ending = (buf_ending + 1) % KB_BUF_LEN;
     outb(INT_ACK_CURRENT, INT_CTL_PORT);
     lprintf("keyboard pressed, %d\n", temp_code);
+    // sche_yield();
 }
 
 /**

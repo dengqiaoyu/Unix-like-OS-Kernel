@@ -9,7 +9,7 @@
 kern_to_user:
     movl    4(%esp), %ecx
     movl    8(%esp), %edx
-    movl    $SEGSEL_USER_DS, %eax // Why DS? 
+    movl    $SEGSEL_USER_DS, %eax
     movl    %eax, %ds
     movl    %eax, %es
     movl    %eax, %fs
@@ -19,8 +19,8 @@ kern_to_user:
     pushf
     
     popl    %eax
-    or      $EFL_IF, %eax
-    // or      $EFL_IOPL_RING3, %eax
+    ; or      $EFL_IF, %eax
+    or      $EFL_IOPL_RING3, %eax
     pushl   %eax
 
     pushl   $SEGSEL_USER_CS
