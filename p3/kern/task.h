@@ -10,8 +10,9 @@
 #include <elf_410.h>
 
 #define USER_STACK_LOW 0xFFB00000
-#define USER_STACK_SIZE (1 << 12)
-#define KERN_STACK_SIZE (1 << 12)
+#define USER_STACK_HIGH 0xFFB02000
+#define USER_STACK_SIZE 0x1000
+#define KERN_STACK_SIZE 0x1000
 
 struct thread;
 
