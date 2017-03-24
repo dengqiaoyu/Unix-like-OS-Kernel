@@ -66,7 +66,7 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
 
     task_t *merchant_1 = task_init("merchant");
     task_t *merchant_2 = task_init("merchant");
-    cur_sche_node = get_mainthr_sche_node(merchant_2);
+    cur_sche_node = get_mainthr_sche_node(merchant_1);
     append_to_scheduler(get_mainthr_sche_node(merchant_2));
 
     merchant_1->main_thread->status = RUNNABLE;
