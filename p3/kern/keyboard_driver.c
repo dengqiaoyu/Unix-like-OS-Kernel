@@ -39,17 +39,17 @@ void add_to_kb_buf(void) {
     //     outb(INT_ACK_CURRENT, INT_CTL_PORT);
     //     return;
     // }
-    uint8_t temp_code = inb(KEYBOARD_PORT);
+    // uint8_t temp_code = inb(KEYBOARD_PORT);
     if (buf_ending + 1 == buf_cursor)
         return;
     buf[buf_ending] = inb(KEYBOARD_PORT);
     buf_ending = (buf_ending + 1) % KB_BUF_LEN;
-    char ch = readchar();
-    lprintf("keyboard pressed, %d\n", temp_code);
-    if (ch == 'a') {
-        outb(INT_ACK_CURRENT, INT_CTL_PORT);
-        sche_yield();
-    }
+    // char ch = readchar();
+    // lprintf("keyboard pressed, %d\n", temp_code);
+    // if (ch == 'a') {
+    //     outb(INT_ACK_CURRENT, INT_CTL_PORT);
+    //     sche_yield();
+    // }
     outb(INT_ACK_CURRENT, INT_CTL_PORT);
 }
 
