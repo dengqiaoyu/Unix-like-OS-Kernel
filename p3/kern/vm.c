@@ -50,6 +50,7 @@ void vm_init()
     uint32_t frame = 0;
 
     uint32_t *page_tab_addr;
+    // Do we need to set CR4_PGE ?
     int flags = PTE_PRESENT | PTE_WRITE;
     int i, j;
     for (i = 0; i < NUM_KERN_TABLES; i++) {
@@ -122,3 +123,4 @@ uint32_t get_free_frame()
     first_free_frame = read_physical(first_free_frame);
     return ret;
 }
+

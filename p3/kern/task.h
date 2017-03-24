@@ -31,7 +31,13 @@ typedef struct thread {
     uint32_t kern_sp;
     uint32_t user_sp;
     uint32_t ip;
+    uint32_t cur_esp;
+    int status;
 } thread_t;
+/* status define */
+#define INITIALIZED 0
+#define RUNNABLE 1
+#define SUSPENDED 2
 
 task_t *task_init(const char *fname);
 

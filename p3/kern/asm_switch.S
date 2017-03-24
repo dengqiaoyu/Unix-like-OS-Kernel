@@ -19,7 +19,7 @@ kern_to_user:
     pushf
     
     popl    %eax
-    // or   $EFL_IF, %eax
+    ; or      $EFL_IF, %eax
     or      $EFL_IOPL_RING3, %eax
     pushl   %eax
 

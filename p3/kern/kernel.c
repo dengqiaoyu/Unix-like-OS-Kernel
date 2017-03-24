@@ -27,30 +27,49 @@
 #include "vm.h"
 #include "task.h"
 #include "asm_switch.h"
+#include "scheduler.h"
+#include "return_type.h"
+
+extern sche_node_t *cur_sche_node;
 
 /** @brief Kernel entrypoint.
- *  
+ *
  *  This is the entrypoint for the kernel.
  *
  * @return Does not return
  */
-int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp)
-{
+int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
+    int ret = SUCCESS;
     lprintf( "Hello from a brand new kernel!" );
 
     install_handlers();
 
     vm_init();
+    ret = init_scheduler();
+    if (ret != SUCCESS) {
+        lprintf("Impossible!\n");
+        return -1;
+    }
 
-    task_t *init = task_init("ck1");
+    lprintf("!!!before task_init\n");
+    task_t *init = task_init("ck1_user");
+    task_t *idle = task_init("idle_user");
+    lprintf("!!!after task_init\n");
+
+    lprintf("idle: %p\n", idle);
+    lprintf("@@@before get_mainthr_sche_node\n");
+    cur_sche_node = get_mainthr_sche_node(init);
+    lprintf("########cur_sche_node: %p\n", cur_sche_node);
+    append_to_scheduler(get_mainthr_sche_node(idle));
+    lprintf("@@@after append_to_scheduler\n");
+    init->main_thread->status = RUNNABLE;
+    lprintf("line 64\n");
     set_cr3((uint32_t)init->page_dir);
+    lprintf("line 66\n");
     set_esp0(init->main_thread->kern_sp);
+    lprintf("line 68\n");
     kern_to_user(init->main_thread->user_sp, init->main_thread->ip);
-
-    task_t *idle = task_init("idle");
-    set_cr3((uint32_t)idle->page_dir);
-    set_esp0(idle->main_thread->kern_sp);
-    kern_to_user(idle->main_thread->user_sp, idle->main_thread->ip);
+    lprintf("line 70\n");
 
     while (1) {
         continue;

@@ -12,6 +12,8 @@
 
 #include "vm.h"
 #include "task.h"
+#include "allocator.h"
+#include "scheduler.h"
 
 int task_id_counter = 0;
 int thread_id_counter = 0;
@@ -19,13 +21,14 @@ task_t *cur_task;
 thread_t *cur_thread;
 
 extern uint32_t *kern_page_dir;
+extern allocator_t *sche_allocator;
 
-task_t *task_init(const char *fname)
-{
+task_t *task_init(const char *fname) {
     task_t *task = malloc(sizeof(task_t));
     task->task_id = task_id_counter++;
     task->main_thread = thread_init();
     task->main_thread->task = task;
+    task->main_thread->status = INITIALIZED;
 
     task->page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);
     // lprintf("task page dir is %p\n", task->page_dir);
@@ -34,6 +37,7 @@ task_t *task_init(const char *fname)
     task->page_dir[1023] = (uint32_t)task->page_dir | flags;
     // set to 0 ???????
 
+    // Does we have enabled CR4_PGE?
     int i;
     for (i = 0; i < NUM_KERN_TABLES; i++) {
         task->page_dir[i] = kern_page_dir[i];
@@ -47,21 +51,23 @@ task_t *task_init(const char *fname)
     return task;
 }
 
-thread_t *thread_init()
-{
-    thread_t *thread = malloc(sizeof(thread_t));
+thread_t *thread_init() {
+    sche_node_t *sche_node = allocator_alloc(sche_allocator);
+    lprintf("########sche_node: %p\n", sche_node);
+    thread_t *thread = GET_TCB(sche_node);
+    lprintf("$$$$$$$$thread: %p\n", thread);
     thread->tid = thread_id_counter++;
-    
+
     void *kern_stack = malloc(KERN_STACK_SIZE);
     // lprintf("thread kern stack is %p\n", kern_stack);
     thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
+    // because of manipulation?
     thread->user_sp = USER_STACK_LOW + USER_STACK_SIZE;
 
     return thread;
 }
 
-int load_program(simple_elf_t *header, uint32_t *page_dir)
-{
+int load_program(simple_elf_t *header, uint32_t *page_dir) {
     set_cr3((uint32_t)page_dir);
 
     lprintf("text\n");
@@ -71,6 +77,7 @@ int load_program(simple_elf_t *header, uint32_t *page_dir)
     load_elf_section(header->e_fname, header->e_datstart, header->e_datlen,
                      header->e_datoff, PTE_USER | PTE_WRITE);
     lprintf("rodat\n");
+    // should we set PTE_WRITE?
     load_elf_section(header->e_fname, header->e_rodatstart, header->e_rodatlen,
                      header->e_rodatoff, PTE_USER | PTE_WRITE);
     lprintf("bss\n");
@@ -94,7 +101,7 @@ int load_elf_section(const char *fname, unsigned long start, unsigned long len,
 
     uint32_t low = (uint32_t)start & PAGE_MASK;
     uint32_t high = (uint32_t)(start + len + PAGE_SIZE - 1) & PAGE_MASK;
-    
+
     uint32_t addr = low;
     while (addr < high) {
         if (!(get_pte(addr) & PTE_PRESENT)) {
