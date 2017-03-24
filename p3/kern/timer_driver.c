@@ -64,7 +64,7 @@ void cnt_seconds(unsigned int numTicks) {
         // lprintf("time: %d", seconds);
         seconds++;
     }
-    // sche_yield();
+    sche_yield();
 }
 
 /**
