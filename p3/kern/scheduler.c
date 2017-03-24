@@ -48,7 +48,7 @@ void append_to_scheduler(sche_node_t *sche_node) {
 
 sche_node_t *pop_scheduler_active() {
     mutex_lock(&sche_list.sche_list_mutex);
-    sche_node_t *sche_node =  get_last_node(&sche_list.active_list);
+    sche_node_t *sche_node =  pop_first_node(&sche_list.active_list);
     mutex_unlock(&sche_list.sche_list_mutex);
     return sche_node;
 }

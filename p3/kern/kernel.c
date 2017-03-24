@@ -51,25 +51,27 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
         return -1;
     }
 
-    lprintf("!!!before task_init\n");
+    // lprintf("!!!before task_init\n");
     task_t *init = task_init("ck1_user");
     task_t *idle = task_init("idle_user");
-    lprintf("!!!after task_init\n");
+    task_t *third_one = task_init("my_user");
+    // lprintf("!!!after task_init\n");
 
-    lprintf("idle: %p\n", idle);
-    lprintf("@@@before get_mainthr_sche_node\n");
+    // lprintf("idle: %p\n", idle);
+    // lprintf("@@@before get_mainthr_sche_node\n");
     cur_sche_node = get_mainthr_sche_node(init);
-    lprintf("########cur_sche_node: %p\n", cur_sche_node);
+    // lprintf("########cur_sche_node: %p\n", cur_sche_node);
     append_to_scheduler(get_mainthr_sche_node(idle));
-    lprintf("@@@after append_to_scheduler\n");
+    append_to_scheduler(get_mainthr_sche_node(third_one));
+    // lprintf("@@@after append_to_scheduler\n");
     init->main_thread->status = RUNNABLE;
-    lprintf("line 64\n");
+    // lprintf("line 64\n");
     set_cr3((uint32_t)init->page_dir);
-    lprintf("line 66\n");
+    // lprintf("line 66\n");
     set_esp0(init->main_thread->kern_sp);
-    lprintf("line 68\n");
+    // lprintf("line 68\n");
     kern_to_user(init->main_thread->user_sp, init->main_thread->ip);
-    lprintf("line 70\n");
+    // lprintf("line 70\n");
 
     while (1) {
         continue;
