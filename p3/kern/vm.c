@@ -12,77 +12,94 @@
 #include <x86/cr.h>
 
 #include "vm.h"
+#include "asm_page_inval.h"
 
-page_t *page_array;
-int page_array_size;
+#define NEXT_FREE_FRAME(frame) (*((uint32_t *)frame))
 
 uint32_t *kern_page_dir;
+uint32_t first_free_frame;
+
+uint32_t read_physical(uint32_t addr) {
+    set_pte(0xFFBFF000, addr, 0);
+    /*
+    uint32_t *temp = (uint32_t *)(kern_page_dir[1022] & ~0xFFF);
+    temp[1023] = addr | PTE_WRITE | PTE_PRESENT;
+    */
+    page_inval((void *)0xFFBFF000);
+    return *((uint32_t *)0xFFBFF000);
+}
+
+void write_physical(uint32_t addr, uint32_t val) {
+    set_pte(0xFFBFF000, addr, PTE_WRITE);
+    /*
+    uint32_t *temp = (uint32_t *)(kern_page_dir[1022] & ~0xFFF);
+    temp[1023] = addr | PTE_WRITE | PTE_PRESENT;
+    */
+    page_inval((void *)0xFFBFF000);
+    *((uint32_t *)0xFFBFF000) = val;
+}
 
 void vm_init()
 {
-    int sys_frames = machine_phys_frames();
-    page_array_size = sys_frames * sizeof(page_t);
-    page_array = malloc(page_array_size);
-    // needs checking...
-    memset(page_array, 0, page_array_size);
+    uint32_t sys_frames = machine_phys_frames();
 
+    // needs checking...
     kern_page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);
     memset(kern_page_dir, 0, PAGE_SIZE);
 
-    int i;
-    for (i = 0; i < NUM_KERN_PAGES; i++) {
-        page_array[i].used = 1;
-    }
+    uint32_t frame = 0;
 
-    // for testing
-    for (; i < 2 * NUM_KERN_PAGES; i++) {
-        page_array[i].used = 1;
-    }
-
-    uint32_t page_addr = 0;
+    uint32_t *page_tab_addr;
     int flags = PTE_PRESENT | PTE_WRITE;
-    int j;
+    int i, j;
     for (i = 0; i < NUM_KERN_TABLES; i++) {
-        void *page_tab_addr = smemalign(PAGE_SIZE, PAGE_SIZE);
+        page_tab_addr = smemalign(PAGE_SIZE, PAGE_SIZE);
         memset(page_tab_addr, 0, PAGE_SIZE);
-
         kern_page_dir[i] = (uint32_t)page_tab_addr | flags;
-        uint32_t *pte_p = page_tab_addr;
+
         for (j = 0; j < PAGES_PER_TABLE; j++) {
-            *pte_p = page_addr | flags;
-            pte_p++;
-            page_addr += PAGE_SIZE;
+            page_tab_addr[j] = frame | flags;
+            frame += PAGE_SIZE;
         }
     }
 
-    // for writing
+    // for bad things
+    kern_page_dir[1022] = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | flags;
+    // for writing to page tables outside of lowest 16MB
     kern_page_dir[1023] = (uint32_t)kern_page_dir | flags;
 
     set_cr3((uint32_t)kern_page_dir);
     set_cr0(get_cr0() | CR0_PG);
     set_cr4(get_cr4() | CR4_PGE);
+
+    first_free_frame = frame;
+    uint32_t last_frame = PAGE_SIZE * (sys_frames - 1);
+    while (frame < last_frame) {
+        write_physical(frame, frame + PAGE_SIZE);
+        frame += PAGE_SIZE;
+    }
 }
 
-// takes physical page_dir !!!!!!!!!! assumes it's in cr3
-uint32_t get_pte(uint32_t *page_dir, uint32_t page_va)
+// can read from physical page_dir !!!!!!!!!! assumes it's in cr3
+uint32_t get_pte(uint32_t page_va)
 {
     // can macro these
     int page_dir_index = (page_va >> 22) & 0x3FF;
     int page_tab_index = (page_va >> PAGE_SHIFT) & 0x3FF;
 
-    int flags = PTE_PRESENT | PTE_WRITE | PTE_USER;
     uint32_t *pd_va = (uint32_t *)0xFFFFF000;
     uint32_t *pt_va = (uint32_t *)(0xFFC00000 | (page_dir_index << PAGE_SHIFT));
     if (!(pd_va[page_dir_index] & PTE_PRESENT)) {
-        uint32_t *new_page = get_free_page();
-        pd_va[page_dir_index] = (uint32_t)new_page | flags;
+        uint32_t new_frame = get_free_frame();
+        pd_va[page_dir_index] = new_frame | PTE_PRESENT | PTE_WRITE | PTE_USER;
         memset(pt_va, 0, PAGE_SIZE);
     }
 
     return pt_va[page_tab_index];
 }
 
-void set_pte(uint32_t *page_dir, uint32_t page_va, uint32_t *page, int flags)
+// calling get_free_frame in two places is nasty
+void set_pte(uint32_t page_va, uint32_t frame, int flags)
 {
     // can macro these
     int page_dir_index = (page_va >> 22) & 0x3FF;
@@ -91,22 +108,17 @@ void set_pte(uint32_t *page_dir, uint32_t page_va, uint32_t *page, int flags)
     uint32_t *pd_va = (uint32_t *)0xFFFFF000;
     uint32_t *pt_va = (uint32_t *)(0xFFC00000 | (page_dir_index << PAGE_SHIFT));
     if (!(pd_va[page_dir_index] & PTE_PRESENT)) {
-        uint32_t *new_page = get_free_page();
-        pd_va[page_dir_index] = (uint32_t)new_page | flags | PTE_PRESENT;
+        uint32_t new_frame = get_free_frame();
+        pd_va[page_dir_index] = new_frame | flags | PTE_PRESENT;
         memset(pt_va, 0, PAGE_SIZE);
     }
 
-    pt_va[page_tab_index] = (uint32_t)page | flags | PTE_PRESENT;
+    pt_va[page_tab_index] = frame | flags | PTE_PRESENT;
 }
 
-uint32_t *get_free_page()
+uint32_t get_free_frame()
 {
-    int i;
-    for (i = 0; i < page_array_size; i++) {
-        if (page_array[i].used == 0) {
-            page_array[i].used = 1;
-            return (uint32_t *)(PAGE_SIZE * i);
-        }
-    }
-    return NULL;
+    uint32_t ret = first_free_frame;
+    first_free_frame = read_physical(first_free_frame);
+    return ret;
 }

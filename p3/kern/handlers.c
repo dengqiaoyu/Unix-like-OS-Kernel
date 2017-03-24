@@ -21,18 +21,14 @@ extern uint32_t *kern_page_dir;
 void pf_handler()
 {
     uint32_t pf_addr = get_cr2();
-    uint32_t *page_dir = (uint32_t *)get_cr3();
-    uint32_t pte = get_pte(page_dir, pf_addr);
-
-    // MAGIC_BREAK;
+    uint32_t pte = get_pte(pf_addr);
 
     if (!(pte & PTE_PRESENT)) {
-        uint32_t *page = get_free_page();
+        uint32_t frame = get_free_frame();
         int flags = PTE_WRITE | PTE_USER;
-        set_pte(page_dir, pf_addr, page, flags);
+        set_pte(pf_addr, frame, flags);
     }
     else {
-        // MAGIC_BREAK;
         roll_over();
     }
 
