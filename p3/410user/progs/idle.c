@@ -7,13 +7,8 @@
  *  @status done
  */
 
-#include <stdio.h>
-
-int main() {
-    int i = 0;
+int main()
+{
     while (1) {
-        i++;
-        if (i == 100000)
-            printf("i : %d\n", i);
     }
 }

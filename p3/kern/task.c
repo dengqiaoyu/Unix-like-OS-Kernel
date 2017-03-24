@@ -31,8 +31,9 @@ task_t *task_init(const char *fname) {
     task->main_thread->status = INITIALIZED;
 
     task->page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);
-    lprintf("task page dir is %p\n", task->page_dir);
+    // lprintf("task page dir is %p\n", task->page_dir);
     int flags = PTE_PRESENT | PTE_WRITE | PTE_USER;
+    task->page_dir[1022] = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | flags;
     task->page_dir[1023] = (uint32_t)task->page_dir | flags;
     // set to 0 ???????
 
@@ -58,7 +59,7 @@ thread_t *thread_init() {
     thread->tid = thread_id_counter++;
 
     void *kern_stack = malloc(KERN_STACK_SIZE);
-    lprintf("thread kern stack is %p\n", kern_stack);
+    // lprintf("thread kern stack is %p\n", kern_stack);
     thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
     // because of manipulation?
     thread->user_sp = USER_STACK_LOW + USER_STACK_SIZE;
@@ -71,20 +72,20 @@ int load_program(simple_elf_t *header, uint32_t *page_dir) {
 
     lprintf("text\n");
     load_elf_section(header->e_fname, header->e_txtstart, header->e_txtlen,
-                     header->e_txtoff, PTE_USER | PTE_WRITE, page_dir);
+                     header->e_txtoff, PTE_USER | PTE_WRITE);
     lprintf("dat\n");
     load_elf_section(header->e_fname, header->e_datstart, header->e_datlen,
-                     header->e_datoff, PTE_USER | PTE_WRITE, page_dir);
+                     header->e_datoff, PTE_USER | PTE_WRITE);
     lprintf("rodat\n");
     // should we set PTE_WRITE?
     load_elf_section(header->e_fname, header->e_rodatstart, header->e_rodatlen,
-                     header->e_rodatoff, PTE_USER | PTE_WRITE, page_dir);
+                     header->e_rodatoff, PTE_USER | PTE_WRITE);
     lprintf("bss\n");
     load_elf_section(header->e_fname, header->e_bssstart, header->e_bsslen,
-                     -1, PTE_USER | PTE_WRITE, page_dir);
+                     -1, PTE_USER | PTE_WRITE);
     lprintf("stack\n");
     load_elf_section(header->e_fname, USER_STACK_LOW, USER_STACK_SIZE,
-                     -1, PTE_USER | PTE_WRITE, page_dir);
+                     -1, PTE_USER | PTE_WRITE);
 
     set_cr3((uint32_t)kern_page_dir);
 
@@ -92,23 +93,25 @@ int load_program(simple_elf_t *header, uint32_t *page_dir) {
 }
 
 int load_elf_section(const char *fname, unsigned long start, unsigned long len,
-                     long offset, int pte_flags, uint32_t *page_dir) {
+                     long offset, int pte_flags)
+{
     lprintf("%p\n", (void *)start);
     lprintf("%p\n", (void *)len);
     lprintf("%p\n", (void *)offset);
-    lprintf("%p\n", page_dir);
 
     uint32_t low = (uint32_t)start & PAGE_MASK;
     uint32_t high = (uint32_t)(start + len + PAGE_SIZE - 1) & PAGE_MASK;
 
     uint32_t addr = low;
     while (addr < high) {
-        if (!(get_pte(page_dir, addr) & PTE_PRESENT)) {
-            uint32_t *page = get_free_page();
-            lprintf("page at %p\n", page);
-            set_pte(page_dir, addr, page, pte_flags);
-            // how are we memsetting the read only pages ???
+        if (!(get_pte(addr) & PTE_PRESENT)) {
+            uint32_t frame = get_free_frame();
+
+            // so we can memset the read only pages
+            set_pte(addr, frame, PTE_WRITE);
+            // probably should do it elsewhere...
             memset((void *)addr, 0, PAGE_SIZE);
+            set_pte(addr, frame, pte_flags);
         }
         addr += PAGE_SIZE;
     }

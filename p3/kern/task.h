@@ -46,6 +46,6 @@ thread_t *thread_init();
 int load_program(simple_elf_t *header, uint32_t *page_dir);
 
 int load_elf_section(const char *fname, unsigned long start, unsigned long len,
-                     long offset, int pte_flags, uint32_t *page_dir);
+                     long offset, int pte_flags);
 
 #endif
