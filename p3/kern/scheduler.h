@@ -7,7 +7,7 @@
 #include "task.h"
 
 #define GET_TCB_TB_NODE(sche_node)\
-        (tcb_tb_node_t *)((sche_node)->data))
+        (tcb_tb_node_t *)((sche_node)->data)
 #define GET_TCB(sche_node)\
         (thread_t *)(((tcb_tb_node_t *)((sche_node)->data))->data)
 

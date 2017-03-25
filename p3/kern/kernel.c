@@ -52,8 +52,8 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     }
 
     lprintf("!!!before task_init\n");
-    task_t *init = task_init("ck1_user");
-    task_t *idle = task_init("idle_user");
+    task_t *init = task_init("t1");
+    task_t *idle = task_init("t2");
     lprintf("!!!after task_init\n");
 
     lprintf("idle: %p\n", idle);

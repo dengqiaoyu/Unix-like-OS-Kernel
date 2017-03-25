@@ -24,7 +24,7 @@
 static int numTicks;
 static int seconds = 0;
 /* control whether to count seconds */
-int if_cnt_time = 1;
+int if_cnt_time = 0;
 /* to store the address of callback function */
 void (*callback_func)();
 extern sche_node_t *cur_sche_node;
