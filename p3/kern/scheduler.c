@@ -16,7 +16,7 @@ allocator_t *sche_allocator = NULL;
 sche_node_t *cur_sche_node = NULL;
 static schedule_t sche_list = {{0}};
 
-int init_scheduler() {
+int scheduler_init() {
     int ret = SUCCESS;
     ret = allocator_init(
               &sche_allocator,

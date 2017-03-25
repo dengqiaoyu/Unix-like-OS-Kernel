@@ -1,5 +1,5 @@
 /**
- * @file keyboard_handler.h
+ * @file asm_keyboard_handler.h
  * @brief A header file contains asm function declarations of
  *        keyboard_handler_asm.S
  * @author Qioayu Deng
@@ -13,6 +13,6 @@
 /**
  * @brief keyboard handler that get called by the IDT entry.
  */
-void keyboard_handler(void);
+void asm_keyboard_handler(void);
 
 #endif /* _H_KEYBOARD_HANDLER_ */

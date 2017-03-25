@@ -8,7 +8,19 @@
 #ifndef _RETURN_TYPE_H_
 #define _RETURN_TYPE_H_
 
+#define RETURN_IF_ERROR(fun, ERROR_TYPE) \
+if ((fun) != SUCCESS) return ERROR_TYPE
+
 #define SUCCESS 0
+
+/* kernel.c */
+#define ERROR_KERNEL_HANDLER_INIT_FAILED -1
+#define ERROR_KERNEL_SCHEDULER_INIT_FAILED -2
+
+/* handler.c */
+#define ERROR_TRAP_INSTALL_FAILED -1
+#define ERROR_SYSCALL_INSTALL_FAILED -2
+#define ERROR_DEVICE_INSTALL_FAILED -3
 
 /* thread.c */
 #define ERROR_THREAD_ALREADY_JOINED -1

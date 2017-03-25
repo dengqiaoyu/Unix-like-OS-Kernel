@@ -13,6 +13,6 @@
 /**
  * @brief timer handler that get called by the IDT entry.
  */
-void timer_handler(void);
+void asm_timer_handler(void);
 
 #endif /* _H_TIMER_HANDLER_ */

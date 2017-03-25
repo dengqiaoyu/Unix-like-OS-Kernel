@@ -39,17 +39,11 @@ extern sche_node_t *cur_sche_node;
  * @return Does not return
  */
 int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
-    int ret = SUCCESS;
     lprintf( "Hello from a brand new kernel!" );
 
-    install_handlers();
-
+    RETURN_IF_ERROR(handler_init(), ERROR_KERNEL_HANDLER_INIT_FAILED);
     vm_init();
-    ret = init_scheduler();
-    if (ret != SUCCESS) {
-        lprintf("Impossible!\n");
-        return -1;
-    }
+    RETURN_IF_ERROR(scheduler_init(), ERROR_KERNEL_SCHEDULER_INIT_FAILED);
 
     // task_t *init = task_init("ck1_user");
     // task_t *idle = task_init("idle_user");

@@ -22,7 +22,7 @@ struct schedule_list_struct {
 typedef node_t sche_node_t;
 typedef node_t tcb_tb_node_t;
 
-int init_scheduler();
+int scheduler_init();
 void append_to_scheduler(sche_node_t *sche_node);
 sche_node_t *pop_scheduler_active();
 void sche_yield();
