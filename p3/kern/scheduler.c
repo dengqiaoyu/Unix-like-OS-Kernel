@@ -48,7 +48,7 @@ void append_to_scheduler(sche_node_t *sche_node) {
 
 sche_node_t *pop_scheduler_active() {
     mutex_lock(&sche_list.sche_list_mutex);
-    sche_node_t *sche_node =  get_last_node(&sche_list.active_list);
+    sche_node_t *sche_node =  pop_first_node(&sche_list.active_list);
     mutex_unlock(&sche_list.sche_list_mutex);
     return sche_node;
 }
@@ -59,18 +59,14 @@ void sche_yield() {
     sche_node_t *new_sche_node = pop_scheduler_active();
 
     if (new_sche_node != NULL) {
-        // lprintf("entering yield!!!\n");
         thread_t *new_tcb_ptr = GET_TCB(new_sche_node);
         append_to_scheduler(cur_sche_node);
         cur_sche_node = new_sche_node;
         set_esp0(new_tcb_ptr->kern_sp);
         if (new_tcb_ptr->status == RUNNABLE) {
-            // lprintf("begin context switch\n\n\n");
             int original_task_id = cur_tcb_ptr->task->task_id;
             int new_task_id = new_tcb_ptr->task->task_id;
             if (new_task_id != original_task_id) {
-                // lprintf("set cr3, new_task_id: %d\noriginal_task_id: %d\n",
-                //         new_task_id, original_task_id);
                 set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
             }
             __asm__("PUSHA");
@@ -91,6 +87,5 @@ void sche_yield() {
 
 sche_node_t *get_mainthr_sche_node(task_t *psb) {
     uint32_t *main_thread = (void *)psb->main_thread;
-    lprintf("&&&&&&&main_thread: %p\n", main_thread);
     return (sche_node_t *)(main_thread - 4);
 }

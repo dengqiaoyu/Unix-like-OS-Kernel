@@ -11,21 +11,19 @@
 
 #include "vm.h"
 #include "scheduler.h"
-#include "asm_registers.h"
+// #include "asm_registers.h"
 #include "asm_switch.h"
 
 extern sche_node_t *cur_sche_node;
 extern uint32_t *kern_page_dir;
 
-int kern_gettid(void)
-{
+int kern_gettid(void) {
     thread_t *thread = GET_TCB(cur_sche_node);
     return thread->tid;
 }
 
-void kern_exec(void)
-{
-    uint32_t *esi = (uint32_t *)get_esi();
+void kern_exec(void) {
+    uint32_t *esi = 0;
     char *execname = (char *)(*esi);
     char **argvec = (char **)(*(esi + 1));
 
@@ -46,7 +44,7 @@ void kern_exec(void)
     thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
     thread->user_sp = USER_STACK_LOW + USER_STACK_SIZE;
     thread->ip = elf_header.e_entry;
-    
+
     task_t *task = thread->task;
     /*
     // memory is leaking

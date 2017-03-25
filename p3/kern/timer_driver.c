@@ -64,6 +64,7 @@ void cnt_seconds(unsigned int numTicks) {
         // lprintf("time: %d", seconds);
         seconds++;
     }
+    outb(INT_ACK_CURRENT, INT_CTL_PORT);
     sche_yield();
 }
 

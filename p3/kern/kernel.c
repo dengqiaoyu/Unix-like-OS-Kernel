@@ -51,25 +51,28 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
         return -1;
     }
 
-    lprintf("!!!before task_init\n");
-    task_t *init = task_init("t1");
-    task_t *idle = task_init("t2");
-    lprintf("!!!after task_init\n");
+    // task_t *init = task_init("ck1_user");
+    // task_t *idle = task_init("idle_user");
+    // task_t *third_one = task_init("my_user");
 
-    lprintf("idle: %p\n", idle);
-    lprintf("@@@before get_mainthr_sche_node\n");
-    cur_sche_node = get_mainthr_sche_node(init);
-    lprintf("########cur_sche_node: %p\n", cur_sche_node);
-    append_to_scheduler(get_mainthr_sche_node(idle));
-    lprintf("@@@after append_to_scheduler\n");
-    init->main_thread->status = RUNNABLE;
-    lprintf("line 64\n");
-    set_cr3((uint32_t)init->page_dir);
-    lprintf("line 66\n");
-    set_esp0(init->main_thread->kern_sp);
-    lprintf("line 68\n");
-    kern_to_user(init->main_thread->user_sp, init->main_thread->ip);
-    lprintf("line 70\n");
+    // cur_sche_node = get_mainthr_sche_node(init);
+    // append_to_scheduler(get_mainthr_sche_node(idle));
+    // append_to_scheduler(get_mainthr_sche_node(third_one));
+
+    // init->main_thread->status = RUNNABLE;
+    // set_cr3((uint32_t)init->page_dir);
+    // set_esp0(init->main_thread->kern_sp);
+    // kern_to_user(init->main_thread->user_sp, init->main_thread->ip);
+
+    task_t *merchant_1 = task_init("merchant");
+    task_t *merchant_2 = task_init("merchant");
+    cur_sche_node = get_mainthr_sche_node(merchant_1);
+    append_to_scheduler(get_mainthr_sche_node(merchant_2));
+
+    merchant_1->main_thread->status = RUNNABLE;
+    set_cr3((uint32_t)merchant_1->page_dir);
+    set_esp0(merchant_1->main_thread->kern_sp);
+    kern_to_user(merchant_1->main_thread->user_sp, merchant_1->main_thread->ip);
 
     while (1) {
         continue;
