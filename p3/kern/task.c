@@ -14,21 +14,30 @@
 #include "task.h"
 #include "allocator.h"
 #include "scheduler.h"
-
-int task_id_counter = 0;
-int thread_id_counter = 0;
-task_t *cur_task;
-thread_t *cur_thread;
+#include "return_type.h"
 
 extern uint32_t *kern_page_dir;
 extern allocator_t *sche_allocator;
 
+id_counter_t id_counter = {0};
+
+int id_counter_init() {
+    id_counter.task_id_counter = 0;
+    id_counter.thread_id_counter = 0;
+    mutex_init(&id_counter.task_id_counter_mutex);
+    mutex_init(&id_counter.thread_id_counter_mutex);
+
+    return SUCCESS;
+}
+
 task_t *task_init(const char *fname) {
     task_t *task = malloc(sizeof(task_t));
-    task->task_id = task_id_counter++;
+    task->task_id = id_counter.task_id_counter++;
     task->main_thread = thread_init();
     task->main_thread->task = task;
     task->main_thread->status = INITIALIZED;
+    task->parent_task = NULL;
+    task->child_cnt = 0;
 
     task->page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);
     // lprintf("task page dir is %p\n", task->page_dir);
@@ -56,7 +65,7 @@ thread_t *thread_init() {
     lprintf("########sche_node: %p\n", sche_node);
     thread_t *thread = GET_TCB(sche_node);
     lprintf("$$$$$$$$thread: %p\n", thread);
-    thread->tid = thread_id_counter++;
+    thread->tid = id_counter.thread_id_counter++;
 
     void *kern_stack = malloc(KERN_STACK_SIZE);
     // lprintf("thread kern stack is %p\n", kern_stack);
@@ -93,8 +102,7 @@ int load_program(simple_elf_t *header, uint32_t *page_dir) {
 }
 
 int load_elf_section(const char *fname, unsigned long start, unsigned long len,
-                     long offset, int pte_flags)
-{
+                     long offset, int pte_flags) {
     lprintf("%p\n", (void *)start);
     lprintf("%p\n", (void *)len);
     lprintf("%p\n", (void *)offset);

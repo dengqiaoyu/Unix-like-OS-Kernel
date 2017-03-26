@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #define PAGE_MASK (0xFFFFFFFF << PAGE_SHIFT)
+#define PTE_ALL_FLAG_MASK (0xfff)
 #define PTE_PRESENT (0x1)
 #define PTE_WRITE (0x2)
 #define PTE_USER (0x4)
@@ -31,5 +32,7 @@ uint32_t get_pte(uint32_t page_va);
 void set_pte(uint32_t page_va, uint32_t frame_addr, int flags);
 
 uint32_t get_free_frame();
+
+int copy_pgdir(uint32_t *new_pgdir, uint32_t *old_pgdir);
 
 #endif

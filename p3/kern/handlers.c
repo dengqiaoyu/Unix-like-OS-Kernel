@@ -66,6 +66,10 @@ int trap_init() {
 }
 
 int syscall_init() {
+    idt_install(FORK_INT,
+                (void *)asm_fork,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
     idt_install(EXEC_INT,
                 (void *)asm_exec,
                 SEGSEL_KERNEL_CS,

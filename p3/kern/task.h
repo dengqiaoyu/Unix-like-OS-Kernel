@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <elf_410.h>
+#include <mutex.h>
 
 #define USER_STACK_LOW 0xFFB00000
 #define USER_STACK_HIGH 0xFFB02000
@@ -16,10 +17,19 @@
 
 struct thread;
 
+typedef struct id_counter {
+    int task_id_counter;
+    mutex_t task_id_counter_mutex;
+    int thread_id_counter;
+    mutex_t thread_id_counter_mutex;
+} id_counter_t;
+
 typedef struct task {
     int task_id;
     uint32_t *page_dir;
     struct thread *main_thread;
+    struct task *parent_task;
+    unsigned int child_cnt;
 
     // list of threads
 
@@ -32,13 +42,15 @@ typedef struct thread {
     uint32_t kern_sp;
     uint32_t user_sp;
     uint32_t ip;
-    uint32_t cur_esp;
     int status;
 } thread_t;
 /* status define */
 #define INITIALIZED 0
-#define RUNNABLE 1
-#define SUSPENDED 2
+#define FORKED 1
+#define RUNNABLE 2
+#define SUSPENDED 3
+
+int id_counter_init();
 
 task_t *task_init(const char *fname);
 

@@ -8,18 +8,88 @@
 #include <page.h>
 #include <simics.h>
 #include <x86/cr.h>
+#include <mutex.h>  /* mutex */
+#include <string.h> /* memset */
+#include <malloc.h> /* malloc, smemalign, sfree */
 
 #include "vm.h"
 #include "scheduler.h"
 // #include "asm_registers.h"
 #include "asm_switch.h"
+#include "allocator.h" /* allocator */
+#include "asm_get_esp_eip.h"
+
 
 extern sche_node_t *cur_sche_node;
 extern uint32_t *kern_page_dir;
+extern id_counter_t id_counter;
+extern allocator_t *sche_allocator;
 
 int kern_gettid(void) {
     thread_t *thread = GET_TCB(cur_sche_node);
     return thread->tid;
+}
+
+// TODO maybe devide into sub functions
+int kern_fork(void) {
+    int ret = SUCCESS;
+    set_cr3((uint32_t)kern_page_dir);
+    task_t *old_task = (GET_TCB(cur_sche_node))->task;
+    task_t *new_task = malloc(sizeof(task_t));
+    if (new_task == NULL)
+        return ERROR_FORK_MALLOC_TASK_FAILED;
+    mutex_lock(&id_counter.task_id_counter_mutex);
+    new_task->task_id = id_counter.task_id_counter++;
+    mutex_unlock(&id_counter.task_id_counter_mutex);
+
+    // BUG so this is not thread safe, right? or we can have a allocator making
+    // it thread safe for us. And what if this one fails;
+    new_task->page_dir = (uint32_t *)smemalign(PAGE_SIZE, PAGE_SIZE);
+
+    memset(new_task->page_dir, 0, PAGE_SIZE);
+    int flags = PTE_PRESENT | PTE_WRITE | PTE_USER;
+    new_task->page_dir[1022] =
+        (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | flags;
+    new_task->page_dir[1023] =
+        (uint32_t)new_task->page_dir | flags;
+
+    ret = copy_pgdir(new_task->page_dir, old_task->page_dir);
+    if (ret != SUCCESS) {
+        // BUG thread safe
+        sfree(new_task->page_dir[1022], PAGE_SIZE);
+        sfree(new_task->page_dir, PAGE_SIZE);
+        return ERROR_FORK_COPY_FIR_FAILED;
+    }
+
+    sche_node_t *sche_node = allocator_alloc(sche_allocator);
+    if (sche_node == NULL) {
+        //free_page_dir(new_task->page_dir);
+        sfree(new_task->page_dir[1022], PAGE_SIZE);
+        sfree(new_task->page_dir, PAGE_SIZE);
+        return ERROR_FORK_MALLOC_THREAD_FAILED;
+    }
+    thread_t *new_thread = GET_TCB(sche_node);
+    mutex_lock(&id_counter.thread_id_counter_mutex);
+    new_thread->tid = id_counter.thread_id_counter++;
+    mutex_unlock(&id_counter.thread_id_counter_mutex);
+    void *kern_stack = malloc(KERN_STACK_SIZE);
+    if (kern_stack == NULL) {
+        //free_page_dir(new_task->page_dir);
+        sfree(new_task->page_dir[1022], PAGE_SIZE);
+        sfree(new_task->page_dir, PAGE_SIZE);
+        allocator_free(sche_node);
+        return ERROR_FORK_MALLOC_KERNEL_STACK_FAILED;
+    }
+    new_thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
+    // need set user_sp
+    new_thread->task = new_task;
+    new_thread->status = FORKED;
+
+    new_task->main_thread = new_thread;
+
+    asm_get_esp_eip(&new_thread->user_sp, &new_thread->ip);
+    // Now, we will have two task running
+
 }
 
 void kern_exec(void) {

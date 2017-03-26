@@ -44,6 +44,7 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     RETURN_IF_ERROR(handler_init(), ERROR_KERNEL_HANDLER_INIT_FAILED);
     vm_init();
     RETURN_IF_ERROR(scheduler_init(), ERROR_KERNEL_SCHEDULER_INIT_FAILED);
+    RETURN_IF_ERROR(id_counter_init(), ERROR_KERNEL_ID_COUNTER_INIT_FAILED);
 
     // task_t *init = task_init("ck1_user");
     // task_t *idle = task_init("idle_user");

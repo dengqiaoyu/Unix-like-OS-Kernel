@@ -2,6 +2,24 @@
  *
  */
 
+.global asm_fork
+asm_fork:
+    push    %ebx
+    push    %ecx
+    push    %edx
+    push    %esi
+    push    %edi
+    push    %ebp
+    call kern_fork
+    pop     %ebp
+    pop     %edi
+    pop     %esi
+    pop     %edx
+    pop     %ecx
+    pop     %ebx
+    # need return twice
+    iret
+
 .global asm_exec
 asm_exec:
     pusha
@@ -26,3 +44,5 @@ asm_gettid:
     pop     %ecx
     pop     %ebx
     iret
+
+a
