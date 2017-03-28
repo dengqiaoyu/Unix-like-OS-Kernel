@@ -44,5 +44,3 @@ asm_gettid:
     pop     %ecx
     pop     %ebx
     iret
-
-a

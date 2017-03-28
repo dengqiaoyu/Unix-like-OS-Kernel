@@ -46,28 +46,29 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     RETURN_IF_ERROR(scheduler_init(), ERROR_KERNEL_SCHEDULER_INIT_FAILED);
     RETURN_IF_ERROR(id_counter_init(), ERROR_KERNEL_ID_COUNTER_INIT_FAILED);
 
-    // task_t *init = task_init("ck1_user");
-    // task_t *idle = task_init("idle_user");
-    // task_t *third_one = task_init("my_user");
+    task_t *init = task_init("ck1_user");
+    task_t *idle = task_init("idle_user");
+    task_t *third_one = task_init("my_user");
 
-    // cur_sche_node = get_mainthr_sche_node(init);
-    // append_to_scheduler(get_mainthr_sche_node(idle));
-    // append_to_scheduler(get_mainthr_sche_node(third_one));
+    cur_sche_node = get_mainthr_sche_node(init);
+    append_to_scheduler(get_mainthr_sche_node(idle));
+    append_to_scheduler(get_mainthr_sche_node(third_one));
 
-    // init->main_thread->status = RUNNABLE;
-    // set_cr3((uint32_t)init->page_dir);
-    // set_esp0(init->main_thread->kern_sp);
-    // kern_to_user(init->main_thread->user_sp, init->main_thread->ip);
+    init->main_thread->status = RUNNABLE;
+    set_cr3((uint32_t)init->page_dir);
+    set_esp0(init->main_thread->kern_sp);
+    kern_to_user(init->main_thread->user_sp, init->main_thread->ip);
 
-    task_t *merchant_1 = task_init("merchant");
-    task_t *merchant_2 = task_init("merchant");
-    cur_sche_node = get_mainthr_sche_node(merchant_1);
-    append_to_scheduler(get_mainthr_sche_node(merchant_2));
+    // ck2 test
+    // task_t *merchant_1 = task_init("merchant");
+    // task_t *merchant_2 = task_init("merchant");
+    // cur_sche_node = get_mainthr_sche_node(merchant_1);
+    // append_to_scheduler(get_mainthr_sche_node(merchant_2));
 
-    merchant_1->main_thread->status = RUNNABLE;
-    set_cr3((uint32_t)merchant_1->page_dir);
-    set_esp0(merchant_1->main_thread->kern_sp);
-    kern_to_user(merchant_1->main_thread->user_sp, merchant_1->main_thread->ip);
+    // merchant_1->main_thread->status = RUNNABLE;
+    // set_cr3((uint32_t)merchant_1->page_dir);
+    // set_esp0(merchant_1->main_thread->kern_sp);
+    // kern_to_user(merchant_1->main_thread->user_sp, merchant_1->main_thread->ip);
 
 
     while (1) {

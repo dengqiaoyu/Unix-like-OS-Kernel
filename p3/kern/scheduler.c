@@ -70,14 +70,14 @@ void sche_yield() {
                 set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
             }
             __asm__("PUSHA");
-            __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->cur_esp));
-            __asm__("movl %0, %%esp" :: "r" (new_tcb_ptr->cur_esp));
+            __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->curr_esp));
+            __asm__("movl %0, %%esp" :: "r" (new_tcb_ptr->curr_esp));
             __asm__("POPA");
         } else if (new_tcb_ptr->status == INITIALIZED) {
             set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
             new_tcb_ptr->status = RUNNABLE;
             __asm__("PUSHA");
-            __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->cur_esp));
+            __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->curr_esp));
             kern_to_user(new_tcb_ptr->user_sp, new_tcb_ptr->ip);
             // never reach here
         }

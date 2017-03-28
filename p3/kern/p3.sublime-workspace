@@ -493,6 +493,28 @@
 			]
 		]
 	},
+	"buffers":
+	[
+		{
+			"contents": "/** @file syscalls.c\n *\n */\n\n#include <stdlib.h>\n#include <ctype.h>\n#include <string.h>\n#include <page.h>\n#include <simics.h>\n#include <x86/cr.h>\n#include <mutex.h>  /* mutex */\n#include <string.h> /* memset */\n#include <malloc.h> /* malloc, smemalign, sfree */\n\n#include \"vm.h\"\n#include \"scheduler.h\"\n// #include \"asm_registers.h\"\n#include \"asm_switch.h\"\n#include \"allocator.h\" /* allocator */\n#include \"asm_get_esp_eip.h\"\n\n\nextern sche_node_t *cur_sche_node;\nextern uint32_t *kern_page_dir;\nextern id_counter_t id_counter;\nextern allocator_t *sche_allocator;\n\nint kern_gettid(void) {\n    thread_t *thread = GET_TCB(cur_sche_node);\n    return thread->tid;\n}\n\n// TODO maybe devide into sub functions\nint kern_fork(void) {\n    int ret = SUCCESS;\n    sche_node_t *sche_node = NULL;\n    set_cr3((uint32_t)kern_page_dir);\n    task_t *old_task = (GET_TCB(cur_sche_node))->task;\n    task_t *new_task = malloc(sizeof(task_t));\n    if (new_task == NULL)\n        return ERROR_FORK_MALLOC_TASK_FAILED;\n    mutex_lock(&id_counter.task_id_counter_mutex);\n    new_task->task_id = id_counter.task_id_counter++;\n    mutex_unlock(&id_counter.task_id_counter_mutex);\n\n    // BUG so this is not thread safe, right? or we can have a allocator making\n    // it thread safe for us. And what if this one fails;\n    new_task->page_dir = (uint32_t *)smemalign(PAGE_SIZE, PAGE_SIZE);\n\n    memset(new_task->page_dir, 0, PAGE_SIZE);\n    int flags = PTE_PRESENT | PTE_WRITE | PTE_USER;\n    new_task->page_dir[1022] =\n        (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | flags;\n    new_task->page_dir[1023] =\n        (uint32_t)new_task->page_dir | flags;\n\n    ret = copy_pgdir(new_task->page_dir, old_task->page_dir);\n    if (ret != SUCCESS) {\n        // BUG thread safe\n        sfree(new_task->page_dir[1022], PAGE_SIZE);\n        sfree(new_task->page_dir, PAGE_SIZE);\n        return ERROR_FORK_COPY_FIR_FAILED;\n    }\n\n    sche_node_t *sche_node = allocator_alloc(sche_allocator);\n    if (sche_node == NULL) {\n        //free_page_dir(new_task->page_dir);\n        sfree(new_task->page_dir[1022], PAGE_SIZE);\n        sfree(new_task->page_dir, PAGE_SIZE);\n        return ERROR_FORK_MALLOC_THREAD_FAILED;\n    }\n    thread_t *new_thread = GET_TCB(sche_node);\n    mutex_lock(&id_counter.thread_id_counter_mutex);\n    new_thread->tid = id_counter.thread_id_counter++;\n    mutex_unlock(&id_counter.thread_id_counter_mutex);\n    void *kern_stack = malloc(KERN_STACK_SIZE);\n    if (kern_stack == NULL) {\n        //free_page_dir(new_task->page_dir);\n        sfree(new_task->page_dir[1022], PAGE_SIZE);\n        sfree(new_task->page_dir, PAGE_SIZE);\n        allocator_free(sche_node);\n        return ERROR_FORK_MALLOC_KERNEL_STACK_FAILED;\n    }\n    new_thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;\n    // need set user_sp\n    new_thread->task = new_task;\n    new_thread->status = FORKED;\n\n    new_task->main_thread = new_thread;\n\n    asm_get_esp_eip(&new_thread->user_sp, &new_thread->ip);\n    // Now, we will have two task running\n\n}\n\nvoid kern_exec(void) {\n    uint32_t *esi = 0;\n    char *execname = (char *)(*esi);\n    char **argvec = (char **)(*(esi + 1));\n\n    // need to check arg counts and lengths\n    int argc = 0;\n    char **temp = argvec;\n    while (*temp) {\n        argc += 1;\n        temp += 1;\n    }\n\n    simple_elf_t elf_header;\n    elf_load_helper(&elf_header, execname);\n\n    thread_t *thread = GET_TCB(cur_sche_node);\n    // need to free old kernel stack\n    void *kern_stack = malloc(KERN_STACK_SIZE);\n    thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;\n    thread->user_sp = USER_STACK_LOW + USER_STACK_SIZE;\n    thread->ip = elf_header.e_entry;\n\n    task_t *task = thread->task;\n    /*\n    // memory is leaking\n    // need to dispose of old mapped frames\n    task->page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);\n    // lprintf(\"task page dir is %p\\n\", task->page_dir);\n    int flags = PTE_PRESENT | PTE_WRITE | PTE_USER;\n    task->page_dir[1022] = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | flags;\n    task->page_dir[1023] = (uint32_t)task->page_dir | flags;\n\n    for (i = 0; i < NUM_KERN_TABLES; i++) {\n        task->page_dir[i] = kern_page_dir[i];\n    }\n    */\n\n    lprintf(\"p0\\n\");\n\n    // need macros here badly\n    char *buf = (char *)(USER_STACK_LOW + USER_STACK_SIZE + 6 * sizeof(int) +\n                         argc * sizeof(int));\n    char **argv = (char **)(USER_STACK_LOW + USER_STACK_SIZE + 5 * sizeof(int));\n\n    char *arg;\n    int len;\n    int i;\n    for (i = 0; i < argc; i++) {\n        arg = *(argvec + i);\n        len = strlen(arg);\n        strncpy(buf, arg, len);\n        buf[len] = '\\0';\n        argv[i] = buf;\n        buf += len + 1;\n    }\n    argv[argc] = NULL;\n    lprintf(\"p1\\n\");\n\n    uint32_t *ptr = (uint32_t *)(USER_STACK_LOW + USER_STACK_SIZE);\n    *(ptr + 1) = argc;\n    *(ptr + 2) = (uint32_t)argv;\n    *(ptr + 3) = USER_STACK_HIGH;\n    *(ptr + 4) = USER_STACK_LOW;\n    lprintf(\"p2\\n\");\n\n    set_esp0(thread->kern_sp);\n    lprintf(\"p3\\n\");\n    load_program(&elf_header, task->page_dir);\n    lprintf(\"p4\\n\");\n    MAGIC_BREAK;\n    kern_to_user(USER_STACK_LOW + USER_STACK_SIZE, elf_header.e_entry);\n}\n",
+			"file": "syscalls.c",
+			"file_size": 5094,
+			"file_write_time": 131349761910000000,
+			"settings":
+			{
+				"buffer_size": 5129,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "asm_get_esp_eip.S",
+			"settings":
+			{
+				"buffer_size": 318,
+				"line_ending": "Unix"
+			}
+		}
+	],
 	"build_system": "",
 	"build_system_choices":
 	[
@@ -556,12 +578,12 @@
 		"side_bar_visible": false,
 		"status_bar_visible": false
 	},
+	"expanded_folders":
+	[
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3"
+	],
 	"file_history":
 	[
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410user/progs/bistromath.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/malloc_wrappers.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_set_exec_context.S",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/p3.sublime-project",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_get_eip_next.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/scheduler.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/scheduler.h",
@@ -571,6 +593,7 @@
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/allocator.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/inc/malloc.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/malloc/sfree.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/malloc_wrappers.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/x86/page.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/vm.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/task.c",
@@ -582,6 +605,7 @@
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/install.old",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_timer_handler.S",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/x86/seg.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/p3.sublime-project",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_syscalls.S",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_syscalls.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/handlers.c",
@@ -659,7 +683,6 @@
 		"height": 134.0,
 		"where_history":
 		[
-			"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410user/progs",
 			""
 		]
 	},
@@ -668,9 +691,6 @@
 		"case_sensitive": true,
 		"find_history":
 		[
-			"malloc",
-			"child_cnt",
-			"movl",
 			"asm_get_eip_next",
 			"thread",
 			"thread_init",
@@ -795,7 +815,10 @@
 			"i",
 			"get_vertex_owner_rank",
 			"world_rank",
-			"global_frontier_sync"
+			"global_frontier_sync",
+			"bfs_step",
+			"world_rank",
+			"add"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -835,6 +858,250 @@
 		"whole_word": true,
 		"wrap": false
 	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "syscalls.c",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5129,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								779,
+								779
+							]
+						],
+						"settings":
+						{
+							"bracket_highlighter.busy": false,
+							"bracket_highlighter.locations":
+							{
+								"close":
+								{
+									"1":
+									[
+										3003,
+										3004
+									]
+								},
+								"icon":
+								{
+									"1":
+									[
+										"Packages/BracketHighlighter/icons/curly_bracket.png",
+										"brackethighlighter.default"
+									]
+								},
+								"open":
+								{
+									"1":
+									[
+										720,
+										721
+									]
+								},
+								"unmatched":
+								{
+								}
+							},
+							"bracket_highlighter.regions":
+							[
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content"
+							],
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"synced": true,
+							"syntax": "Packages/C Improved/C Improved.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 608.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 1,
+					"file": "asm_get_esp_eip.S",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 318,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								318,
+								318
+							]
+						],
+						"settings":
+						{
+							"bracket_highlighter.busy": false,
+							"bracket_highlighter.locations":
+							{
+								"close":
+								{
+								},
+								"icon":
+								{
+								},
+								"open":
+								{
+								},
+								"unmatched":
+								{
+								}
+							},
+							"bracket_highlighter.regions":
+							[
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content"
+							],
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"synced": true,
+							"syntax": "Packages/x86 and x86_64 Assembly/x86_64 Assembly.tmbundle/Syntaxes/x86_64 Assembly.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		}
+	],
 	"incremental_find":
 	{
 		"height": 30.0
@@ -890,6 +1157,7 @@
 		"height": 144.0
 	},
 	"pinned_build_system": "",
+	"project": "p3.sublime-project",
 	"replace":
 	{
 		"height": 56.0
@@ -926,6 +1194,7 @@
 		],
 		"width": 0.0
 	},
+	"selected_group": 1,
 	"settings":
 	{
 	},
