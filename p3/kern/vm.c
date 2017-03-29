@@ -158,43 +158,43 @@ int copy_pgdir(uint32_t *new_pgdir, uint32_t *old_pgdir) {
         new_pgdir[i] = kern_page_dir[i];
     }
 
-    for (i = NUM_KERN_TABLES; i < NUM_KERN_PAGES; i++) {
-        uint32_t *page_table_dir = (uint32_t *)old_pgdir[i];
-        if (((uint32_t)page_table_dir & PTE_PRESENT) == 0) continue;
-        int j;
-        for (j = 0; j < NUM_KERN_PAGES; j++) {
-            uint32_t page_table = (page_table_dir[j] & (~PTE_ALL_FLAG_MASK));
-            if ((page_table & PTE_PRESENT) == 0)  continue;
-            uint32_t physical_frame =
-                (page_table & (~PTE_ALL_FLAG_MASK));
-            uint32_t virtual_addr = ((uint32_t)i << 22) | ((uint32_t)j << 12);
-            if ((page_table & PTE_WRITE) == 0) {
-                // BUG check return value
-                set_pte(virtual_addr,
-                        physical_frame,
-                        (page_table & PTE_ALL_FLAG_MASK));
-            } else {
-                mutex_lock(&first_free_frame_mutex);
-                // BUG check reuturn value
-                uint32_t new_frame = get_free_frame();
-                mutex_unlock(&first_free_frame_mutex);
-                set_pte(virtual_addr,
-                        new_frame,
-                        (page_table & PTE_ALL_FLAG_MASK));
-                int start;
-                for (start = 0; start < PAGE_SIZE; start++) {
-                    mutex_lock(&buf_mutex);
-                    read_physicals(physical_buffer,
-                                   (char *)physical_frame,
-                                   PAGE_SIZE);
-                    write_physicals((char *)new_frame,
-                                    physical_buffer,
-                                    PAGE_SIZE);
-                    mutex_unlock(&buf_mutex);
-                }
-            }
-        }
-    }
+    // for (i = NUM_KERN_TABLES; i < NUM_KERN_PAGES; i++) {
+    //     uint32_t *page_table_dir = (uint32_t *)old_pgdir[i];
+    //     if (((uint32_t)page_table_dir & PTE_PRESENT) == 0) continue;
+    //     int j;
+    //     for (j = 0; j < NUM_KERN_PAGES; j++) {
+    //         uint32_t page_table = (page_table_dir[j] & (~PTE_ALL_FLAG_MASK));
+    //         if ((page_table & PTE_PRESENT) == 0)  continue;
+    //         uint32_t physical_frame =
+    //             (page_table & (~PTE_ALL_FLAG_MASK));
+    //         uint32_t virtual_addr = ((uint32_t)i << 22) | ((uint32_t)j << 12);
+    //         if ((page_table & PTE_WRITE) == 0) {
+    //             // BUG check return value
+    //             set_pte(virtual_addr,
+    //                     physical_frame,
+    //                     (page_table & PTE_ALL_FLAG_MASK));
+    //         } else {
+    //             mutex_lock(&first_free_frame_mutex);
+    //             // BUG check reuturn value
+    //             uint32_t new_frame = get_free_frame();
+    //             mutex_unlock(&first_free_frame_mutex);
+    //             set_pte(virtual_addr,
+    //                     new_frame,
+    //                     (page_table & PTE_ALL_FLAG_MASK));
+    //             int start;
+    //             for (start = 0; start < PAGE_SIZE; start++) {
+    //                 mutex_lock(&buf_mutex);
+    //                 read_physicals(physical_buffer,
+    //                                (char *)physical_frame,
+    //                                PAGE_SIZE);
+    //                 write_physicals((char *)new_frame,
+    //                                 physical_buffer,
+    //                                 PAGE_SIZE);
+    //                 mutex_unlock(&buf_mutex);
+    //             }
+    //         }
+    //     }
+    // }
 
     return SUCCESS;
 }

@@ -64,7 +64,7 @@ int kern_fork(void) {
     new_task->page_dir[1023] =
         (uint32_t)new_task->page_dir | flags;
     lprintf("before copy_pgdir");
-    // ret = copy_pgdir(new_task->page_dir, old_task->page_dir);
+    ret = copy_pgdir(new_task->page_dir, old_task->page_dir);
     lprintf("after copy_pgdir");
     if (ret != SUCCESS) {
         // BUG thread safe
@@ -131,6 +131,7 @@ int kern_fork(void) {
     thread_t *curr_thr = GET_TCB(cur_sche_node);
     if (curr_thr->task->child_cnt == 0) {
         lprintf("I am new task!");
+        MAGIC_BREAK;
         return 0;
     } else {
         append_to_scheduler(sche_node);
