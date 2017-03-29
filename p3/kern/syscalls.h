@@ -7,5 +7,6 @@
 
 int kern_gettid(void);
 void kern_exec(void);
+int kern_fork(void);
 
 #endif

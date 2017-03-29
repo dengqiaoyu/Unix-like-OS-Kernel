@@ -31,13 +31,16 @@ int kern_gettid(void) {
 
 // TODO maybe devide into sub functions
 int kern_fork(void) {
+    thread_t *thr_tmp_test = GET_TCB(cur_sche_node);
+    lprintf("Hi, I am thread %d in kernel space\n", thr_tmp_test->tid);
     int ret = SUCCESS;
     // This should be done first.
-    set_cr3((uint32_t)kern_page_dir);
+    // set_cr3((uint32_t)kern_page_dir);
     thread_t *old_thread = (GET_TCB(cur_sche_node));
     task_t *old_task = old_thread->task;
     if (old_task->child_cnt != 0)
         return -1;
+    lprintf("after checking child count\n");
     // malloc new task structure
     task_t *new_task = malloc(sizeof(task_t));
     if (new_task == NULL)
@@ -47,6 +50,8 @@ int kern_fork(void) {
     mutex_lock(&id_counter.task_id_counter_mutex);
     new_task->task_id = id_counter.task_id_counter++;
     mutex_unlock(&id_counter.task_id_counter_mutex);
+
+    lprintf("after get new task id, task id: %d", new_task->task_id);
 
     // create and copy page directory
     // BUG so this is not thread safe, right? or we can have a allocator making
@@ -58,7 +63,9 @@ int kern_fork(void) {
         (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | flags;
     new_task->page_dir[1023] =
         (uint32_t)new_task->page_dir | flags;
-    ret = copy_pgdir(new_task->page_dir, old_task->page_dir);
+    lprintf("before copy_pgdir");
+    // ret = copy_pgdir(new_task->page_dir, old_task->page_dir);
+    lprintf("after copy_pgdir");
     if (ret != SUCCESS) {
         // BUG thread safe
         sfree((void *)new_task->page_dir[1022], PAGE_SIZE);
@@ -66,8 +73,8 @@ int kern_fork(void) {
         return ERROR_FORK_COPY_FIR_FAILED;
     }
 
-
     sche_node_t *sche_node = allocator_alloc(sche_allocator);
+    lprintf("after allocate sche_node");
     if (sche_node == NULL) {
         //free_page_dir(new_task->page_dir);
         sfree((void *)new_task->page_dir[1022], PAGE_SIZE);
@@ -78,6 +85,7 @@ int kern_fork(void) {
     mutex_lock(&id_counter.thread_id_counter_mutex);
     new_thread->tid = id_counter.thread_id_counter++;
     mutex_unlock(&id_counter.thread_id_counter_mutex);
+    lprintf("after get tid, new tid: %d\n", new_thread->tid);
     void *kern_stack = malloc(KERN_STACK_SIZE);
     if (kern_stack == NULL) {
         //free_page_dir(new_task->page_dir);
@@ -93,16 +101,42 @@ int kern_fork(void) {
 
     new_task->main_thread = new_thread;
     new_task->parent_task = old_task;
-    new_task->child_cnt = 1;
+    old_task->child_cnt = 1;
 
+    lprintf("before asm_set_exec_context");
+    lprintf("old_thread->kern_sp: %p", (void *)old_thread->kern_sp);
+    lprintf("new_thread->kern_sp: %p", (void *)new_thread->kern_sp);
+    lprintf("&(new_thread->curr_esp): %p", (void *)(&(new_thread->curr_esp)));
+    lprintf("new_thread->curr_esp: %p", (void *)new_thread->curr_esp);
+    lprintf("&(new_thread->ip): %p", (void *)(&(new_thread->ip)));
+    lprintf("new_thread->ip: %p", (void *)new_thread->ip);
+    // MAGIC_BREAK;
     asm_set_exec_context(old_thread->kern_sp,
                          new_thread->kern_sp,
-                         &new_thread->curr_esp,
-                         &new_thread->ip);
+                         (uint32_t) & (new_thread->curr_esp),
+                         (uint32_t) & (new_thread->ip));
+    // lprintf("&(new_thread->curr_esp): %p", (void *)(&(new_thread->curr_esp)));
+    // lprintf("new_thread->curr_esp: %p", (void *)new_thread->curr_esp);
+    // lprintf("&(new_thread->ip): %p", (void *)(&(new_thread->ip)));
+    // lprintf("new_thread->ip: %p", (void *)new_thread->ip);
+    // MAGIC_BREAK;
+    // asm_set_exec_context(0,
+    //                      1,
+    //                      2,
+    //                      3);
+    lprintf("after asm_set_exec_context");
     // Now, we will have two tasks running
+
+    lprintf("begin return\n");
     thread_t *curr_thr = GET_TCB(cur_sche_node);
-    if (curr_thr->task->child_cnt == 0) return 0;
-    else return new_thread->tid;
+    if (curr_thr->task->child_cnt == 0) {
+        lprintf("I am new task!");
+        return 0;
+    } else {
+        append_to_scheduler(sche_node);
+        lprintf("I am your father!");
+        return new_thread->tid;
+    }
 }
 
 void kern_exec(void) {

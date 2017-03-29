@@ -68,7 +68,7 @@ thread_t *thread_init() {
     thread->tid = id_counter.thread_id_counter++;
 
     void *kern_stack = malloc(KERN_STACK_SIZE);
-    // lprintf("thread kern stack is %p\n", kern_stack);
+    lprintf("thread kern stack is %p\n", kern_stack);
     thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
     // because of manipulation?
     thread->user_sp = USER_STACK_LOW + USER_STACK_SIZE;

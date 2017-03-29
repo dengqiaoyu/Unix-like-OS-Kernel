@@ -76,7 +76,7 @@ THREAD_OBJS = malloc.o panic.o
 ###########################################################################
 # Object files for your syscall wrappers
 ###########################################################################
-SYSCALL_OBJS = syscall.o exec.o gettid.o
+SYSCALL_OBJS = syscall.o exec.o gettid.o fork.o
 
 ###########################################################################
 # Object files for your automatic stack handling
@@ -130,4 +130,4 @@ KERNEL_OBJS = fake_console.o kernel.o loader.o malloc_wrappers.o asm_handlers.o\
 # kernel in, or else your tweaked version will run and the test harness
 # won't.
 #
-STUDENTREQPROGS = ck1_user idle_user my_user
+STUDENTREQPROGS = ck1_user idle_user my_user my_fork_test
