@@ -40,7 +40,6 @@ extern sche_node_t *cur_sche_node;
  */
 int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     lprintf( "Hello from a brand new kernel!" );
-
     RETURN_IF_ERROR(handler_init(), ERROR_KERNEL_HANDLER_INIT_FAILED);
     vm_init();
     RETURN_IF_ERROR(scheduler_init(), ERROR_KERNEL_SCHEDULER_INIT_FAILED);

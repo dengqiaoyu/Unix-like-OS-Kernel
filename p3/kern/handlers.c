@@ -82,6 +82,7 @@ int syscall_init() {
 }
 
 int device_init() {
+    init_timer(cnt_seconds);
     idt_install(TIMER_IDT_ENTRY,
                 (void *)asm_timer_handler,
                 SEGSEL_KERNEL_CS,
@@ -95,8 +96,8 @@ int device_init() {
 
 void idt_install(int idt_idx,
                  void (*entry)(),
-                 unsigned int selector,
-                 unsigned int flag) {
+                 int selector,
+                 int flag) {
     uint32_t *idt_addr = (uint32_t *)idt_base() + 2 * idt_idx;
     *idt_addr = ((uint32_t)entry & 0x0000ffff) | (selector << 16);
     *(idt_addr + 1) =

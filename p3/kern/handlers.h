@@ -27,8 +27,8 @@ void pf_handler();
 
 void idt_install(int idt_idx,
                  void (*entry)(),
-                 unsigned int selector,
-                 unsigned int flag);
+                 int selector,
+                 int flag);
 
 void roll_over();
 
