@@ -40,13 +40,11 @@ task_t *task_init(const char *fname) {
     task->child_cnt = 0;
 
     task->page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);
-    // lprintf("task page dir is %p\n", task->page_dir);
     int flags = PTE_PRESENT | PTE_WRITE | PTE_USER;
-    task->page_dir[1022] = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | flags;
-    task->page_dir[1023] = (uint32_t)task->page_dir | flags;
+    uint32_t entry = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | flags;
+    task->page_dir[RW_PHYS_PD_INDEX] = entry;
     // set to 0 ???????
 
-    // Does we have enabled CR4_PGE?
     int i;
     for (i = 0; i < NUM_KERN_TABLES; i++) {
         task->page_dir[i] = kern_page_dir[i];
@@ -82,19 +80,19 @@ int load_program(simple_elf_t *header, uint32_t *page_dir) {
 
     set_cr3((uint32_t)page_dir);
 
-    lprintf("text\n");
+    lprintf("text");
     load_elf_section(header->e_fname, header->e_txtstart, header->e_txtlen,
                      header->e_txtoff, PTE_USER | PTE_PRESENT);
-    lprintf("dat\n");
+    lprintf("dat");
     load_elf_section(header->e_fname, header->e_datstart, header->e_datlen,
                      header->e_datoff, PTE_USER | PTE_WRITE | PTE_PRESENT);
-    lprintf("rodat\n");
+    lprintf("rodat");
     load_elf_section(header->e_fname, header->e_rodatstart, header->e_rodatlen,
                      header->e_rodatoff, PTE_USER | PTE_PRESENT);
-    lprintf("bss\n");
+    lprintf("bss");
     load_elf_section(header->e_fname, header->e_bssstart, header->e_bsslen,
                      -1, PTE_USER | PTE_WRITE | PTE_PRESENT);
-    lprintf("stack\n");
+    lprintf("stack");
     load_elf_section(header->e_fname, USER_STACK_LOW, USER_STACK_SIZE,
                      -1, PTE_USER | PTE_WRITE | PTE_PRESENT);
 
@@ -105,9 +103,9 @@ int load_program(simple_elf_t *header, uint32_t *page_dir) {
 
 int load_elf_section(const char *fname, unsigned long start, unsigned long len,
                      long offset, int pte_flags) {
-    lprintf("%p\n", (void *)start);
-    lprintf("%p\n", (void *)len);
-    lprintf("%p\n", (void *)offset);
+    lprintf("%p", (void *)start);
+    lprintf("%p", (void *)len);
+    lprintf("%p", (void *)offset);
 
     uint32_t low = (uint32_t)start & PAGE_MASK;
     uint32_t high = (uint32_t)(start + len + PAGE_SIZE - 1) & PAGE_MASK;
