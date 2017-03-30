@@ -82,6 +82,8 @@ void sche_yield() {
             // never reach here
         }
     }
+    // TODO
+    // is it possible the thread initially had interrupts disabled?
     enable_interrupts();
 }
 

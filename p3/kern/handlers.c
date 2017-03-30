@@ -15,14 +15,13 @@
 #include <keyhelp.h>            /* KEY_IDT_ENTRY */
 
 #include "handlers.h"
-#include "asm_handlers.h"
 #include "vm.h"
 #include "task.h"
-#include "asm_timer_handler.h"
-#include "asm_keyboard_handler.h"   /* keyboard_handler */
-#include "timer_driver.h"
 #include "syscalls.h"
 #include "asm_syscalls.h"
+#include "asm_exceptions.h"
+#include "asm_interrupts.h"
+#include "timer_driver.h"
 
 extern uint32_t *kern_page_dir;
 
@@ -31,9 +30,7 @@ void pf_handler() {
     uint32_t pte = get_pte(pf_addr);
 
     if (!(pte & PTE_PRESENT)) {
-        uint32_t frame = get_free_frame();
-        int flags = PTE_WRITE | PTE_USER;
-        set_pte(pf_addr, frame, flags);
+        set_pte(pf_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
     }
     else {
         lprintf("%x\n", (unsigned int)pf_addr);
@@ -85,13 +82,13 @@ int install_handlers() {
     // exec
     uint32_t *exec_idt = (uint32_t *)idt_base() + 2 * EXEC_INT;
     *exec_idt = pack_idt_low(SEGSEL_KERNEL_CS, (void *)asm_exec);
-    // *(exec_idt + 1) = pack_idt_high((void *)kern_exec, 0, 1);
+    // *(exec_idt + 1) = pack_idt_high((void *)asm_exec, 0, 1);
     *(exec_idt + 1) = ((int)asm_exec & 0xffff0000) | (0xEF << 8);
 
     // gettid
     uint32_t *gettid_idt = (uint32_t *)idt_base() + 2 * GETTID_INT;
     *gettid_idt = pack_idt_low(SEGSEL_KERNEL_CS, (void *)asm_gettid);
-    // *(exec_idt + 1) = pack_idt_high((void *)kern_exec, 0, 1);
+    // *(exec_idt + 1) = pack_idt_high((void *)asm_exec, 0, 1);
     *(gettid_idt + 1) = ((int)asm_gettid & 0xffff0000) | (0xEF << 8);
 
     // driver

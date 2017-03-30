@@ -34,7 +34,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the 410user/progs
 # directory.
 #
-410TESTS = ck1 merchant
+410TESTS = ck1 merchant peon
 
 ###########################################################################
 # Test programs you have written which you wish to run
@@ -93,11 +93,11 @@ AUTOSTACK_OBJS = autostack.o
 #
 # Kernel object files you provide in from kern/
 #
-KERNEL_OBJS = fake_console.o kernel.o loader.o malloc_wrappers.o asm_handlers.o\
-	      asm_switch.o handlers.o task.o vm.o asm_timer_handler.o\
-	      asm_keyboard_handler.o timer_driver.o keyboard_driver.o\
-	      mutex.o asm_mutex.o maps.o allocator.o scheduler.o list.o\
-	      asm_page_inval.o asm_syscalls.o syscalls.o\
+KERNEL_OBJS = fake_console.o kernel.o loader.o malloc_wrappers.o\
+	      asm_switch.o handlers.o task.o vm.o asm_exceptions.o\
+	      asm_interrupts.o timer_driver.o keyboard_driver.o\
+	      mutex.o maps.o allocator.o scheduler.o list.o\
+	      asm_page_inval.o asm_syscalls.o asm_registers.o syscalls.o\
 
 ###########################################################################
 # WARNING: Do not put **test** programs into the REQPROGS variables.  Your
@@ -130,4 +130,4 @@ KERNEL_OBJS = fake_console.o kernel.o loader.o malloc_wrappers.o asm_handlers.o\
 # kernel in, or else your tweaked version will run and the test harness
 # won't.
 #
-STUDENTREQPROGS = ck1_user idle_user my_user
+STUDENTREQPROGS = ck1_user idle_user my_user cp1 t1 t2

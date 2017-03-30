@@ -40,10 +40,11 @@ void add_to_kb_buf(void) {
     //     return;
     // }
     // uint8_t temp_code = inb(KEYBOARD_PORT);
-    if (buf_ending + 1 == buf_cursor)
+    int new_buf_ending = (buf_ending + 1) % KB_BUF_LEN;
+    if (new_buf_ending == buf_cursor)
         return;
     buf[buf_ending] = inb(KEYBOARD_PORT);
-    buf_ending = (buf_ending + 1) % KB_BUF_LEN;
+    buf_ending = new_buf_ending;
     // char ch = readchar();
     // lprintf("keyboard pressed, %d\n", temp_code);
     // if (ch == 'a') {

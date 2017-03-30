@@ -36,7 +36,7 @@ int init_list(list_t *list) {
         // printf("Cannot allocate more memory for thread %d\n", tid);
         return ERROR_INIT_LIST_CALLOC_FAILED;
     }
-    /* this is the dummy head for easy iterate */
+    /* this is the dummy tail for easy iterate */
     list->tail = tail_node;
 
     head_node->next = tail_node;

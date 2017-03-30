@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 
-#define PAGE_MASK (0xFFFFFFFF << PAGE_SHIFT)
+#define PAGE_MASK (0xFFFFF000)
 #define PTE_PRESENT (0x1)
 #define PTE_WRITE (0x2)
 #define PTE_USER (0x4)
@@ -20,15 +20,11 @@
 #define PAGES_PER_TABLE 1024
 #define NUM_KERN_TABLES 4
 
-typedef struct page {
-    char used;
-} page_t;
-
 void vm_init();
 
-uint32_t get_pte(uint32_t page_va);
+uint32_t get_pte(uint32_t addr);
 
-void set_pte(uint32_t page_va, uint32_t frame_addr, int flags);
+void set_pte(uint32_t addr, int flags);
 
 uint32_t get_free_frame();
 
