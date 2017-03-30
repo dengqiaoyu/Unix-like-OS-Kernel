@@ -68,7 +68,7 @@ int kern_fork(void) {
     lprintf("after copy_pgdir");
     if (ret != SUCCESS) {
         // BUG thread safe
-        sfree((void *)new_task->page_dir[1022], PAGE_SIZE);
+        // sfree((void *)new_task->page_dir[1022], PAGE_SIZE);
         sfree((void *)new_task->page_dir, PAGE_SIZE);
         return ERROR_FORK_COPY_FIR_FAILED;
     }
