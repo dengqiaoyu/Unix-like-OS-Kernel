@@ -77,26 +77,26 @@ thread_t *thread_init() {
 }
 
 int load_program(simple_elf_t *header, uint32_t *page_dir) {
+    // debugging code
+    sim_reg_process(page_dir, header->e_fname);
+
     set_cr3((uint32_t)page_dir);
 
     lprintf("text\n");
     load_elf_section(header->e_fname, header->e_txtstart, header->e_txtlen,
-                     header->e_txtoff, PTE_USER | PTE_WRITE);
+                     header->e_txtoff, PTE_USER | PTE_PRESENT);
     lprintf("dat\n");
     load_elf_section(header->e_fname, header->e_datstart, header->e_datlen,
-                     header->e_datoff, PTE_USER | PTE_WRITE);
+                     header->e_datoff, PTE_USER | PTE_WRITE | PTE_PRESENT);
     lprintf("rodat\n");
-    // should we set PTE_WRITE?
     load_elf_section(header->e_fname, header->e_rodatstart, header->e_rodatlen,
-                     header->e_rodatoff, PTE_USER | PTE_WRITE);
+                     header->e_rodatoff, PTE_USER | PTE_PRESENT);
     lprintf("bss\n");
     load_elf_section(header->e_fname, header->e_bssstart, header->e_bsslen,
-                     -1, PTE_USER | PTE_WRITE);
+                     -1, PTE_USER | PTE_WRITE | PTE_PRESENT);
     lprintf("stack\n");
     load_elf_section(header->e_fname, USER_STACK_LOW, USER_STACK_SIZE,
-                     -1, PTE_USER | PTE_WRITE);
-
-    lprintf("%x\n", (unsigned int)header->e_entry);
+                     -1, PTE_USER | PTE_WRITE | PTE_PRESENT);
 
     // set_cr3((uint32_t)kern_page_dir);
 
@@ -115,13 +115,7 @@ int load_elf_section(const char *fname, unsigned long start, unsigned long len,
     uint32_t addr = low;
     while (addr < high) {
         if (!(get_pte(addr) & PTE_PRESENT)) {
-            uint32_t frame = get_free_frame();
-
-            // so we can memset the read only pages
-            set_pte(addr, frame, PTE_WRITE);
-            // probably should do it elsewhere...
-            memset((void *)addr, 0, PAGE_SIZE);
-            set_pte(addr, frame, pte_flags);
+            set_pte(addr, pte_flags);
         }
         addr += PAGE_SIZE;
     }

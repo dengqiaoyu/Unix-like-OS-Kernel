@@ -45,12 +45,14 @@ typedef struct thread {
     uint32_t ip;
     int status;
 } thread_t;
+
 /* status define */
 #define INITIALIZED 0
-#define FORKED 1
-#define FORKED_START 2
-#define RUNNABLE 3
-#define SUSPENDED 4
+#define RUNNABLE 1
+#define SUSPENDED 2
+#define FORKED 3
+#define FORKED_START 4
+#define BLOCKED_MUTEX 5
 
 int id_counter_init();
 

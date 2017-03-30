@@ -2,6 +2,7 @@
  *
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -14,7 +15,7 @@
 
 #include "vm.h"
 #include "scheduler.h"
-// #include "asm_registers.h"
+#include "asm_registers.h"
 #include "asm_switch.h"
 #include "allocator.h" /* allocator */
 #include "asm_set_exec_context.h"
@@ -141,7 +142,7 @@ int kern_fork(void) {
 }
 
 void kern_exec(void) {
-    uint32_t *esi = 0;
+    uint32_t *esi = (uint32_t *)get_esi();
     char *execname = (char *)(*esi);
     char **argvec = (char **)(*(esi + 1));
 
@@ -154,7 +155,10 @@ void kern_exec(void) {
     }
 
     simple_elf_t elf_header;
-    elf_load_helper(&elf_header, execname);
+    // really bad code, just for testing
+    char namebuf[32];
+    sprintf(namebuf, "%s", execname);
+    elf_load_helper(&elf_header, namebuf);
 
     thread_t *thread = GET_TCB(cur_sche_node);
     // need to free old kernel stack
@@ -164,6 +168,7 @@ void kern_exec(void) {
     thread->ip = elf_header.e_entry;
 
     task_t *task = thread->task;
+    int i;
     /*
     // memory is leaking
     // need to dispose of old mapped frames
@@ -185,7 +190,6 @@ void kern_exec(void) {
 
     char *arg;
     int len;
-    int i;
     for (i = 0; i < argc; i++) {
         arg = *(argvec + i);
         len = strlen(arg);
@@ -204,5 +208,6 @@ void kern_exec(void) {
 
     set_esp0(thread->kern_sp);
     load_program(&elf_header, task->page_dir);
+    lprintf("cp");
     kern_to_user(USER_STACK_LOW + USER_STACK_SIZE, elf_header.e_entry);
 }

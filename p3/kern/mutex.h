@@ -1,5 +1,5 @@
 /** @file mutex.h
- *  @brief Mutex hader file.
+ *  @brief Mutex header file.
  *
  *  @author Newton Xie (ncx)
  *  @author Qiaoyu Deng (qdeng)
@@ -9,10 +9,13 @@
 #ifndef _MUTEX_H_
 #define _MUTEX_H_
 
+#include "list.h"
+
 #define INIT_MUTEX {.lock = 0}
 
 typedef struct mutex {
     int lock;
+    list_t list;
 } mutex_t;
 
 int mutex_init(mutex_t *mp);
