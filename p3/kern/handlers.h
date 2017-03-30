@@ -13,7 +13,7 @@
 
 int handler_init();
 
-int trap_init();
+int exception_init();
 
 int syscall_init();
 

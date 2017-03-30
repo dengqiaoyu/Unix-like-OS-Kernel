@@ -17,16 +17,6 @@
 #include "asm_page_inval.h"
 #include "return_type.h"
 
-#define RW_PHYS_PD_INDEX 1023
-#define RW_PHYS_PT_INDEX 1023
-#define RW_PHYS_VA 0xFFFFF000
-
-#define PD_INDEX(addr) ((addr >> 22) & 0x3FF)
-#define PT_INDEX(addr) ((addr >> 12) & 0x3FF)
-#define PTE_TO_ADDR(pte) ((void *)(pte & PAGE_MASK))
-
-#define CHECK_ALLOC(addr) if (addr == NULL) lprintf("bad malloc")
-
 uint32_t *kern_page_dir;
 // thread safe?
 uint32_t first_free_frame;
@@ -35,7 +25,8 @@ mutex_t first_free_frame_mutex;
 // maps RW_PHYS_VA to physical address addr
 void access_physical(uint32_t addr) {
     page_inval((void *)RW_PHYS_VA);
-    uint32_t *pt_va = PTE_TO_ADDR(kern_page_dir[RW_PHYS_PD_INDEX]);
+    uint32_t *page_dir = (uint32_t *)get_cr3();
+    uint32_t *pt_va = PTE_TO_ADDR(page_dir[RW_PHYS_PD_INDEX]);
     uint32_t entry = addr & PAGE_MASK;
     pt_va[RW_PHYS_PT_INDEX] = entry | PTE_WRITE | PTE_PRESENT;
 }
@@ -125,7 +116,7 @@ void set_pte(uint32_t addr, int flags)
     int pt_index = PT_INDEX(addr);
 
     if (!(page_dir[pd_index] & PTE_PRESENT)) {
-        page_dir[pd_index] = get_free_frame();
+        page_dir[pd_index] = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE);
         page_dir[pd_index] |= PTE_USER | PTE_WRITE | PTE_PRESENT;
     }
 

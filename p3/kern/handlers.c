@@ -47,7 +47,7 @@ void pf_handler() {
  *  @return
  */
 int handler_init() {
-    RETURN_IF_ERROR(trap_init(), ERROR_TRAP_INSTALL_FAILED);
+    RETURN_IF_ERROR(exception_init(), ERROR_TRAP_INSTALL_FAILED);
     RETURN_IF_ERROR(syscall_init(), ERROR_SYSCALL_INSTALL_FAILED);
     RETURN_IF_ERROR(device_init(), ERROR_DEVICE_INSTALL_FAILED);
 

@@ -20,6 +20,17 @@
 #define PAGES_PER_TABLE 1024
 #define NUM_KERN_TABLES 4
 
+#define RW_PHYS_PD_INDEX 1023
+#define RW_PHYS_PT_INDEX 1023
+#define RW_PHYS_VA 0xFFFFF000
+
+#define PD_INDEX(addr) ((addr >> 22) & 0x3FF)
+#define PT_INDEX(addr) ((addr >> 12) & 0x3FF)
+#define PTE_TO_ADDR(pte) ((void *)(pte & PAGE_MASK))
+
+#define CHECK_ALLOC(addr) if (addr == NULL) lprintf("bad malloc")
+
+
 void vm_init();
 
 uint32_t get_pte(uint32_t addr);
