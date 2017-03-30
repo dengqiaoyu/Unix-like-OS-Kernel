@@ -6,13 +6,29 @@
 #ifndef _HANDLERS_H_
 #define _HANDLERS_H_
 
-int install_handlers();
+#define FLAG_TRAP_GATE 0x0f
+#define FLAG_PL_USER 0x60
+#define FLAG_PL_KERNEL 0x00
+#define FLAG_PRESENT 0x80
+
+int handler_init();
+
+int trap_init();
+
+int syscall_init();
+
+int device_init();
 
 int pack_idt_high(void *offset, int dpl, int size);
 
 int pack_idt_low(int selector, void *offset);
 
 void pf_handler();
+
+void idt_install(int idt_idx,
+                 void (*entry)(),
+                 int selector,
+                 int flag);
 
 void roll_over();
 

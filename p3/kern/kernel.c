@@ -39,18 +39,13 @@ extern sche_node_t *cur_sche_node;
  * @return Does not return
  */
 int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
-    int ret = SUCCESS;
     lprintf( "Hello from a brand new kernel!" );
-
-    install_handlers();
-
+    RETURN_IF_ERROR(handler_init(), ERROR_KERNEL_HANDLER_INIT_FAILED);
     vm_init();
-    ret = init_scheduler();
-    if (ret != SUCCESS) {
-        lprintf("Impossible!\n");
-        return -1;
-    }
+    RETURN_IF_ERROR(scheduler_init(), ERROR_KERNEL_SCHEDULER_INIT_FAILED);
+    RETURN_IF_ERROR(id_counter_init(), ERROR_KERNEL_ID_COUNTER_INIT_FAILED);
 
+    // context switch test
     // task_t *init = task_init("ck1_user");
     // task_t *idle = task_init("idle_user");
     // task_t *third_one = task_init("my_user");
@@ -74,6 +69,17 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     set_cr3((uint32_t)merchant_1->page_dir);
     set_esp0(merchant_1->main_thread->kern_sp);
     kern_to_user(merchant_1->main_thread->user_sp, merchant_1->main_thread->ip);
+
+    /*
+    task_t *init = task_init("my_fork_test");
+    cur_sche_node = get_mainthr_sche_node(init);
+    init->main_thread->status = RUNNABLE;
+    set_cr3((uint32_t)init->page_dir);
+    // lprintf("in kern.c, init->main_thread->kern_sp: %p",
+    //         (void *)init->main_thread->kern_sp);
+    set_esp0(init->main_thread->kern_sp);
+    kern_to_user(init->main_thread->user_sp, init->main_thread->ip);
+    */
 
     while (1) {
         continue;

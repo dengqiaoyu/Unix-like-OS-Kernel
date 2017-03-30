@@ -19,9 +19,11 @@ wrapper_name: ;\
     pop     %ebx ;\
     iret ;\
 
+.global asm_gettid
+WRAP_SYSCALL(asm_gettid, kern_gettid)
 
 .global asm_exec
 WRAP_SYSCALL(asm_exec, kern_exec)
 
-.global asm_gettid
-WRAP_SYSCALL(asm_gettid, kern_gettid)
+.global asm_fork
+WRAP_SYSCALL(asm_fork, kern_fork)

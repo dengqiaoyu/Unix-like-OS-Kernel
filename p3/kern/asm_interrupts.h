@@ -11,11 +11,11 @@
 /**
  * @brief keyboard handler that get called by the IDT entry.
  */
-void keyboard_handler(void);
+void asm_keyboard_handler(void);
 
 /**
  * @brief timer handler that get called by the IDT entry.
  */
-void timer_handler(void);
+void asm_timer_handler(void);
 
 #endif

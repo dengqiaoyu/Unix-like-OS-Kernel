@@ -76,7 +76,7 @@ THREAD_OBJS = malloc.o panic.o
 ###########################################################################
 # Object files for your syscall wrappers
 ###########################################################################
-SYSCALL_OBJS = syscall.o exec.o gettid.o
+SYSCALL_OBJS = syscall.o exec.o gettid.o fork.o
 
 ###########################################################################
 # Object files for your automatic stack handling
@@ -96,8 +96,9 @@ AUTOSTACK_OBJS = autostack.o
 KERNEL_OBJS = fake_console.o kernel.o loader.o malloc_wrappers.o\
 	      asm_switch.o handlers.o task.o vm.o asm_exceptions.o\
 	      asm_interrupts.o timer_driver.o keyboard_driver.o\
-	      mutex.o maps.o allocator.o scheduler.o list.o\
-	      asm_page_inval.o asm_syscalls.o asm_registers.o syscalls.o\
+	      mutex.o maps.o allocator.o scheduler.o list.o syscalls.o\
+	      asm_page_inval.o asm_syscalls.o asm_registers.o\
+	      asm_set_exec_context.o\
 
 ###########################################################################
 # WARNING: Do not put **test** programs into the REQPROGS variables.  Your
@@ -130,4 +131,4 @@ KERNEL_OBJS = fake_console.o kernel.o loader.o malloc_wrappers.o\
 # kernel in, or else your tweaked version will run and the test harness
 # won't.
 #
-STUDENTREQPROGS = ck1_user idle_user my_user cp1 t1 t2
+STUDENTREQPROGS = ck1_user idle_user my_user my_fork_test

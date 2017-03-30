@@ -28,4 +28,6 @@ void set_pte(uint32_t addr, int flags);
 
 uint32_t get_free_frame();
 
+int copy_pgdir(uint32_t *new_pgdir, uint32_t *old_pgdir);
+
 #endif

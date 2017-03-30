@@ -2,15 +2,15 @@
  *
  */
 
-.globl keyboard_handler
-keyboard_handler:
+.globl asm_keyboard_handler
+asm_keyboard_handler:
     PUSHA                      /* push all the general register */
     CALL    add_to_kb_buf      /* call the handler */
     POPA                       /* restore all the general register */
     IRET                       /* return */
 
-.globl timer_handler
-timer_handler:
+.globl asm_timer_handler
+asm_timer_handler:
     PUSHA            /* push all the general register */
     CALL    ticktock /* call the handler */
     POPA             /* restore all the general register */

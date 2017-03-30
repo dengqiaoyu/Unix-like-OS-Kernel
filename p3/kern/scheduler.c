@@ -16,7 +16,7 @@ allocator_t *sche_allocator = NULL;
 sche_node_t *cur_sche_node = NULL;
 static schedule_t sche_list = {{0}};
 
-int init_scheduler() {
+int scheduler_init() {
     int ret = SUCCESS;
     ret = allocator_init(
               &sche_allocator,
@@ -70,15 +70,28 @@ void sche_yield() {
                 set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
             }
             __asm__("PUSHA");
-            __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->cur_esp));
-            __asm__("movl %0, %%esp" :: "r" (new_tcb_ptr->cur_esp));
+            __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->curr_esp));
+            __asm__("movl %0, %%esp" :: "r" (new_tcb_ptr->curr_esp));
             __asm__("POPA");
         } else if (new_tcb_ptr->status == INITIALIZED) {
             set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
             new_tcb_ptr->status = RUNNABLE;
             __asm__("PUSHA");
-            __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->cur_esp));
+            __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->curr_esp));
             kern_to_user(new_tcb_ptr->user_sp, new_tcb_ptr->ip);
+            // never reach here
+        } else if (new_tcb_ptr->status == FORKED) {
+            lprintf("task %d will fire off a forked task %d",
+                    cur_tcb_ptr->task->task_id, new_tcb_ptr->task->task_id);
+            set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
+            new_tcb_ptr->status = RUNNABLE;
+            lprintf("esp: %p", (void *)(new_tcb_ptr->curr_esp));
+            lprintf("ip: %p", (void *)new_tcb_ptr->ip);
+            __asm__("PUSHA");
+            __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->curr_esp));
+            __asm__("movl %0, %%esp" :: "r" (new_tcb_ptr->curr_esp));
+            __asm__("jmp %0" :: "r" (new_tcb_ptr->ip));
+            // kern_to_user(new_tcb_ptr->curr_esp, new_tcb_ptr->ip);
             // never reach here
         }
     }

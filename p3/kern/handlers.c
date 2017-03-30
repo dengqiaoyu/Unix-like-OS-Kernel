@@ -22,6 +22,7 @@
 #include "asm_exceptions.h"
 #include "asm_interrupts.h"
 #include "timer_driver.h"
+#include "return_type.h"            /* RETURN_IF_ERROR, ERROR_TYPE */
 
 extern uint32_t *kern_page_dir;
 
@@ -40,67 +41,64 @@ void pf_handler() {
     return;
 }
 
-/** @brief Packs high bits of IDT entry
- *
- *  @param offset handler address
- *  @param dpl privilege level
- *  @size size parameter
- *  @return packed high bits
- **/
-int pack_idt_high(void *offset, int dpl, int size) {
-    int packed = (int)offset & 0xffff0000;
-    packed |= 1 << 15;
-    packed |= dpl << 13;
-    packed |= size << 11;
-    packed |= 3 << 9;
-    return packed;
-}
-
-/** @brief Packs low bits of IDT entry
- *
- *  @param selector segment selector
- *  @param offset handler address
- *  @return packed low bits
- **/
-int pack_idt_low(int selector, void *offset) {
-    int packed = (int)offset & 0xffff;
-    packed |= selector << 16;
-    return packed;
-}
-
 /** @brief
  *
  *  @param
  *  @return
  */
-int install_handlers() {
-    // Maybe we need split system interrupt and trap handlers with driver.
-    uint32_t *pf_idt = (uint32_t *)idt_base() + 2 * IDT_PF;
-    *pf_idt = pack_idt_low(SEGSEL_KERNEL_CS, (void *)asm_pf_handler);
-    *(pf_idt + 1) = pack_idt_high((void *)asm_pf_handler, 0, 1);
+int handler_init() {
+    RETURN_IF_ERROR(trap_init(), ERROR_TRAP_INSTALL_FAILED);
+    RETURN_IF_ERROR(syscall_init(), ERROR_SYSCALL_INSTALL_FAILED);
+    RETURN_IF_ERROR(device_init(), ERROR_DEVICE_INSTALL_FAILED);
 
-    // exec
-    uint32_t *exec_idt = (uint32_t *)idt_base() + 2 * EXEC_INT;
-    *exec_idt = pack_idt_low(SEGSEL_KERNEL_CS, (void *)asm_exec);
-    // *(exec_idt + 1) = pack_idt_high((void *)asm_exec, 0, 1);
-    *(exec_idt + 1) = ((int)asm_exec & 0xffff0000) | (0xEF << 8);
+    return SUCCESS;
+}
 
-    // gettid
-    uint32_t *gettid_idt = (uint32_t *)idt_base() + 2 * GETTID_INT;
-    *gettid_idt = pack_idt_low(SEGSEL_KERNEL_CS, (void *)asm_gettid);
-    // *(exec_idt + 1) = pack_idt_high((void *)asm_exec, 0, 1);
-    *(gettid_idt + 1) = ((int)asm_gettid & 0xffff0000) | (0xEF << 8);
+int exception_init() {
+    idt_install(IDT_PF,
+                asm_pf_handler,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_KERNEL);
+    return SUCCESS;
+}
 
-    // driver
+int syscall_init() {
+    idt_install(FORK_INT,
+                (void *)asm_fork,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(EXEC_INT,
+                (void *)asm_exec,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(GETTID_INT,
+                (void *)asm_gettid,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
+    return SUCCESS;
+}
+
+int device_init() {
     init_timer(cnt_seconds);
-    uint32_t *timer_idt = (uint32_t *)idt_base() + 2 * TIMER_IDT_ENTRY;
-    *timer_idt = pack_idt_low(SEGSEL_KERNEL_CS, (void *)timer_handler);
-    *(timer_idt + 1) = pack_idt_high((void *)timer_handler, 0, 1);
+    idt_install(TIMER_IDT_ENTRY,
+                (void *)asm_timer_handler,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_KERNEL);
+    idt_install(KEY_IDT_ENTRY,
+                (void *)asm_keyboard_handler,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_KERNEL);
+    return SUCCESS;
+}
 
-    uint32_t *keyboard_idt = (uint32_t *)idt_base() + 2 * KEY_IDT_ENTRY;
-    *keyboard_idt = pack_idt_low(SEGSEL_KERNEL_CS, (void *)keyboard_handler);
-    *(keyboard_idt + 1) = pack_idt_high((void *)keyboard_handler, 0, 1);
-    return 0;
+void idt_install(int idt_idx,
+                 void (*entry)(),
+                 int selector,
+                 int flag) {
+    uint32_t *idt_addr = (uint32_t *)idt_base() + 2 * idt_idx;
+    *idt_addr = ((uint32_t)entry & 0x0000ffff) | (selector << 16);
+    *(idt_addr + 1) =
+        ((uint32_t)entry & 0xffff0000) | ((flag | FLAG_PRESENT) << 8);
 }
 
 void roll_over() {
