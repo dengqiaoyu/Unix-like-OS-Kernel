@@ -79,7 +79,6 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     set_esp0(init->main_thread->kern_sp);
     kern_to_user(init->main_thread->user_sp, init->main_thread->ip);
 
-
     while (1) {
         continue;
     }

@@ -96,7 +96,9 @@ int load_program(simple_elf_t *header, uint32_t *page_dir) {
     load_elf_section(header->e_fname, USER_STACK_LOW, USER_STACK_SIZE,
                      -1, PTE_USER | PTE_WRITE);
 
-    set_cr3((uint32_t)kern_page_dir);
+    lprintf("%x\n", (unsigned int)header->e_entry);
+
+    // set_cr3((uint32_t)kern_page_dir);
 
     return 0;
 }

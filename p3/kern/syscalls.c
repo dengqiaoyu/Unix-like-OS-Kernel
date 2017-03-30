@@ -178,8 +178,6 @@ void kern_exec(void) {
     }
     */
 
-    lprintf("p0\n");
-
     // need macros here badly
     char *buf = (char *)(USER_STACK_LOW + USER_STACK_SIZE + 6 * sizeof(int) +
                          argc * sizeof(int));
@@ -197,19 +195,14 @@ void kern_exec(void) {
         buf += len + 1;
     }
     argv[argc] = NULL;
-    lprintf("p1\n");
 
     uint32_t *ptr = (uint32_t *)(USER_STACK_LOW + USER_STACK_SIZE);
     *(ptr + 1) = argc;
     *(ptr + 2) = (uint32_t)argv;
     *(ptr + 3) = USER_STACK_HIGH;
     *(ptr + 4) = USER_STACK_LOW;
-    lprintf("p2\n");
 
     set_esp0(thread->kern_sp);
-    lprintf("p3\n");
     load_program(&elf_header, task->page_dir);
-    lprintf("p4\n");
-    MAGIC_BREAK;
     kern_to_user(USER_STACK_LOW + USER_STACK_SIZE, elf_header.e_entry);
 }
