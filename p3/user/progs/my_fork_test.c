@@ -16,5 +16,11 @@ int main() {
     if (fork() == 0) {
         lprintf("I am thread %d", gettid());
     }
+    if (fork() == 0) {
+        lprintf("I am thread %d", gettid());
+    }
+    if (fork() == 0) {
+        lprintf("I am thread %d", gettid());
+    }
     while (1) {}
 }

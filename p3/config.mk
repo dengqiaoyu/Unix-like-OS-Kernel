@@ -99,6 +99,10 @@ KERNEL_OBJS = fake_console.o kernel.o loader.o malloc_wrappers.o\
 	      mutex.o maps.o allocator.o scheduler.o list.o syscalls.o\
 	      asm_page_inval.o asm_syscalls.o asm_registers.o\
 	      asm_set_exec_context.o\
+	      \
+	      fork.o\
+	      \
+	      asm_mutex.o
 
 ###########################################################################
 # WARNING: Do not put **test** programs into the REQPROGS variables.  Your
