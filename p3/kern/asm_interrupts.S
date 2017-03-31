@@ -12,6 +12,7 @@ asm_keyboard_handler:
 .globl asm_timer_handler
 asm_timer_handler:
     PUSHA            /* push all the general register */
+    CALL    sim_breakpoint
     CALL    ticktock /* call the handler */
     POPA             /* restore all the general register */
     IRET             /* return */

@@ -75,8 +75,8 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     cur_sche_node = get_mainthr_sche_node(init);
     init->main_thread->status = RUNNABLE;
     set_cr3((uint32_t)init->page_dir);
-    // lprintf("in kern.c, init->main_thread->kern_sp: %p",
-    //         (void *)init->main_thread->kern_sp);
+    lprintf("in kern.c, init->main_thread->kern_sp: %p",
+            (void *)init->main_thread->kern_sp);
     set_esp0(init->main_thread->kern_sp);
     kern_to_user(init->main_thread->user_sp, init->main_thread->ip);
 
