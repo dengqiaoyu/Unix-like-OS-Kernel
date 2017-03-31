@@ -28,11 +28,11 @@ int scheduler_init() {
     if (ret != SUCCESS)
         return ret;
 
-    ret = init_list(&sche_list.active_list);
+    ret = list_init(&sche_list.active_list);
     if (ret != SUCCESS)
         return ret;
 
-    ret = init_list(&sche_list.deactive_list);
+    ret = list_init(&sche_list.deactive_list);
     if (ret != SUCCESS)
         return ret;
 
@@ -57,35 +57,21 @@ sche_node_t *pop_scheduler_active() {
 }
 
 void sche_yield() {
-    // lprintf("entering scheduler");
     disable_interrupts();
     outb(INT_ACK_CURRENT, INT_CTL_PORT);
     thread_t *cur_tcb_ptr = GET_TCB(cur_sche_node);
     sche_node_t *new_sche_node = pop_scheduler_active();
-    // print_line;
     if (new_sche_node != NULL) {
-        // print_line;
         thread_t *new_tcb_ptr = GET_TCB(new_sche_node);
         append_to_scheduler(cur_sche_node);
         cur_sche_node = new_sche_node;
         set_esp0(new_tcb_ptr->kern_sp);
-        // print_line;
         int original_task_id = cur_tcb_ptr->task->task_id;
         int new_task_id = new_tcb_ptr->task->task_id;
         if (new_tcb_ptr->status == RUNNABLE) {
             if (new_task_id != original_task_id) {
-                // lprintf("new_task_id: %d, original_task_id: %d",
-                //         new_task_id, original_task_id);
                 set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
-                // lprintf("new page_dir: %p", new_tcb_ptr->task->page_dir);
             }
-            // lprintf("task %d: esp_var: %p, esp_var_addr: %p",
-            //         original_task_id, (void *)cur_tcb_ptr->curr_esp,
-            //         &(cur_tcb_ptr->curr_esp));
-            // lprintf("task %d: esp_var: %p, esp_var_addr: %p",
-            //         new_task_id, (void *)new_tcb_ptr->curr_esp,
-            //         &(new_tcb_ptr->curr_esp));
-            // MAGIC_BREAK;
             __asm__("PUSHA");
             __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->curr_esp));
             __asm__("movl %0, %%esp" :: "r" (new_tcb_ptr->curr_esp));
@@ -98,24 +84,12 @@ void sche_yield() {
             kern_to_user(new_tcb_ptr->user_sp, new_tcb_ptr->ip);
             // never reach here
         } else if (new_tcb_ptr->status == FORKED) {
-            // lprintf("task %d will fire off a forked task %d",
-            //         cur_tcb_ptr->task->task_id, new_tcb_ptr->task->task_id);
             set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
-            // lprintf("new page_dir: %p", new_tcb_ptr->task->page_dir);
             new_tcb_ptr->status = RUNNABLE;
-            // lprintf("task %d: esp_var: %p, esp_var_addr: %p",
-            //         original_task_id, (void *)cur_tcb_ptr->curr_esp,
-            //         &(cur_tcb_ptr->curr_esp));
-            // lprintf("task %d: esp_var: %p, esp_var_addr: %p",
-            //         new_task_id, (void *)new_tcb_ptr->curr_esp,
-            //         &(new_tcb_ptr->curr_esp));
-            // lprintf("ip: %p", (void *)new_tcb_ptr->ip);
-            // MAGIC_BREAK;
             __asm__("PUSHA");
             __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->curr_esp));
             __asm__("movl %0, %%esp" :: "r" (new_tcb_ptr->curr_esp));
             __asm__("jmp %0" :: "r" (new_tcb_ptr->ip));
-            // kern_to_user(new_tcb_ptr->curr_esp, new_tcb_ptr->ip);
             // never reach here
         }
     }

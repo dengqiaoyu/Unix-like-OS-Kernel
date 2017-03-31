@@ -18,7 +18,7 @@
  * @return      SUCCESS(0) for success, ERROR_INIT_LIST_CALLOC_FAILED(-1) for
  *              fail
  */
-int init_list(list_t *list) {
+int list_init(list_t *list) {
     node_t *head_node = calloc(1, sizeof(node_t));
     if (head_node == NULL) {
         // int tid = gettid();
