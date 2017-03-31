@@ -130,10 +130,12 @@ void set_pte(uint32_t addr, int flags) {
 }
 
 uint32_t get_free_frame() {
+    // mutex_lock(&first_free_frame_mutex);
     uint32_t ret = first_free_frame;
     access_physical(ret);
 
     first_free_frame = *((uint32_t *)RW_PHYS_VA);
+    // mutex_unlock(&first_free_frame_mutex);
     memset((void *)RW_PHYS_VA, 0, PAGE_SIZE);
     return ret;
 }
@@ -150,9 +152,9 @@ int copy_pgdir(uint32_t *new_pgdir, uint32_t *old_pgdir) {
         int new_pde_flag = old_pde & PAGE_FALG_MASK;
         // print_line;
         new_pgdir[i] = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | new_pde_flag;
-        if ((new_pgdir[i] & PDE_PRESENT) == 1) {
-            lprintf("pgdir %d set successful", i);
-        }
+        // if ((new_pgdir[i] & PDE_PRESENT) == 1) {
+        //     lprintf("pgdir %d set successful", i);
+        // }
         // print_line;
         uint32_t *old_pgtable = (uint32_t *)(old_pde & PAGE_MASK);
         // print_line;
@@ -164,18 +166,20 @@ int copy_pgdir(uint32_t *new_pgdir, uint32_t *old_pgdir) {
             if ((old_pte & PTE_PRESENT) == 0) continue;
             uint32_t virtual_addr = ((uint32_t)i << 22) | ((uint32_t)j << 12);
             if ((old_pte & PDE_WRITE) == 0) {
-                lprintf("ready_only, virtual address: %p",
-                        (void *)virtual_addr);
+                // lprintf("ready_only, virtual address: %p",
+                //         (void *)virtual_addr);
                 new_pgtable[j] = old_pte;
                 continue;
             }
             // lprintf("read_and_write: i: %d, j: %d", i, j);
-            lprintf("read_and_write, virtual address: %p",
-                    (void *)virtual_addr);
+            // lprintf("read_and_write, virtual address: %p",
+            //         (void *)virtual_addr);
             // print_line;
             // print_line;
             // BUG mutex
+            mutex_lock(&first_free_frame_mutex);
             uint32_t new_physical_frame = get_free_frame();
+            mutex_unlock(&first_free_frame_mutex);
             // print_line;
             int new_pte_flag = old_pte & PAGE_FALG_MASK;
             // print_line;
@@ -187,7 +191,7 @@ int copy_pgdir(uint32_t *new_pgdir, uint32_t *old_pgdir) {
             // print_line;
         }
     }
-    lprintf("page_dir: %p", new_pgdir);
+    // lprintf("page_dir: %p", new_pgdir);
     // set_cr3((uint32_t)new_pgdir);
     // MAGIC_BREAK;
     // print_line;

@@ -30,6 +30,7 @@ typedef struct task {
     struct thread *main_thread;
     struct task *parent_task;
     unsigned int child_cnt;
+    unsigned int thread_cnt;
 
     // list of threads
 

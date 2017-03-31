@@ -81,13 +81,13 @@ void sche_yield() {
             kern_to_user(new_tcb_ptr->user_sp, new_tcb_ptr->ip);
             // never reach here
         } else if (new_tcb_ptr->status == FORKED) {
-            lprintf("task %d will fire off a forked task %d",
-                    cur_tcb_ptr->task->task_id, new_tcb_ptr->task->task_id);
+            // lprintf("task %d will fire off a forked task %d",
+            //         cur_tcb_ptr->task->task_id, new_tcb_ptr->task->task_id);
             set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
-            lprintf("new page_dir: %p", new_tcb_ptr->task->page_dir);
+            // lprintf("new page_dir: %p", new_tcb_ptr->task->page_dir);
             new_tcb_ptr->status = RUNNABLE;
-            lprintf("esp: %p", (void *)(new_tcb_ptr->curr_esp));
-            lprintf("ip: %p", (void *)new_tcb_ptr->ip);
+            // lprintf("esp: %p", (void *)(new_tcb_ptr->curr_esp));
+            // lprintf("ip: %p", (void *)new_tcb_ptr->ip);
             __asm__("PUSHA");
             __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->curr_esp));
             __asm__("movl %0, %%esp" :: "r" (new_tcb_ptr->curr_esp));

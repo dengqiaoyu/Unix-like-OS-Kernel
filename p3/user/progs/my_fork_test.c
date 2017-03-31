@@ -3,8 +3,18 @@
 #include <syscall.h>
 
 int main() {
-    lprintf("Hi, I am thread %d in user space\n", gettid());
-    int i = fork();
-    lprintf("fork() returns %d\n", i);
+    lprintf("I am thread %d", gettid());
+    if (fork() == 0) {
+        lprintf("I am thread %d", gettid());
+    }
+    if (fork() == 0) {
+        lprintf("I am thread %d", gettid());
+    }
+    if (fork() == 0) {
+        lprintf("I am thread %d", gettid());
+    }
+    if (fork() == 0) {
+        lprintf("I am thread %d", gettid());
+    }
     while (1) {}
 }
