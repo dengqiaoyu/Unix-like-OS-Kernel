@@ -60,17 +60,17 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     // kern_to_user(init->main_thread->user_sp, init->main_thread->ip);
 
     // task_t *merchant_1 = task_init("t2");
-    task_t *merchant_1 = task_init("peon");
-    task_t *merchant_2 = task_init("peon");
-    cur_sche_node = get_mainthr_sche_node(merchant_1);
-    append_to_scheduler(get_mainthr_sche_node(merchant_2));
+    // task_t *merchant_1 = task_init("peon");
+    // task_t *merchant_2 = task_init("peon");
+    // cur_sche_node = get_mainthr_sche_node(merchant_1);
+    // append_to_scheduler(get_mainthr_sche_node(merchant_2));
 
-    merchant_1->main_thread->status = RUNNABLE;
-    set_cr3((uint32_t)merchant_1->page_dir);
-    set_esp0(merchant_1->main_thread->kern_sp);
-    kern_to_user(merchant_1->main_thread->user_sp, merchant_1->main_thread->ip);
+    // merchant_1->main_thread->status = RUNNABLE;
+    // set_cr3((uint32_t)merchant_1->page_dir);
+    // set_esp0(merchant_1->main_thread->kern_sp);
+    // kern_to_user(merchant_1->main_thread->user_sp, merchant_1->main_thread->ip);
 
-    /*
+
     task_t *init = task_init("my_fork_test");
     cur_sche_node = get_mainthr_sche_node(init);
     init->main_thread->status = RUNNABLE;
@@ -79,7 +79,7 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     //         (void *)init->main_thread->kern_sp);
     set_esp0(init->main_thread->kern_sp);
     kern_to_user(init->main_thread->user_sp, init->main_thread->ip);
-    */
+
 
     while (1) {
         continue;

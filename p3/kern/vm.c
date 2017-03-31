@@ -17,6 +17,9 @@
 #include "asm_page_inval.h"
 #include "return_type.h"
 
+//######## DEBUG
+#define print_line lprintf("line %d", __LINE__)
+
 uint32_t *kern_page_dir;
 // thread safe?
 uint32_t first_free_frame;
@@ -55,8 +58,7 @@ void write_physical(uint32_t phys_dest, void *virtual_src, uint32_t n) {
     memcpy((void *)virtual_dest, virtual_src, len);
 }
 
-void vm_init()
-{
+void vm_init() {
     kern_page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);
     memset(kern_page_dir, 0, PAGE_SIZE);
 
@@ -96,8 +98,7 @@ void vm_init()
 }
 
 // can read from physical page_dir !!!!!!!!!! assumes it's in cr3
-uint32_t get_pte(uint32_t addr)
-{
+uint32_t get_pte(uint32_t addr) {
     uint32_t *page_dir = (uint32_t *)get_cr3();
     int pd_index = PD_INDEX(addr);
     int pt_index = PT_INDEX(addr);
@@ -109,8 +110,7 @@ uint32_t get_pte(uint32_t addr)
     }
 }
 
-void set_pte(uint32_t addr, int flags)
-{
+void set_pte(uint32_t addr, int flags) {
     uint32_t *page_dir = (uint32_t *)get_cr3();
     int pd_index = PD_INDEX(addr);
     int pt_index = PT_INDEX(addr);
@@ -123,8 +123,7 @@ void set_pte(uint32_t addr, int flags)
     uint32_t *page_tab = PTE_TO_ADDR(page_dir[pd_index]);
     if (!(page_tab[pt_index] & PTE_PRESENT)) {
         page_tab[pt_index] = get_free_frame() | flags;
-    }
-    else {
+    } else {
         page_tab[pt_index] &= PAGE_MASK;
         page_tab[pt_index] |= flags;
     }
@@ -145,44 +144,53 @@ int copy_pgdir(uint32_t *new_pgdir, uint32_t *old_pgdir) {
         new_pgdir[i] = kern_page_dir[i];
     }
 
-    // for (i = NUM_KERN_TABLES; i < NUM_KERN_PAGES; i++) {
-    //     uint32_t *page_table_dir = (uint32_t *)old_pgdir[i];
-    //     if (((uint32_t)page_table_dir & PTE_PRESENT) == 0) continue;
-    //     int j;
-    //     for (j = 0; j < NUM_KERN_PAGES; j++) {
-    //         uint32_t page_table = (page_table_dir[j] & (~PTE_ALL_FLAG_MASK));
-    //         if ((page_table & PTE_PRESENT) == 0)  continue;
-    //         uint32_t physical_frame =
-    //             (page_table & (~PTE_ALL_FLAG_MASK));
-    //         uint32_t virtual_addr = ((uint32_t)i << 22) | ((uint32_t)j << 12);
-    //         if ((page_table & PTE_WRITE) == 0) {
-    //             // BUG check return value
-    //             set_pte(virtual_addr,
-    //                     physical_frame,
-    //                     (page_table & PTE_ALL_FLAG_MASK));
-    //         } else {
-    //             mutex_lock(&first_free_frame_mutex);
-    //             // BUG check reuturn value
-    //             uint32_t new_frame = get_free_frame();
-    //             mutex_unlock(&first_free_frame_mutex);
-    //             set_pte(virtual_addr,
-    //                     new_frame,
-    //                     (page_table & PTE_ALL_FLAG_MASK));
-    //             int start;
-    //             for (start = 0; start < PAGE_SIZE; start++) {
-    //                 mutex_lock(&buf_mutex);
-    //                 read_physicals(physical_buffer,
-    //                                (char *)physical_frame,
-    //                                PAGE_SIZE);
-    //                 write_physicals((char *)new_frame,
-    //                                 physical_buffer,
-    //                                 PAGE_SIZE);
-    //                 mutex_unlock(&buf_mutex);
-    //             }
-    //         }
-    //     }
-    // }
-
+    for (i = NUM_KERN_TABLES; i < NUM_PAGE_DIRECTORY_ENTRY; i++) {
+        uint32_t old_pde = old_pgdir[i];
+        if ((old_pde & PDE_PRESENT) == 0) continue;
+        int new_pde_flag = old_pde & PAGE_FALG_MASK;
+        // print_line;
+        new_pgdir[i] = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | new_pde_flag;
+        if ((new_pgdir[i] & PDE_PRESENT) == 1) {
+            lprintf("pgdir %d set successful", i);
+        }
+        // print_line;
+        uint32_t *old_pgtable = (uint32_t *)(old_pde & PAGE_MASK);
+        // print_line;
+        uint32_t *new_pgtable = (uint32_t *) (new_pgdir[i] & PAGE_MASK);
+        // print_line;
+        int j;
+        for (j = 0; j < PAGES_PER_TABLE; j++) {
+            uint32_t old_pte = old_pgtable[j];
+            if ((old_pte & PTE_PRESENT) == 0) continue;
+            uint32_t virtual_addr = ((uint32_t)i << 22) | ((uint32_t)j << 12);
+            if ((old_pte & PDE_WRITE) == 0) {
+                lprintf("ready_only, virtual address: %p",
+                        (void *)virtual_addr);
+                new_pgtable[j] = old_pte;
+                continue;
+            }
+            // lprintf("read_and_write: i: %d, j: %d", i, j);
+            lprintf("read_and_write, virtual address: %p",
+                    (void *)virtual_addr);
+            // print_line;
+            // print_line;
+            // BUG mutex
+            uint32_t new_physical_frame = get_free_frame();
+            // print_line;
+            int new_pte_flag = old_pte & PAGE_FALG_MASK;
+            // print_line;
+            uint32_t new_pte = new_physical_frame | new_pte_flag;
+            // print_line;
+            write_physical(new_physical_frame, (void *)virtual_addr, PAGE_SIZE);
+            // print_line;
+            new_pgtable[j] = new_pte;
+            // print_line;
+        }
+    }
+    lprintf("page_dir: %p", new_pgdir);
+    // set_cr3((uint32_t)new_pgdir);
+    // MAGIC_BREAK;
+    // print_line;
     return SUCCESS;
 }
 

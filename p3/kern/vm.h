@@ -9,8 +9,11 @@
 #include <stdint.h>
 
 #define PAGE_MASK (0xFFFFF000)
+#define PAGE_FALG_MASK (~PAGE_MASK)
 #define PTE_PRESENT (0x1)
+#define PDE_PRESENT (PTE_PRESENT)
 #define PTE_WRITE (0x2)
+#define PDE_WRITE (PTE_WRITE)
 #define PTE_USER (0x4)
 
 #define CR0_PG (1 << 31)
@@ -18,6 +21,8 @@
 
 #define NUM_KERN_PAGES 4096
 #define PAGES_PER_TABLE 1024
+// TODO Do we need to leave last page directory void?
+#define NUM_PAGE_DIRECTORY_ENTRY (1024 - 1)
 #define NUM_KERN_TABLES 4
 
 #define RW_PHYS_PD_INDEX 1023

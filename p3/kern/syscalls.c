@@ -58,6 +58,7 @@ int kern_fork(void) {
     // BUG so this is not thread safe, right? or we can have a allocator making
     // it thread safe for us. And what if this one fails;
     new_task->page_dir = (uint32_t *)smemalign(PAGE_SIZE, PAGE_SIZE);
+    lprintf("new_task->page_dir: %p", new_task->page_dir);
     memset(new_task->page_dir, 0, PAGE_SIZE);
     int flags = PTE_PRESENT | PTE_WRITE | PTE_USER;
     new_task->page_dir[1022] =
@@ -96,6 +97,7 @@ int kern_fork(void) {
         return ERROR_FORK_MALLOC_KERNEL_STACK_FAILED;
     }
     new_thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
+    new_thread->user_sp = USER_STACK_LOW + USER_STACK_SIZE;
     // need set user_sp
     new_thread->task = new_task;
     new_thread->status = FORKED;
@@ -132,11 +134,12 @@ int kern_fork(void) {
     thread_t *curr_thr = GET_TCB(cur_sche_node);
     if (curr_thr->task->child_cnt == 0) {
         lprintf("I am new task!");
-        MAGIC_BREAK;
+        // MAGIC_BREAK;
         return 0;
     } else {
         append_to_scheduler(sche_node);
         lprintf("I am your father!");
+        // MAGIC_BREAK;
         return new_thread->tid;
     }
 }
