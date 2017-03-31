@@ -9,6 +9,8 @@
 #include "task.h"       /* thread_t */
 #include "allocator.h"
 #include "asm_switch.h" /* kern_to_user */
+#include "asm_context_switch.h"
+/* asm_switch_to_runnable, asm_switch_to_initizlized, asm_switch_to_forked */
 
 
 // DEBUG
@@ -72,25 +74,38 @@ void sche_yield() {
             if (new_task_id != original_task_id) {
                 set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
             }
-            __asm__("PUSHA");
-            __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->curr_esp));
-            __asm__("movl %0, %%esp" :: "r" (new_tcb_ptr->curr_esp));
-            __asm__("POPA");
+            // previous asm
+            // __asm__("PUSHA");
+            // __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->curr_esp));
+            // __asm__("movl %0, %%esp" :: "r" (new_tcb_ptr->curr_esp));
+            // __asm__("POPA");
+            // previous asm
+            asm_switch_to_runnable(&cur_tcb_ptr->curr_esp,
+                                   new_tcb_ptr->curr_esp);
         } else if (new_tcb_ptr->status == INITIALIZED) {
             set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
             new_tcb_ptr->status = RUNNABLE;
-            __asm__("PUSHA");
-            __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->curr_esp));
-            kern_to_user(new_tcb_ptr->user_sp, new_tcb_ptr->ip);
+            // previous asm
+            // __asm__("PUSHA");
+            // __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->curr_esp));
+            // kern_to_user(new_tcb_ptr->user_sp, new_tcb_ptr->ip);
             // never reach here
+            // previous asm
+            asm_switch_to_initizlized(&cur_tcb_ptr->curr_esp,
+                                      new_tcb_ptr->user_sp, new_tcb_ptr->ip);
         } else if (new_tcb_ptr->status == FORKED) {
             set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
             new_tcb_ptr->status = RUNNABLE;
-            __asm__("PUSHA");
-            __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->curr_esp));
-            __asm__("movl %0, %%esp" :: "r" (new_tcb_ptr->curr_esp));
-            __asm__("jmp %0" :: "r" (new_tcb_ptr->ip));
+            // previous asm
+            // __asm__("PUSHA");
+            // __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->curr_esp));
+            // __asm__("movl %0, %%esp" :: "r" (new_tcb_ptr->curr_esp));
+            // __asm__("jmp %0" :: "r" (new_tcb_ptr->ip));
             // never reach here
+            // previous asm
+            asm_switch_to_forked(&cur_tcb_ptr->curr_esp,
+                                 new_tcb_ptr->curr_esp,
+                                 new_tcb_ptr->ip);
         }
     }
     // TODO

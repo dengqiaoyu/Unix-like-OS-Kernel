@@ -38,9 +38,6 @@ int kern_fork(void) {
     // Do we need a mutex to protect this one?
     curr_thr = GET_TCB(cur_sche_node);
     sche_node = get_mainthr_sche_node(new_task);
-    // lprintf("curr_thr->task->child_task_cnt: %d",
-    //         curr_thr->task->child_task_cnt);
-    // MAGIC_BREAK;
     if (curr_thr->task->child_task_cnt == 0) {
         return 0;
     } else {

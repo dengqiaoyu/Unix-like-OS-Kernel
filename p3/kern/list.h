@@ -30,7 +30,7 @@ struct list {
  * @return      SUCCESS(0) for success, ERROR_INIT_LIST_CALLOC_FAILED(-1) for
  *              fail
  */
-int init_list(list_t *list);
+int list_init(list_t *list);
 
 /**
  * Add new node after the dummy head node.
