@@ -1,17 +1,11 @@
 #include "syscalls.h"
 
-task_t  *_fork_task_init(task_t *old_task);
-int _fork_page_init(task_t *new_task, task_t *old_task);
-// static int _fork_thread_init(thread_t **main_thread_ptr, task_t *new_task);
-int temp_func(task_t *new_task, task_t *old_task);
-sche_node_t *temp_func1(task_t *new_task);
-thread_t *temp_func2(sche_node_t *sche_node,
-                     task_t *new_task,
-                     thread_t *new_thread);
-int set_kern_stack(task_t *new_task, thread_t *new_thread);
+static task_t  *_fork_task_init(task_t *old_task);
+static int _fork_page_init(uint32_t **new_pgdir_ptr, uint32_t *old_pgdir);
+static int _fork_thread_init(thread_t **main_thread_ptr, task_t *new_task);
 
 int kern_fork(void) {
-    // int ret = SUCCESS;
+    int ret = SUCCESS;
     thread_t *old_thread = (GET_TCB(cur_sche_node));
     task_t *old_task = old_thread->task;
     if (old_task->thread_cnt != 1)
@@ -22,24 +16,15 @@ int kern_fork(void) {
     if (new_task == NULL) return ERROR_FORK_MALLOC_TASK_FAILED;
 
     // init_paging
-    _fork_page_init(new_task, old_task);
-    // new_task->page_dir = (uint32_t *)smemalign(PAGE_SIZE, PAGE_SIZE);
-    int flags = PTE_PRESENT | PTE_WRITE | PTE_USER;
-    uint32_t entry = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | flags;
-    new_task->page_dir[RW_PHYS_PD_INDEX] = entry;
-    temp_func(new_task, old_task);
+    ret = _fork_page_init(&(new_task->page_dir), old_task->page_dir);
+    if (ret != SUCCESS) return ERROR_FORK_COPY_PAGE_FAILED;
 
-    // init thread
-    sche_node_t *sche_node = temp_func1(new_task);
-    thread_t *new_thread = temp_func2(sche_node, new_task, NULL);
+    // init_thread
+    ret = _fork_thread_init(&(new_task->main_thread), new_task);
+    if (ret != SUCCESS) return ret;
+    old_task->child_cnt++;
 
-
-
-    new_thread->user_sp = USER_STACK_LOW + USER_STACK_SIZE;
-    new_thread->task = new_task;
-    new_thread->status = FORKED;
-    new_task->main_thread = new_thread;
-    old_task->child_cnt = 1;
+    thread_t *new_thread = new_task->main_thread;
     asm_set_exec_context(old_thread->kern_sp,
                          new_thread->kern_sp,
                          (uint32_t) & (new_thread->curr_esp),
@@ -47,6 +32,7 @@ int kern_fork(void) {
     // Now, we will have two tasks running
 
     thread_t *curr_thr = GET_TCB(cur_sche_node);
+    sche_node_t *sche_node = get_mainthr_sche_node(new_task);
     if (curr_thr->task->child_cnt == 0) {
         return 0;
     } else {
@@ -54,8 +40,6 @@ int kern_fork(void) {
         return new_thread->tid;
     }
 }
-
-
 
 task_t *_fork_task_init(task_t *old_task) {
     task_t *new_task = malloc(sizeof(task_t));
@@ -69,89 +53,51 @@ task_t *_fork_task_init(task_t *old_task) {
     return new_task;
 }
 
-int _fork_page_init(task_t *new_task, task_t *old_task) {
-    new_task->page_dir = (uint32_t *)smemalign(PAGE_SIZE, PAGE_SIZE);
-    memset(new_task->page_dir, 0, PAGE_SIZE);
-    int flags = PTE_PRESENT | PTE_WRITE | PTE_USER;
-    uint32_t entry = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | flags;
-    new_task->page_dir[RW_PHYS_PD_INDEX] = entry;
-    return SUCCESS;
-}
-
-int temp_func(task_t *new_task, task_t *old_task) {
-    lprintf("before copy_pgdir");
-    int ret = copy_pgdir(new_task->page_dir, old_task->page_dir);
-    lprintf("after copy_pgdir");
+int _fork_page_init(uint32_t **new_pgdir_ptr, uint32_t *old_pgdir) {
+    *new_pgdir_ptr = (uint32_t *)smemalign(PAGE_SIZE, PAGE_SIZE);
+    uint32_t *new_pgdir = *new_pgdir_ptr;
+    memset((void *)new_pgdir, 0, PAGE_SIZE);
+    int new_pde_flags = PTE_PRESENT | PTE_WRITE | PTE_USER;
+    uint32_t new_pde =
+        (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | new_pde_flags;
+    new_pgdir[RW_PHYS_PD_INDEX] = new_pde;
+    int ret = copy_pgdir(new_pgdir, old_pgdir);
     if (ret != SUCCESS) {
-        sfree((void *)new_task->page_dir[RW_PHYS_PD_INDEX], PAGE_SIZE);
-        sfree((void *)new_task->page_dir, PAGE_SIZE);
+        *new_pgdir_ptr = NULL;
+        sfree((void *)new_pgdir, PAGE_SIZE);
         return ERROR_FORK_COPY_PAGE_FAILED;
     }
+
     return SUCCESS;
 }
 
-sche_node_t *temp_func1(task_t *new_task) {
+int _fork_thread_init(thread_t **main_thread_ptr, task_t *new_task) {
     sche_node_t *sche_node = allocator_alloc(sche_allocator);
     if (sche_node == NULL) {
         //free_page_dir(new_task->page_dir);
-        lprintf("enter in");
-        sfree((void *)new_task->page_dir[RW_PHYS_PD_INDEX], PAGE_SIZE);
+        sfree((void *)new_task->page_dir[1022], PAGE_SIZE);
         sfree((void *)new_task->page_dir, PAGE_SIZE);
-        return NULL;
+        free(new_task);
+        return ERROR_FORK_MALLOC_THREAD_FAILED;
     }
-
-    return sche_node;
-}
-
-thread_t *temp_func2(sche_node_t *sche_node,
-                     task_t *new_task,
-                     thread_t *new_thread) {
-    new_thread = GET_TCB(sche_node);
+    thread_t *new_thread = GET_TCB(sche_node);
     mutex_lock(&id_counter.thread_id_counter_mutex);
     new_thread->tid = id_counter.thread_id_counter++;
     mutex_unlock(&id_counter.thread_id_counter_mutex);
-    return new_thread;
-}
-
-int set_kern_stack(task_t *new_task, thread_t *new_thread) {
     void *kern_stack = malloc(KERN_STACK_SIZE);
     if (kern_stack == NULL) {
         //free_page_dir(new_task->page_dir);
-        sfree((void *)new_task->page_dir[1023], PAGE_SIZE);
+        sfree((void *)new_task->page_dir[1022], PAGE_SIZE);
         sfree((void *)new_task->page_dir, PAGE_SIZE);
-        return -1;
+        allocator_free(sche_node);
+        free(new_task);
+        return ERROR_FORK_MALLOC_KERNEL_STACK_FAILED;
     }
     new_thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
+    new_thread->user_sp = USER_STACK_LOW + USER_STACK_SIZE;
+    new_thread->task = new_task;
+    new_thread->status = FORKED;
+    *main_thread_ptr = new_thread;
     return SUCCESS;
 }
 
-// int _fork_thread_init(thread_t **main_thread_ptr, task_t *new_task) {
-//     sche_node_t *sche_node = allocator_alloc(sche_allocator);
-//     if (sche_node == NULL) {
-//         //free_page_dir(new_task->page_dir);
-//         sfree((void *)new_task->page_dir[1022], PAGE_SIZE);
-//         sfree((void *)new_task->page_dir, PAGE_SIZE);
-//         free(new_task);
-//         return ERROR_FORK_MALLOC_THREAD_FAILED;
-//     }
-//     thread_t *new_thread = GET_TCB(sche_node);
-//     mutex_lock(&id_counter.thread_id_counter_mutex);
-//     new_thread->tid = id_counter.thread_id_counter++;
-//     mutex_unlock(&id_counter.thread_id_counter_mutex);
-//     void *kern_stack = malloc(KERN_STACK_SIZE);
-//     if (kern_stack == NULL) {
-//         //free_page_dir(new_task->page_dir);
-//         sfree((void *)new_task->page_dir[1022], PAGE_SIZE);
-//         sfree((void *)new_task->page_dir, PAGE_SIZE);
-//         allocator_free(sche_node);
-//         free(new_task);
-//         return ERROR_FORK_MALLOC_KERNEL_STACK_FAILED;
-//     }
-//     new_thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
-//     new_thread->user_sp = USER_STACK_LOW + USER_STACK_SIZE;
-//     new_thread->task = new_task;
-//     new_thread->status = FORKED;
-//     *main_thread_ptr = new_thread;
-//     return SUCCESS;
-// }
-//
