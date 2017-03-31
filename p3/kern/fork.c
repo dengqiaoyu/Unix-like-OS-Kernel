@@ -6,8 +6,11 @@ static int _fork_thread_init(thread_t **main_thread_ptr, task_t *new_task);
 
 int kern_fork(void) {
     int ret = SUCCESS;
+    // Do we need a mutex to protect this one?
     thread_t *old_thread = (GET_TCB(cur_sche_node));
     task_t *old_task = old_thread->task;
+    thread_t *curr_thr = NULL;
+    sche_node_t *sche_node = NULL;
     if (old_task->thread_cnt != 1)
         return ERROR_FORK_TASK_MORE_THAN_ONE_THREAD;
 
@@ -22,7 +25,7 @@ int kern_fork(void) {
     // init_thread
     ret = _fork_thread_init(&(new_task->main_thread), new_task);
     if (ret != SUCCESS) return ret;
-    old_task->child_cnt++;
+    old_task->child_task_cnt++;
 
     thread_t *new_thread = new_task->main_thread;
     asm_set_exec_context(old_thread->kern_sp,
@@ -30,10 +33,15 @@ int kern_fork(void) {
                          (uint32_t) & (new_thread->curr_esp),
                          (uint32_t) & (new_thread->ip));
     // Now, we will have two tasks running
-
-    thread_t *curr_thr = GET_TCB(cur_sche_node);
-    sche_node_t *sche_node = get_mainthr_sche_node(new_task);
-    if (curr_thr->task->child_cnt == 0) {
+    // BUG that has been found!!! cannot declare var here, because we will break
+    // stack
+    // Do we need a mutex to protect this one?
+    curr_thr = GET_TCB(cur_sche_node);
+    sche_node = get_mainthr_sche_node(new_task);
+    // lprintf("curr_thr->task->child_task_cnt: %d",
+    //         curr_thr->task->child_task_cnt);
+    // MAGIC_BREAK;
+    if (curr_thr->task->child_task_cnt == 0) {
         return 0;
     } else {
         append_to_scheduler(sche_node);
@@ -48,7 +56,6 @@ task_t *_fork_task_init(task_t *old_task) {
     new_task->task_id = id_counter.task_id_counter++;
     mutex_unlock(&id_counter.task_id_counter_mutex);
     new_task->parent_task = old_task;
-    new_task->child_cnt = 0;
     new_task->thread_cnt = 1;
     return new_task;
 }

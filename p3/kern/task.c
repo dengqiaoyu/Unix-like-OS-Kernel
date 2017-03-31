@@ -37,7 +37,6 @@ task_t *task_init(const char *fname) {
     task->main_thread->task = task;
     task->main_thread->status = INITIALIZED;
     task->parent_task = NULL;
-    task->child_cnt = 0;
     task->thread_cnt = 1;
 
     task->page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);

@@ -29,7 +29,7 @@ typedef struct task {
     uint32_t *page_dir;
     struct thread *main_thread;
     struct task *parent_task;
-    unsigned int child_cnt;
+    unsigned int child_task_cnt;
     unsigned int thread_cnt;
 
     // list of threads
@@ -52,8 +52,7 @@ typedef struct thread {
 #define RUNNABLE 1
 #define SUSPENDED 2
 #define FORKED 3
-#define FORKED_START 4
-#define BLOCKED_MUTEX 5
+#define BLOCKED_MUTEX 4
 
 int id_counter_init();
 
