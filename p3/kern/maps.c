@@ -3,12 +3,14 @@
  */
 
 #include <stdlib.h>
+#include <simics.h>
 #include <assert.h>
 #include "maps.h"
 #include "maps_internal.h"
 
-#define MAP_START(node) node->data.map_start
-#define MAP_END(node) node->data.map_end
+#define MAP_START(node) (node->map.start)
+#define MAP_SIZE(node) (node->map.size)
+#define MAP_PERMS(node) (node->map.perms)
 
 map_list_t *init_maps()
 {
@@ -17,16 +19,17 @@ map_list_t *init_maps()
     return list;
 }
 
+// assumes no overlaps
 void insert_map(map_list_t *list, uint32_t addr, uint32_t size, int perms)
 {
     map_node_t *node = make_node(addr, size, perms);
     list->root = tree_insert(list->root, node);
 }
 
-map_t *find_map(map_list_t *list, uint32_t addr)
+map_t *find_map(map_list_t *list, uint32_t addr, uint32_t size)
 {
-    map_node_t *node = tree_find(list->root, addr);
-    return &(node->data);
+    map_node_t *node = tree_find(list->root, addr, size);
+    return &(node->map);
 }
 
 void delete_map(map_list_t *list, uint32_t addr)
@@ -37,6 +40,21 @@ void delete_map(map_list_t *list, uint32_t addr)
 void destroy_maps(map_list_t *list)
 {
     return;
+}
+
+void print_nodes(map_node_t *node)
+{
+    if (node == NULL) return;
+    print_nodes(node->left);
+    lprintf("start: %x size: %x perms: %x", (unsigned int)MAP_START(node), 
+            (unsigned int)MAP_SIZE(node), (unsigned int)MAP_PERMS(node));
+    print_nodes(node->right);
+}
+
+// end me
+void print_map(map_list_t *list)
+{
+    print_nodes(list->root);
 }
 
 int max(int a, int b)
@@ -60,29 +78,67 @@ void update_height(map_node_t *node)
 map_node_t *make_node(uint32_t addr, uint32_t size, int perms)
 {
     map_node_t *node = malloc(sizeof(map_node_t));
-    node->data.map_start = addr;
-    node->data.map_end = addr + size;
-    node->data.perms = perms;
+    node->map.start = addr;
+    node->map.size = size;
+    node->map.perms = perms;
 
     node->left = node->right = NULL;
     node->height = 1;
     return node;
 }
 
+map_node_t *smallest_node(map_node_t *tree)
+{
+    if (tree == NULL) return NULL;
+    map_node_t *node = tree;
+    while (node->left != NULL) node = node->left;
+    return node;
+}
+
+int get_balance(map_node_t *tree)
+{
+    if (tree == NULL) return 0;
+    return get_height(tree->right) - get_height(tree->left);
+}
+
+void copy_map(map_node_t *from, map_node_t *to)
+{
+    MAP_START(to) = MAP_START(from);
+    MAP_SIZE(to) = MAP_SIZE(from);
+    MAP_PERMS(to) = MAP_PERMS(from);
+}
+
+map_node_t *tree_find(map_node_t *tree, uint32_t addr, uint32_t size)
+{
+    if (tree == NULL) return NULL;
+
+    if (addr < MAP_START(tree) && MAP_START(tree) - addr >= size) {
+        return tree_find(tree->left, addr, size);
+    }
+    else if (addr - MAP_START(tree) >= MAP_SIZE(tree)) {
+        return tree_find(tree->right, addr, size);
+    }
+    else {
+        return tree;
+    }
+}
+
+// assumes no overlaps
 map_node_t *tree_insert(map_node_t *tree, map_node_t *node)
 {
     if (tree == NULL) return node;
     
     if (MAP_START(tree) < MAP_START(node)) {
+        assert(MAP_START(tree) + MAP_SIZE(tree) <= MAP_START(node));
         tree->right = tree_insert(tree->right, node);
     }
     else {
-        assert(MAP_START(tree) > MAP_START(node));
+        assert(MAP_START(node) + MAP_SIZE(node) <= MAP_START(tree));
         tree->left = tree_insert(tree->left, node);
     }
 
     update_height(tree);
-    int balance = get_height(tree->right) - get_height(tree->left);
+    int balance = get_balance(tree);
 
     if (balance > 1) {
         if (MAP_START(node) < MAP_START(tree->right)) {
@@ -101,17 +157,56 @@ map_node_t *tree_insert(map_node_t *tree, map_node_t *node)
     return tree;
 }
 
-map_node_t *tree_find(map_node_t *tree, uint32_t addr)
+map_node_t *tree_delete(map_node_t *tree, uint32_t addr)
 {
-    if (tree == NULL) return NULL;
-
-    if (MAP_START(tree) > addr) {
-        return tree_find(tree->left, addr);
+    if (MAP_START(tree) < addr) {
+        tree->right = tree_delete(tree->right, addr);
+    }
+    else if (addr < MAP_START(tree)) {
+        tree->left = tree_delete(tree->left, addr);
     }
     else {
-        if (MAP_END(tree) > addr) return tree;
-        return tree_find(tree->right, addr);
+        if (tree->left == NULL || tree->right == NULL) {
+            map_node_t *temp;
+            if (tree->left == NULL) temp = tree->right;
+            else temp = tree->left;
+
+            if (temp == NULL) {
+                temp = tree;
+                tree = NULL;
+            }
+            else {
+                copy_map(temp, tree);
+                tree->left = NULL;
+                tree->right = NULL;
+            }
+            free(temp);
+        }
+        else {
+            copy_map(smallest_node(tree->right), tree);
+            tree->right = tree_delete(tree->right, MAP_START(tree));
+        }
     }
+    if (tree == NULL) return tree;
+
+    update_height(tree);
+    int balance = get_balance(tree);
+
+    if (balance > 1) {
+        if (get_balance(tree->right) < 0) {
+            tree->right = rotate_right(tree->right);
+        }
+        return rotate_left(tree);
+    }
+
+    if (balance < -1) {
+        if (get_balance(tree->left) > 0) {
+            tree->left = rotate_left(tree->left);
+        }
+        return rotate_right(tree);
+    }
+
+    return tree;
 }
 
 map_node_t *rotate_right(map_node_t *old_root)

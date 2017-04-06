@@ -14,6 +14,7 @@
 #include <mutex.h>
 
 #include "vm.h"
+#include "vm_internal.h"
 #include "asm_page_inval.h"
 #include "return_type.h"
 
@@ -21,39 +22,6 @@ uint32_t *kern_page_dir;
 // thread safe?
 uint32_t first_free_frame;
 mutex_t first_free_frame_mutex;
-
-// maps RW_PHYS_VA to physical address addr
-void access_physical(uint32_t addr) {
-    page_inval((void *)RW_PHYS_VA);
-    uint32_t *page_dir = (uint32_t *)get_cr3();
-    uint32_t *pt_va = PTE_TO_ADDR(page_dir[RW_PHYS_PD_INDEX]);
-    uint32_t entry = addr & PAGE_MASK;
-    pt_va[RW_PHYS_PT_INDEX] = entry | PTE_WRITE | PTE_PRESENT;
-}
-
-void read_physical(void *virtual_dest, uint32_t phys_src, uint32_t n) {
-    access_physical(phys_src);
-    uint32_t page_offset = phys_src & ~PAGE_MASK;
-
-    int len;
-    if (page_offset + n < PAGE_SIZE) len = n;
-    else len = PAGE_SIZE - page_offset;
-
-    uint32_t virtual_src = RW_PHYS_VA + page_offset;
-    memcpy(virtual_dest, (void *)virtual_src, len);
-}
-
-void write_physical(uint32_t phys_dest, void *virtual_src, uint32_t n) {
-    access_physical(phys_dest);
-    uint32_t page_offset = (uint32_t)virtual_src & ~PAGE_MASK;
-
-    int len;
-    if (page_offset + n < PAGE_SIZE) len = n;
-    else len = PAGE_SIZE - page_offset;
-
-    uint32_t virtual_dest = RW_PHYS_VA + page_offset;
-    memcpy((void *)virtual_dest, virtual_src, len);
-}
 
 void vm_init()
 {
@@ -122,7 +90,7 @@ void set_pte(uint32_t addr, int flags)
 
     uint32_t *page_tab = PTE_TO_ADDR(page_dir[pd_index]);
     if (!(page_tab[pt_index] & PTE_PRESENT)) {
-        page_tab[pt_index] = get_free_frame() | flags;
+        page_tab[pt_index] = get_frame() | flags;
     }
     else {
         page_tab[pt_index] &= PAGE_MASK;
@@ -130,13 +98,19 @@ void set_pte(uint32_t addr, int flags)
     }
 }
 
-uint32_t get_free_frame() {
+uint32_t get_frame() {
     uint32_t ret = first_free_frame;
     access_physical(ret);
 
     first_free_frame = *((uint32_t *)RW_PHYS_VA);
     memset((void *)RW_PHYS_VA, 0, PAGE_SIZE);
     return ret;
+}
+
+void free_frame(uint32_t addr) {
+    access_physical(addr);
+    *((uint32_t *)RW_PHYS_VA) = first_free_frame;
+    first_free_frame = addr;
 }
 
 int copy_pgdir(uint32_t *new_pgdir, uint32_t *old_pgdir) {
@@ -163,7 +137,7 @@ int copy_pgdir(uint32_t *new_pgdir, uint32_t *old_pgdir) {
     //         } else {
     //             mutex_lock(&first_free_frame_mutex);
     //             // BUG check reuturn value
-    //             uint32_t new_frame = get_free_frame();
+    //             uint32_t new_frame = get_frame();
     //             mutex_unlock(&first_free_frame_mutex);
     //             set_pte(virtual_addr,
     //                     new_frame,
@@ -186,3 +160,35 @@ int copy_pgdir(uint32_t *new_pgdir, uint32_t *old_pgdir) {
     return SUCCESS;
 }
 
+// maps RW_PHYS_VA to physical address addr
+void access_physical(uint32_t addr) {
+    page_inval((void *)RW_PHYS_VA);
+    uint32_t *page_dir = (uint32_t *)get_cr3();
+    uint32_t *pt_va = PTE_TO_ADDR(page_dir[RW_PHYS_PD_INDEX]);
+    uint32_t entry = addr & PAGE_MASK;
+    pt_va[RW_PHYS_PT_INDEX] = entry | PTE_WRITE | PTE_PRESENT;
+}
+
+void read_physical(void *virtual_dest, uint32_t phys_src, uint32_t n) {
+    access_physical(phys_src);
+    uint32_t page_offset = phys_src & ~PAGE_MASK;
+
+    int len;
+    if (page_offset + n < PAGE_SIZE) len = n;
+    else len = PAGE_SIZE - page_offset;
+
+    uint32_t virtual_src = RW_PHYS_VA + page_offset;
+    memcpy(virtual_dest, (void *)virtual_src, len);
+}
+
+void write_physical(uint32_t phys_dest, void *virtual_src, uint32_t n) {
+    access_physical(phys_dest);
+    uint32_t page_offset = (uint32_t)virtual_src & ~PAGE_MASK;
+
+    int len;
+    if (page_offset + n < PAGE_SIZE) len = n;
+    else len = PAGE_SIZE - page_offset;
+
+    uint32_t virtual_dest = RW_PHYS_VA + page_offset;
+    memcpy((void *)virtual_dest, virtual_src, len);
+}

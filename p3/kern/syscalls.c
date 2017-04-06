@@ -155,26 +155,25 @@ void kern_exec(void) {
     }
 
     simple_elf_t elf_header;
-    // really bad code, just for testing
+    // macro for namebuf length
+    // need to check execname length fits
     char namebuf[32];
     sprintf(namebuf, "%s", execname);
     elf_load_helper(&elf_header, namebuf);
 
     thread_t *thread = GET_TCB(cur_sche_node);
+    /*
     // need to free old kernel stack
     void *kern_stack = malloc(KERN_STACK_SIZE);
     thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
+    */
     thread->user_sp = USER_STACK_LOW + USER_STACK_SIZE;
     thread->ip = elf_header.e_entry;
 
     task_t *task = thread->task;
     int i;
     /*
-    // memory is leaking
-    // need to dispose of old mapped frames
-    task->page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);
-    // lprintf("task page dir is %p\n", task->page_dir);
-    int flags = PTE_PRESENT | PTE_WRITE | PTE_USER;
+    // need an unmap function here
     task->page_dir[1022] = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | flags;
     task->page_dir[1023] = (uint32_t)task->page_dir | flags;
 
@@ -207,7 +206,6 @@ void kern_exec(void) {
     *(ptr + 4) = USER_STACK_LOW;
 
     set_esp0(thread->kern_sp);
-    load_program(&elf_header, task->page_dir);
-    lprintf("cp");
+    load_program(&elf_header, task->maps);
     kern_to_user(USER_STACK_LOW + USER_STACK_SIZE, elf_header.e_entry);
 }

@@ -9,13 +9,12 @@
 #include <stdint.h>
 #include <elf_410.h>
 #include <mutex.h>
+#include <maps.h>
 
 #define USER_STACK_LOW 0xFFB00000
 #define USER_STACK_HIGH 0xFFB02000
 #define USER_STACK_SIZE 0x1000
 #define KERN_STACK_SIZE 0x1000
-
-struct thread;
 
 typedef struct id_counter {
     int task_id_counter;
@@ -34,6 +33,7 @@ typedef struct task {
     // list of threads
 
     // virtual memory mapped regions
+    map_list_t *maps;
 } task_t;
 
 typedef struct thread {
@@ -60,7 +60,7 @@ task_t *task_init(const char *fname);
 
 thread_t *thread_init();
 
-int load_program(simple_elf_t *header, uint32_t *page_dir);
+int load_program(simple_elf_t *header, map_list_t *maps);
 
 int load_elf_section(const char *fname, unsigned long start, unsigned long len,
                      long offset, int pte_flags);

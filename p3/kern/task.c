@@ -11,6 +11,7 @@
 #include <x86/cr.h>
 
 #include "vm.h"
+#include "maps.h"
 #include "task.h"
 #include "allocator.h"
 #include "scheduler.h"
@@ -43,17 +44,26 @@ task_t *task_init(const char *fname) {
     int flags = PTE_PRESENT | PTE_WRITE | PTE_USER;
     uint32_t entry = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | flags;
     task->page_dir[RW_PHYS_PD_INDEX] = entry;
-    // set to 0 ???????
-
+    // set frame areas to 0 ???????
     int i;
     for (i = 0; i < NUM_KERN_TABLES; i++) {
         task->page_dir[i] = kern_page_dir[i];
     }
 
+    task->maps = init_maps();
+    insert_map(task->maps, 0, PAGE_SIZE * NUM_KERN_PAGES, 0);
+    // zfod page goes here
+    insert_map(task->maps, RW_PHYS_VA, PAGE_SIZE, 0);
+
     simple_elf_t elf_header;
     elf_load_helper(&elf_header, fname);
-    load_program(&elf_header, task->page_dir);
     task->main_thread->ip = elf_header.e_entry;
+
+    // register new task for simics symbolic debugging
+    sim_reg_process(task->page_dir, fname);
+
+    set_cr3((uint32_t)task->page_dir);
+    load_program(&elf_header, task->maps);
 
     return task;
 }
@@ -74,29 +84,34 @@ thread_t *thread_init() {
     return thread;
 }
 
-int load_program(simple_elf_t *header, uint32_t *page_dir) {
-    // debugging code
-    sim_reg_process(page_dir, header->e_fname);
-
-    set_cr3((uint32_t)page_dir);
-
+int load_program(simple_elf_t *header, map_list_t *maps) {
     lprintf("text");
     load_elf_section(header->e_fname, header->e_txtstart, header->e_txtlen,
                      header->e_txtoff, PTE_USER | PTE_PRESENT);
+    insert_map(maps, header->e_txtstart, header->e_txtlen, MAP_USER);
+
     lprintf("dat");
     load_elf_section(header->e_fname, header->e_datstart, header->e_datlen,
                      header->e_datoff, PTE_USER | PTE_WRITE | PTE_PRESENT);
+    insert_map(maps, header->e_datstart, header->e_datlen, MAP_USER | MAP_WRITE);
+
     lprintf("rodat");
     load_elf_section(header->e_fname, header->e_rodatstart, header->e_rodatlen,
                      header->e_rodatoff, PTE_USER | PTE_PRESENT);
+    insert_map(maps, header->e_rodatstart, header->e_rodatlen, MAP_USER);
+
     lprintf("bss");
     load_elf_section(header->e_fname, header->e_bssstart, header->e_bsslen,
                      -1, PTE_USER | PTE_WRITE | PTE_PRESENT);
+    insert_map(maps, header->e_bssstart, header->e_bsslen, MAP_USER | MAP_WRITE);
+
     lprintf("stack");
     load_elf_section(header->e_fname, USER_STACK_LOW, USER_STACK_SIZE,
                      -1, PTE_USER | PTE_WRITE | PTE_PRESENT);
+    insert_map(maps, USER_STACK_LOW, USER_STACK_SIZE, MAP_USER | MAP_WRITE);
 
-    // set_cr3((uint32_t)kern_page_dir);
+    // test maps
+    print_map(maps);
 
     return 0;
 }

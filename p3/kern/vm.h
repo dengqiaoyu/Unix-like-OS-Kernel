@@ -16,20 +16,13 @@
 #define CR0_PG (1 << 31)
 #define CR4_PGE (1 << 7)
 
-#define NUM_KERN_PAGES 4096
-#define PAGES_PER_TABLE 1024
-#define NUM_KERN_TABLES 4
-
 #define RW_PHYS_PD_INDEX 1023
 #define RW_PHYS_PT_INDEX 1023
 #define RW_PHYS_VA 0xFFFFF000
 
-#define PD_INDEX(addr) ((addr >> 22) & 0x3FF)
-#define PT_INDEX(addr) ((addr >> 12) & 0x3FF)
-#define PTE_TO_ADDR(pte) ((void *)(pte & PAGE_MASK))
-
-#define CHECK_ALLOC(addr) if (addr == NULL) lprintf("bad malloc")
-
+#define PAGES_PER_TABLE 1024
+#define NUM_KERN_TABLES 4
+#define NUM_KERN_PAGES 4096
 
 void vm_init();
 
@@ -37,7 +30,9 @@ uint32_t get_pte(uint32_t addr);
 
 void set_pte(uint32_t addr, int flags);
 
-uint32_t get_free_frame();
+uint32_t get_frame();
+
+void free_frame(uint32_t addr);
 
 int copy_pgdir(uint32_t *new_pgdir, uint32_t *old_pgdir);
 
