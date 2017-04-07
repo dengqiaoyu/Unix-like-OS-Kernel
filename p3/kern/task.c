@@ -38,7 +38,7 @@ task_t *task_init(const char *fname) {
     task->main_thread->task = task;
     task->main_thread->status = INITIALIZED;
     task->parent_task = NULL;
-    task->child_cnt = 0;
+    task->thread_cnt = 1;
 
     task->page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);
     int flags = PTE_PRESENT | PTE_WRITE | PTE_USER;
@@ -50,10 +50,9 @@ task_t *task_init(const char *fname) {
         task->page_dir[i] = kern_page_dir[i];
     }
 
-    task->maps = init_maps();
-    insert_map(task->maps, 0, PAGE_SIZE * NUM_KERN_PAGES, 0);
-    // zfod page goes here
-    insert_map(task->maps, RW_PHYS_VA, PAGE_SIZE, 0);
+    task->maps = maps_init();
+    maps_insert(task->maps, 0, PAGE_SIZE * NUM_KERN_PAGES, 0);
+    maps_insert(task->maps, RW_PHYS_VA, PAGE_SIZE, 0);
 
     simple_elf_t elf_header;
     elf_load_helper(&elf_header, fname);
@@ -88,30 +87,30 @@ int load_program(simple_elf_t *header, map_list_t *maps) {
     lprintf("text");
     load_elf_section(header->e_fname, header->e_txtstart, header->e_txtlen,
                      header->e_txtoff, PTE_USER | PTE_PRESENT);
-    insert_map(maps, header->e_txtstart, header->e_txtlen, MAP_USER);
+    maps_insert(maps, header->e_txtstart, header->e_txtlen, MAP_USER);
 
     lprintf("dat");
     load_elf_section(header->e_fname, header->e_datstart, header->e_datlen,
                      header->e_datoff, PTE_USER | PTE_WRITE | PTE_PRESENT);
-    insert_map(maps, header->e_datstart, header->e_datlen, MAP_USER | MAP_WRITE);
+    maps_insert(maps, header->e_datstart, header->e_datlen, MAP_USER | MAP_WRITE);
 
     lprintf("rodat");
     load_elf_section(header->e_fname, header->e_rodatstart, header->e_rodatlen,
                      header->e_rodatoff, PTE_USER | PTE_PRESENT);
-    insert_map(maps, header->e_rodatstart, header->e_rodatlen, MAP_USER);
+    maps_insert(maps, header->e_rodatstart, header->e_rodatlen, MAP_USER);
 
     lprintf("bss");
     load_elf_section(header->e_fname, header->e_bssstart, header->e_bsslen,
                      -1, PTE_USER | PTE_WRITE | PTE_PRESENT);
-    insert_map(maps, header->e_bssstart, header->e_bsslen, MAP_USER | MAP_WRITE);
+    maps_insert(maps, header->e_bssstart, header->e_bsslen, MAP_USER | MAP_WRITE);
 
     lprintf("stack");
     load_elf_section(header->e_fname, USER_STACK_LOW, USER_STACK_SIZE,
                      -1, PTE_USER | PTE_WRITE | PTE_PRESENT);
-    insert_map(maps, USER_STACK_LOW, USER_STACK_SIZE, MAP_USER | MAP_WRITE);
+    maps_insert(maps, USER_STACK_LOW, USER_STACK_SIZE, MAP_USER | MAP_WRITE);
 
     // test maps
-    print_map(maps);
+    maps_print(maps);
 
     return 0;
 }
@@ -122,8 +121,8 @@ int load_elf_section(const char *fname, unsigned long start, unsigned long len,
     lprintf("%p", (void *)len);
     lprintf("%p", (void *)offset);
 
-    uint32_t low = (uint32_t)start & PAGE_MASK;
-    uint32_t high = (uint32_t)(start + len + PAGE_SIZE - 1) & PAGE_MASK;
+    uint32_t low = (uint32_t)start & PAGE_ALIGN_MASK;
+    uint32_t high = (uint32_t)(start + len + PAGE_SIZE - 1) & PAGE_ALIGN_MASK;
 
     uint32_t addr = low;
     while (addr < high) {

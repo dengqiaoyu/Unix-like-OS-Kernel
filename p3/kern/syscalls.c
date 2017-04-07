@@ -30,117 +30,6 @@ int kern_gettid(void) {
     return thread->tid;
 }
 
-// TODO maybe devide into sub functions
-int kern_fork(void) {
-    thread_t *thr_tmp_test = GET_TCB(cur_sche_node);
-    lprintf("Hi, I am thread %d in kernel space\n", thr_tmp_test->tid);
-    int ret = SUCCESS;
-    // This should be done first.
-    // set_cr3((uint32_t)kern_page_dir);
-    thread_t *old_thread = (GET_TCB(cur_sche_node));
-    task_t *old_task = old_thread->task;
-    if (old_task->child_cnt != 0)
-        return -1;
-    lprintf("after checking child count\n");
-    // malloc new task structure
-    task_t *new_task = malloc(sizeof(task_t));
-    if (new_task == NULL)
-        return ERROR_FORK_MALLOC_TASK_FAILED;
-
-    // get new task id
-    mutex_lock(&id_counter.task_id_counter_mutex);
-    new_task->task_id = id_counter.task_id_counter++;
-    mutex_unlock(&id_counter.task_id_counter_mutex);
-
-    lprintf("after get new task id, task id: %d", new_task->task_id);
-
-    // create and copy page directory
-    // BUG so this is not thread safe, right? or we can have a allocator making
-    // it thread safe for us. And what if this one fails;
-    new_task->page_dir = (uint32_t *)smemalign(PAGE_SIZE, PAGE_SIZE);
-    memset(new_task->page_dir, 0, PAGE_SIZE);
-    int flags = PTE_PRESENT | PTE_WRITE | PTE_USER;
-    new_task->page_dir[1022] =
-        (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | flags;
-    new_task->page_dir[1023] =
-        (uint32_t)new_task->page_dir | flags;
-    lprintf("before copy_pgdir");
-    ret = copy_pgdir(new_task->page_dir, old_task->page_dir);
-    lprintf("after copy_pgdir");
-    if (ret != SUCCESS) {
-        // BUG thread safe
-        sfree((void *)new_task->page_dir[1022], PAGE_SIZE);
-        sfree((void *)new_task->page_dir, PAGE_SIZE);
-        return ERROR_FORK_COPY_FIR_FAILED;
-    }
-
-    sche_node_t *sche_node = allocator_alloc(sche_allocator);
-    lprintf("after allocate sche_node");
-    if (sche_node == NULL) {
-        //free_page_dir(new_task->page_dir);
-        sfree((void *)new_task->page_dir[1022], PAGE_SIZE);
-        sfree((void *)new_task->page_dir, PAGE_SIZE);
-        return ERROR_FORK_MALLOC_THREAD_FAILED;
-    }
-    thread_t *new_thread = GET_TCB(sche_node);
-    mutex_lock(&id_counter.thread_id_counter_mutex);
-    new_thread->tid = id_counter.thread_id_counter++;
-    mutex_unlock(&id_counter.thread_id_counter_mutex);
-    lprintf("after get tid, new tid: %d\n", new_thread->tid);
-    void *kern_stack = malloc(KERN_STACK_SIZE);
-    if (kern_stack == NULL) {
-        //free_page_dir(new_task->page_dir);
-        sfree((void *)new_task->page_dir[1022], PAGE_SIZE);
-        sfree((void *)new_task->page_dir, PAGE_SIZE);
-        allocator_free(sche_node);
-        return ERROR_FORK_MALLOC_KERNEL_STACK_FAILED;
-    }
-    new_thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
-    // need set user_sp
-    new_thread->task = new_task;
-    new_thread->status = FORKED;
-
-    new_task->main_thread = new_thread;
-    new_task->parent_task = old_task;
-    old_task->child_cnt = 1;
-
-    lprintf("before asm_set_exec_context");
-    lprintf("old_thread->kern_sp: %p", (void *)old_thread->kern_sp);
-    lprintf("new_thread->kern_sp: %p", (void *)new_thread->kern_sp);
-    lprintf("&(new_thread->curr_esp): %p", (void *)(&(new_thread->curr_esp)));
-    lprintf("new_thread->curr_esp: %p", (void *)new_thread->curr_esp);
-    lprintf("&(new_thread->ip): %p", (void *)(&(new_thread->ip)));
-    lprintf("new_thread->ip: %p", (void *)new_thread->ip);
-    // MAGIC_BREAK;
-    asm_set_exec_context(old_thread->kern_sp,
-                         new_thread->kern_sp,
-                         (uint32_t) & (new_thread->curr_esp),
-                         (uint32_t) & (new_thread->ip));
-    // lprintf("&(new_thread->curr_esp): %p", (void *)(&(new_thread->curr_esp)));
-    // lprintf("new_thread->curr_esp: %p", (void *)new_thread->curr_esp);
-    // lprintf("&(new_thread->ip): %p", (void *)(&(new_thread->ip)));
-    // lprintf("new_thread->ip: %p", (void *)new_thread->ip);
-    // MAGIC_BREAK;
-    // asm_set_exec_context(0,
-    //                      1,
-    //                      2,
-    //                      3);
-    lprintf("after asm_set_exec_context");
-    // Now, we will have two tasks running
-
-    lprintf("begin return\n");
-    thread_t *curr_thr = GET_TCB(cur_sche_node);
-    if (curr_thr->task->child_cnt == 0) {
-        lprintf("I am new task!");
-        MAGIC_BREAK;
-        return 0;
-    } else {
-        append_to_scheduler(sche_node);
-        lprintf("I am your father!");
-        return new_thread->tid;
-    }
-}
-
 void kern_exec(void) {
     uint32_t *esi = (uint32_t *)get_esi();
     char *execname = (char *)(*esi);
@@ -161,6 +50,22 @@ void kern_exec(void) {
     sprintf(namebuf, "%s", execname);
     elf_load_helper(&elf_header, namebuf);
 
+    char argbuf[256];
+    char *ptrbuf[16];
+    char *arg;
+    char *marker = argbuf;
+    int len;
+    int i;
+    for (i = 0; i < argc; i++) {
+        arg = *(argvec + i);
+        len = strlen(arg);
+        strncpy(marker, arg, len);
+        marker[len] = '\0';
+        ptrbuf[i] = marker;
+        marker += len + 1;
+    }
+    ptrbuf[argc] = NULL;
+
     thread_t *thread = GET_TCB(cur_sche_node);
     /*
     // need to free old kernel stack
@@ -171,26 +76,25 @@ void kern_exec(void) {
     thread->ip = elf_header.e_entry;
 
     task_t *task = thread->task;
-    int i;
-    /*
-    // need an unmap function here
-    task->page_dir[1022] = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | flags;
-    task->page_dir[1023] = (uint32_t)task->page_dir | flags;
+    maps_destroy(task->maps);
+    task->maps = maps_init();
+    maps_insert(task->maps, 0, PAGE_SIZE * NUM_KERN_PAGES, 0);
+    maps_insert(task->maps, RW_PHYS_VA, PAGE_SIZE, 0);
 
-    for (i = 0; i < NUM_KERN_TABLES; i++) {
-        task->page_dir[i] = kern_page_dir[i];
-    }
-    */
+    clear_pgdir(task->page_dir);
+    set_cr3((uint32_t)task->page_dir);
+
+    load_program(&elf_header, task->maps);
 
     // need macros here badly
+    // 5 because ret addr and 4 args
+    char **argv = (char **)(USER_STACK_LOW + USER_STACK_SIZE + 5 * sizeof(int));
+    // 6 because argv is a null terminated char ptr array
     char *buf = (char *)(USER_STACK_LOW + USER_STACK_SIZE + 6 * sizeof(int) +
                          argc * sizeof(int));
-    char **argv = (char **)(USER_STACK_LOW + USER_STACK_SIZE + 5 * sizeof(int));
 
-    char *arg;
-    int len;
     for (i = 0; i < argc; i++) {
-        arg = *(argvec + i);
+        arg = *(ptrbuf + i);
         len = strlen(arg);
         strncpy(buf, arg, len);
         buf[len] = '\0';
@@ -205,7 +109,9 @@ void kern_exec(void) {
     *(ptr + 3) = USER_STACK_HIGH;
     *(ptr + 4) = USER_STACK_LOW;
 
+    // update fname for simics symbolic debugging
+    sim_reg_process(task->page_dir, elf_header.e_fname);
+
     set_esp0(thread->kern_sp);
-    load_program(&elf_header, task->maps);
     kern_to_user(USER_STACK_LOW + USER_STACK_SIZE, elf_header.e_entry);
 }

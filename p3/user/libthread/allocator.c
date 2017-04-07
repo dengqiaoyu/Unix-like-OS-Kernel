@@ -63,7 +63,7 @@ int allocator_init(allocator_t **allocator,
     allocator_t *allocator_ptr = malloc(sizeof(allocator_t));
     if (allocator_ptr == NULL) return ERROR_ALLOCATOR_INIT_FAILED;
 
-    ret = init_list(&(allocator_ptr->list));
+    ret = list_init(&(allocator_ptr->list));
     if (ret != SUCCESS) {
         free(allocator_ptr);
         return ERROR_ALLOCATOR_INIT_FAILED;

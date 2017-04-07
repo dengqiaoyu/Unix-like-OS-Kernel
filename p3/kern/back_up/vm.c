@@ -65,7 +65,7 @@ uint32_t *get_pte(uint32_t *page_dir, uint32_t page_va) {
         return NULL;
     }
 
-    uint32_t *pt = (uint32_t *)(page_dir[page_dir_index] & ~PAGE_MASK);
+    uint32_t *pt = (uint32_t *)(page_dir[page_dir_index] & ~PAGE_ALIGN_MASK);
     return &(pt[page_tab_index]);
 }
 
@@ -83,7 +83,7 @@ void set_pte(uint32_t *page_dir, uint32_t page_va, uint32_t *page, int flags) {
         page_dir[page_dir_index] = (uint32_t)new_page | flags;
     }
 
-    uint32_t *pt = (uint32_t *)(page_dir[page_dir_index] & ~PAGE_MASK);
+    uint32_t *pt = (uint32_t *)(page_dir[page_dir_index] & ~PAGE_ALIGN_MASK);
     pt[page_tab_index] = (uint32_t)page | flags;
 }
 

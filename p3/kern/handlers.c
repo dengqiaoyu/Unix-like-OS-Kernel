@@ -30,7 +30,7 @@ void pf_handler() {
     uint32_t pf_addr = get_cr2();
     uint32_t pte = get_pte(pf_addr);
 
-    if (!(pte & PTE_PRESENT)) {
+    if ((pte & PTE_PRESENT) == 0) {
         set_pte(pf_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
     }
     else {

@@ -25,7 +25,7 @@ extern sche_node_t *cur_sche_node;
 int mutex_init(mutex_t *mp) {
     mp->lock = 0;
     // list_init(&mp->list);
-    init_list(&mp->list);
+    list_init(&mp->list);
     return 0;
 }
 
@@ -46,8 +46,7 @@ void mutex_lock(mutex_t *mp) {
         enable_interrupts();
 
         sche_yield();
-    }
-    else {
+    } else {
         mp->lock = 1;
         enable_interrupts();
     }
@@ -60,8 +59,7 @@ void mutex_unlock(mutex_t *mp) {
     sche_node_t *new_sche_node = pop_first_node(&mp->list);
     if (new_sche_node == NULL) {
         mp->lock = 0;
-    }
-    else {
+    } else {
         GET_TCB(new_sche_node)->status = RUNNABLE;
         append_to_scheduler(new_sche_node);
     }
@@ -69,4 +67,3 @@ void mutex_unlock(mutex_t *mp) {
     // if (eflags & EFL_IF)
     enable_interrupts();
 }
-

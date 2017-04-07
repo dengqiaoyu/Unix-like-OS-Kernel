@@ -52,7 +52,7 @@ void init_timer(void (*tickback)(unsigned int)) {
 void ticktock() {
     numTicks++;
     callback_func(numTicks);
-    outb(INT_ACK_CURRENT, INT_CTL_PORT);
+    // outb(INT_ACK_CURRENT, INT_CTL_PORT);
 }
 
 /**
@@ -64,7 +64,7 @@ void cnt_seconds(unsigned int numTicks) {
         // lprintf("time: %d", seconds);
         seconds++;
     }
-    outb(INT_ACK_CURRENT, INT_CTL_PORT);
+    // outb(INT_ACK_CURRENT, INT_CTL_PORT);
     sche_yield();
 }
 
