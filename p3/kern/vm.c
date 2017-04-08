@@ -22,9 +22,13 @@
 #define print_line lprintf("line %d", __LINE__)
 
 uint32_t *kern_page_dir;
-// thread safe?
-uint32_t first_free_frame;
-mutex_t first_free_frame_mutex;
+uint32_t zfod_frame;
+
+static int num_free_frames;
+static mutex_t num_free_frames_mutex;
+
+static uint32_t first_free_frame;
+static mutex_t first_free_frame_mutex;
 
 void vm_init() {
     kern_page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);
@@ -55,14 +59,18 @@ void vm_init() {
     set_cr0(get_cr0() | CR0_PG);
     set_cr4(get_cr4() | CR4_PGE);
 
+    int machine_frames = machine_phys_frames();
+    mutex_init(&first_free_frame_mutex);
     first_free_frame = frame;
-    uint32_t last_frame = PAGE_SIZE * (machine_phys_frames() - 1);
+    num_free_frames = machine_frames - NUM_KERN_PAGES - 1;
+    zfod_frame = PAGE_SIZE * (machine_frames - 1);
+
+    uint32_t last_frame = zfod_frame - PAGE_SIZE;
     while (frame < last_frame) {
         access_physical(frame);
         *((uint32_t *)RW_PHYS_VA) = frame + PAGE_SIZE;
         frame += PAGE_SIZE;
     }
-    mutex_init(&first_free_frame_mutex);
 }
 
 // can read from physical page_dir !!!!!!!!!! assumes it's in cr3
@@ -78,7 +86,7 @@ uint32_t get_pte(uint32_t addr) {
     }
 }
 
-void set_pte(uint32_t addr, int flags) {
+void set_pte(uint32_t addr, uint32_t frame_addr, int flags) {
     uint32_t *page_dir = (uint32_t *)get_cr3();
     int pd_index = PD_INDEX(addr);
     int pt_index = PT_INDEX(addr);
@@ -89,13 +97,7 @@ void set_pte(uint32_t addr, int flags) {
     }
 
     uint32_t *page_tab = ENTRY_TO_ADDR(page_dir[pd_index]);
-    if (!(page_tab[pt_index] & PTE_PRESENT)) {
-        page_tab[pt_index] = get_frame() | flags;
-    }
-    else {
-        page_tab[pt_index] &= PAGE_ALIGN_MASK;
-        page_tab[pt_index] |= flags;
-    }
+    page_tab[pt_index] = frame_addr | flags;
 }
 
 uint32_t get_frame() {
@@ -116,6 +118,21 @@ void free_frame(uint32_t addr) {
     *((uint32_t *)RW_PHYS_VA) = first_free_frame;
     first_free_frame = addr;
     mutex_unlock(&first_free_frame_mutex);
+}
+
+int dec_num_free_frames(int n) {
+    int ret = 0;
+    mutex_lock(&num_free_frames_mutex);
+    if (num_free_frames < n) ret = -1;
+    num_free_frames -= n;
+    mutex_unlock(&num_free_frames_mutex);
+    return ret;
+}
+
+void inc_num_free_frames(int n) {
+    mutex_lock(&num_free_frames_mutex);
+    num_free_frames += n;
+    mutex_unlock(&num_free_frames_mutex);
 }
 
 int clear_pgdir(uint32_t *pgdir) {

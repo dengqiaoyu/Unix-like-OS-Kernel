@@ -10,7 +10,6 @@
 
 #define MAP_USER 0x1
 #define MAP_WRITE 0x2
-#define MAP_REMOVE 0x4
 
 typedef struct map {
     uint32_t start;
@@ -26,7 +25,7 @@ void maps_destroy(map_list_t *maps);
 
 map_list_t *maps_copy(map_list_t *list);
 
-//TODO
+//TODO delete me, eventually?
 void maps_print(map_list_t *maps);
 
 

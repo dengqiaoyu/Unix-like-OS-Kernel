@@ -29,7 +29,11 @@ extern id_counter_t id_counter;
 extern allocator_t *sche_allocator;
 
 int kern_gettid(void);
+
 void kern_exec(void);
+
 int kern_fork(void);
+
+int kern_new_pages(void);
 
 #endif

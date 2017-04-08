@@ -18,6 +18,7 @@
 #include "return_type.h"
 
 extern uint32_t *kern_page_dir;
+extern int num_free_frames;
 extern allocator_t *sche_allocator;
 
 id_counter_t id_counter = {0};
@@ -78,7 +79,7 @@ thread_t *thread_init() {
     lprintf("thread kern stack is %p\n", kern_stack);
     thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
     // because of manipulation?
-    thread->user_sp = USER_STACK_LOW + USER_STACK_SIZE;
+    thread->user_sp = USER_STACK_START;
 
     return thread;
 }
@@ -122,12 +123,18 @@ int load_elf_section(const char *fname, unsigned long start, unsigned long len,
     lprintf("%p", (void *)offset);
 
     uint32_t low = (uint32_t)start & PAGE_ALIGN_MASK;
-    uint32_t high = (uint32_t)(start + len + PAGE_SIZE - 1) & PAGE_ALIGN_MASK;
+    uint32_t high = (uint32_t)(start + len);
 
     uint32_t addr = low;
     while (addr < high) {
         if (!(get_pte(addr) & PTE_PRESENT)) {
-            set_pte(addr, pte_flags);
+            // TODO fix error handling here
+            if (dec_num_free_frames(1) < 0) {
+                return -1;
+            }
+
+            uint32_t frame_addr = get_frame();
+            set_pte(addr, frame_addr, pte_flags);
         }
         addr += PAGE_SIZE;
     }

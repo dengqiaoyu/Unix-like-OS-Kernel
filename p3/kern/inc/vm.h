@@ -12,10 +12,12 @@
 #define PAGE_FLAG_MASK (~PAGE_ALIGN_MASK)
 
 #define PTE_PRESENT (0x1)
-#define PDE_PRESENT (PTE_PRESENT)
 #define PTE_WRITE (0x2)
-#define PDE_WRITE (PTE_WRITE)
 #define PTE_USER (0x4)
+
+#define PDE_PRESENT (0x1)
+#define PDE_WRITE (0x2)
+#define PDE_USER (0x4)
 
 #define CR0_PG (1 << 31)
 #define CR4_PGE (1 << 7)
@@ -33,11 +35,15 @@ void vm_init();
 
 uint32_t get_pte(uint32_t addr);
 
-void set_pte(uint32_t addr, int flags);
+void set_pte(uint32_t addr, uint32_t frame_addr, int flags);
 
 uint32_t get_frame();
 
 void free_frame(uint32_t addr);
+
+int dec_num_free_frames(int n);
+
+void inc_num_free_frames(int n);
 
 int clear_pgdir(uint32_t *pgdir);
 

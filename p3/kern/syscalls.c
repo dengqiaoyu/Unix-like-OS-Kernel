@@ -21,20 +21,24 @@
 #include "asm_set_exec_context.h"
 
 extern sche_node_t *cur_sche_node;
-extern uint32_t *kern_page_dir;
 extern id_counter_t id_counter;
 extern allocator_t *sche_allocator;
+
+extern uint32_t *kern_page_dir;
+extern uint32_t zfod_frame;
+extern int num_free_frames;
 
 int kern_gettid(void) {
     thread_t *thread = GET_TCB(cur_sche_node);
     return thread->tid;
 }
 
-void kern_exec(void) {
+int kern_exec(void) {
     uint32_t *esi = (uint32_t *)get_esi();
     char *execname = (char *)(*esi);
     char **argvec = (char **)(*(esi + 1));
 
+    // TODO
     // need to check arg counts and lengths
     int argc = 0;
     char **temp = argvec;
@@ -44,6 +48,7 @@ void kern_exec(void) {
     }
 
     simple_elf_t elf_header;
+    // TODO
     // macro for namebuf length
     // need to check execname length fits
     char namebuf[32];
@@ -68,11 +73,11 @@ void kern_exec(void) {
 
     thread_t *thread = GET_TCB(cur_sche_node);
     /*
-    // need to free old kernel stack
+    // need to free old kernel stack?
     void *kern_stack = malloc(KERN_STACK_SIZE);
     thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
     */
-    thread->user_sp = USER_STACK_LOW + USER_STACK_SIZE;
+    thread->user_sp = USER_STACK_START;
     thread->ip = elf_header.e_entry;
 
     task_t *task = thread->task;
@@ -88,9 +93,9 @@ void kern_exec(void) {
 
     // need macros here badly
     // 5 because ret addr and 4 args
-    char **argv = (char **)(USER_STACK_LOW + USER_STACK_SIZE + 5 * sizeof(int));
+    char **argv = (char **)(USER_STACK_START + 5 * sizeof(int));
     // 6 because argv is a null terminated char ptr array
-    char *buf = (char *)(USER_STACK_LOW + USER_STACK_SIZE + 6 * sizeof(int) +
+    char *buf = (char *)(USER_STACK_START + 6 * sizeof(int) +
                          argc * sizeof(int));
 
     for (i = 0; i < argc; i++) {
@@ -103,15 +108,57 @@ void kern_exec(void) {
     }
     argv[argc] = NULL;
 
-    uint32_t *ptr = (uint32_t *)(USER_STACK_LOW + USER_STACK_SIZE);
+    uint32_t *ptr = (uint32_t *)USER_STACK_START;
     *(ptr + 1) = argc;
     *(ptr + 2) = (uint32_t)argv;
-    *(ptr + 3) = USER_STACK_HIGH;
+    *(ptr + 3) = USER_STACK_LOW + USER_STACK_SIZE;
     *(ptr + 4) = USER_STACK_LOW;
 
     // update fname for simics symbolic debugging
     sim_reg_process(task->page_dir, elf_header.e_fname);
 
     set_esp0(thread->kern_sp);
-    kern_to_user(USER_STACK_LOW + USER_STACK_SIZE, elf_header.e_entry);
+    kern_to_user(USER_STACK_START, elf_header.e_entry);
+
+    return 0;
+}
+
+int kern_new_pages(void) {
+    uint32_t *esi = (uint32_t *)get_esi();
+    uint32_t base = (uint32_t)(*esi);
+    uint32_t len = (uint32_t)(*(esi + 1));
+
+    if (base & (~PAGE_ALIGN_MASK)) {
+        return -1;
+    }
+
+    if (len % PAGE_SIZE != 0 || len == 0) {
+        return -1;
+    }
+
+    // this is an ugly check for "overflowing" len
+    if (base + (len - 1) < base) {
+        return -1;
+    }
+
+    thread_t *thread = GET_TCB(cur_sche_node);
+    task_t *task = thread->task;
+    if (maps_find(task->maps, base, len)) {
+        // already mapped or reserved
+        return -1;
+    }
+
+    if (dec_num_free_frames(len / PAGE_SIZE) < 0) {
+        // not enough memory
+        return -1;
+    }
+
+    uint32_t page_addr;
+    for (page_addr = base; page_addr - base > len; page_addr += PAGE_SIZE) {
+        set_pte(page_addr, zfod_frame, PTE_USER | PTE_PRESENT);
+    }
+
+    maps_insert(task->maps, base, len, MAP_USER | MAP_WRITE);
+
+    return 0;
 }

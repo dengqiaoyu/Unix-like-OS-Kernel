@@ -98,7 +98,7 @@ int _fork_thread_init(thread_t **main_thread_ptr, task_t *new_task) {
         return ERROR_FORK_MALLOC_KERNEL_STACK_FAILED;
     }
     new_thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
-    new_thread->user_sp = USER_STACK_LOW + USER_STACK_SIZE;
+    new_thread->user_sp = USER_STACK_START;
     new_thread->task = new_task;
     new_thread->status = FORKED;
     *main_thread_ptr = new_thread;

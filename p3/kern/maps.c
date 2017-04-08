@@ -96,28 +96,29 @@ void copy_node(map_node_t *from, map_node_t *to) {
 map_node_t *tree_find(map_node_t *tree, uint32_t addr, uint32_t size) {
     if (tree == NULL) return NULL;
 
-    if (addr < MAP_START(tree) && MAP_START(tree) - addr >= size) {
-        return tree_find(tree->left, addr, size);
+    if (addr < MAP_START(tree)) {
+        if (MAP_START(tree) - addr >= size) {
+            return tree_find(tree->left, addr, size);
+        }
     }
     else if (addr - MAP_START(tree) >= MAP_SIZE(tree)) {
         return tree_find(tree->right, addr, size);
     }
-    else {
-        return tree;
-    }
+
+    return tree;
 }
 
 // assumes no overlaps
 map_node_t *tree_insert(map_node_t *tree, map_node_t *node) {
     if (tree == NULL) return node;
     
-    if (MAP_START(tree) < MAP_START(node)) {
-        assert(MAP_START(tree) + MAP_SIZE(tree) <= MAP_START(node));
-        tree->right = tree_insert(tree->right, node);
+    if (MAP_START(node) < MAP_START(tree)) {
+        assert(MAP_START(tree) - MAP_START(node) >= MAP_SIZE(node));
+        tree->left = tree_insert(tree->left, node);
     }
     else {
-        assert(MAP_START(node) + MAP_SIZE(node) <= MAP_START(tree));
-        tree->left = tree_insert(tree->left, node);
+        assert(MAP_START(node) - MAP_START(tree) >= MAP_SIZE(tree));
+        tree->right = tree_insert(tree->right, node);
     }
 
     update_height(tree);
@@ -218,8 +219,9 @@ map_node_t *tree_copy(map_node_t *tree) {
 void tree_print(map_node_t *node) {
     if (node == NULL) return;
     tree_print(node->left);
-    lprintf("start: %x size: %x perms: %x", (unsigned int)MAP_START(node), 
-            (unsigned int)MAP_SIZE(node), (unsigned int)MAP_PERMS(node));
+    lprintf("start: %x size: %x perms: %x height: %d", (unsigned int)MAP_START(node), 
+            (unsigned int)MAP_SIZE(node), (unsigned int)MAP_PERMS(node),
+            node->height);
     tree_print(node->right);
 }
 
@@ -229,8 +231,8 @@ map_node_t *rotate_right(map_node_t *old_root) {
 
     new_root->right = old_root;
     old_root->left = new_left;
-    update_height(new_root);
     update_height(old_root);
+    update_height(new_root);
     return new_root;
 }
 
@@ -240,8 +242,8 @@ map_node_t *rotate_left(map_node_t *old_root) {
 
     new_root->left = old_root;
     old_root->right = new_right;
-    update_height(new_root);
     update_height(old_root);
+    update_height(new_root);
     return new_root;
 }
 

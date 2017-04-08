@@ -25,13 +25,16 @@
 #include "return_type.h"            /* RETURN_IF_ERROR, ERROR_TYPE */
 
 extern uint32_t *kern_page_dir;
+extern uint32_t zfod_frame;
 
 void pf_handler() {
     uint32_t pf_addr = get_cr2();
     uint32_t pte = get_pte(pf_addr);
 
-    if ((pte & PTE_PRESENT) == 0) {
-        set_pte(pf_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
+    // TODO handle other cases
+    if (!(pte & PTE_PRESENT) || (pte & PAGE_ALIGN_MASK) == zfod_frame) {
+        uint32_t frame_addr = get_frame();
+        set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
     }
     else {
         lprintf("%x\n", (unsigned int)pf_addr);
@@ -73,6 +76,10 @@ int syscall_init() {
                 FLAG_TRAP_GATE | FLAG_PL_USER);
     idt_install(GETTID_INT,
                 (void *)asm_gettid,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(NEW_PAGES_INT,
+                (void *)asm_new_pages,
                 SEGSEL_KERNEL_CS,
                 FLAG_TRAP_GATE | FLAG_PL_USER);
     return SUCCESS;

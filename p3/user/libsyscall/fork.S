@@ -1,6 +1,6 @@
-/** exec.S
+/** fork.S
  *
- *  Assembly wrapper for exec syscall
+ *  Assembly wrapper for fork syscall
  **/
 
 #include <syscall_int.h>
@@ -8,6 +8,6 @@
 .global fork
 
 fork:
-    int   $FORK_INT       /* trap instruction for exec */
+    int  $FORK_INT       /* trap instruction for fork */
     ret
 

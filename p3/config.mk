@@ -34,7 +34,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the 410user/progs
 # directory.
 #
-410TESTS = ck1 merchant peon
+410TESTS = loader_test1 loader_test2 ck1 merchant peon knife new_pages
 
 ###########################################################################
 # Test programs you have written which you wish to run
@@ -76,7 +76,7 @@ THREAD_OBJS = malloc.o panic.o
 ###########################################################################
 # Object files for your syscall wrappers
 ###########################################################################
-SYSCALL_OBJS = syscall.o exec.o gettid.o fork.o
+SYSCALL_OBJS = syscall.o exec.o gettid.o fork.o new_pages.o
 
 ###########################################################################
 # Object files for your automatic stack handling
@@ -98,9 +98,7 @@ KERNEL_OBJS = fake_console.o kernel.o loader.o malloc_wrappers.o\
           asm_interrupts.o timer_driver.o keyboard_driver.o\
           mutex.o maps.o allocator.o list.o syscalls.o\
           asm_page_inval.o asm_syscalls.o asm_registers.o\
-          \
           scheduler.o asm_context_switch.o\
-          \
           fork.o asm_set_exec_context.o\
 
 ###########################################################################
@@ -134,4 +132,4 @@ KERNEL_OBJS = fake_console.o kernel.o loader.o malloc_wrappers.o\
 # kernel in, or else your tweaked version will run and the test harness
 # won't.
 #
-STUDENTREQPROGS = my_user my_fork_test
+STUDENTREQPROGS =

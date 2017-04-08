@@ -27,3 +27,6 @@ WRAP_SYSCALL(asm_exec, kern_exec)
 
 .global asm_fork
 WRAP_SYSCALL(asm_fork, kern_fork)
+
+.global asm_new_pages
+WRAP_SYSCALL(asm_new_pages, kern_new_pages)

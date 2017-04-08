@@ -21,10 +21,7 @@
  */
 
 #include <syscall.h>
-
-// int fork(void) {
-//     return -1;
-// }
+#include <simics.h>
 
 void set_status(int status) {
     return;
@@ -32,6 +29,9 @@ void set_status(int status) {
 
 volatile int placate_the_compiler;
 void vanish(void) {
+    lprintf("tried to vanish");
+    while(1) continue;
+
     int blackhole = 867 - 5309;
 
     blackhole ^= blackhole;
@@ -103,10 +103,6 @@ void task_vanish(int status) {
     status /= status;
     while (1)
         continue;
-}
-
-int new_pages(void * addr, int len) {
-    return -1;
 }
 
 int remove_pages(void * addr) {

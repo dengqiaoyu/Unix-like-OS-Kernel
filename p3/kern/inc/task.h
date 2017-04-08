@@ -11,10 +11,11 @@
 #include <mutex.h>
 #include <maps.h>
 
-#define USER_STACK_LOW 0xFFB00000
-#define USER_STACK_HIGH 0xFFB02000
-#define USER_STACK_SIZE 0x1000
 #define KERN_STACK_SIZE 0x1000
+
+#define USER_STACK_LOW 0xFFB00000
+#define USER_STACK_SIZE 0x1000
+#define USER_STACK_START 0xFFB00F00
 
 typedef struct id_counter {
     int task_id_counter;
