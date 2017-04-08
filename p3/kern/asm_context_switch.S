@@ -1,7 +1,4 @@
 .global asm_switch_to_runnable
-.global asm_switch_to_initizlized
-.global asm_switch_to_forked
-
 asm_switch_to_runnable:
     pushl   %ebp
     movl    %esp, %ebp
@@ -14,7 +11,8 @@ asm_switch_to_runnable:
     leave
     ret
 
-asm_switch_to_initizlized:
+.global asm_switch_to_initialized
+asm_switch_to_initialized:
     pushl   %ebp
     movl    %esp, %ebp
     movl    8(%ebp), %eax
@@ -26,6 +24,7 @@ asm_switch_to_initizlized:
     pushl   %ecx
     call    kern_to_user
 
+.global asm_switch_to_forked
 asm_switch_to_forked:
     pushl   %ebp
     movl    %esp, %ebp

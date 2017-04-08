@@ -42,10 +42,6 @@ task_t *task_init(const char *fname) {
     task->thread_cnt = 1;
 
     task->page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);
-    int flags = PTE_PRESENT | PTE_WRITE | PTE_USER;
-    uint32_t entry = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE) | flags;
-    task->page_dir[RW_PHYS_PD_INDEX] = entry;
-    // set frame areas to 0 ???????
     int i;
     for (i = 0; i < NUM_KERN_TABLES; i++) {
         task->page_dir[i] = kern_page_dir[i];
@@ -70,15 +66,11 @@ task_t *task_init(const char *fname) {
 
 thread_t *thread_init() {
     sche_node_t *sche_node = allocator_alloc(sche_allocator);
-    lprintf("########sche_node: %p\n", sche_node);
     thread_t *thread = GET_TCB(sche_node);
-    lprintf("$$$$$$$$thread: %p\n", thread);
     thread->tid = id_counter.thread_id_counter++;
 
     void *kern_stack = malloc(KERN_STACK_SIZE);
-    lprintf("thread kern stack is %p\n", kern_stack);
     thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
-    // because of manipulation?
     thread->user_sp = USER_STACK_START;
 
     return thread;

@@ -32,6 +32,9 @@
 
 extern sche_node_t *cur_sche_node;
 
+// will need to ginf a better way to do this eventually
+extern mutex_t malloc_mutex;
+
 /** @brief Kernel entrypoint.
  *
  *  This is the entrypoint for the kernel.
@@ -40,10 +43,14 @@ extern sche_node_t *cur_sche_node;
  */
 int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     lprintf( "Hello from a brand new kernel!" );
+
     RETURN_IF_ERROR(handler_init(), ERROR_KERNEL_HANDLER_INIT_FAILED);
     vm_init();
     RETURN_IF_ERROR(scheduler_init(), ERROR_KERNEL_SCHEDULER_INIT_FAILED);
     RETURN_IF_ERROR(id_counter_init(), ERROR_KERNEL_ID_COUNTER_INIT_FAILED);
+
+    // TODO find a better way to init mutexes
+    mutex_init(&malloc_mutex);
 
     /*
     task_t *idle = task_init("idle_user");

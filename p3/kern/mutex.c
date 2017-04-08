@@ -24,7 +24,6 @@ extern sche_node_t *cur_sche_node;
 
 int mutex_init(mutex_t *mp) {
     mp->lock = 0;
-    // list_init(&mp->list);
     list_init(&mp->list);
     return 0;
 }
@@ -42,6 +41,7 @@ void mutex_lock(mutex_t *mp) {
         GET_TCB(cur_sche_node)->status = BLOCKED_MUTEX;
         add_node_to_tail(&mp->list, cur_sche_node);
 
+        // TODO will interrupts ever be disabled here?
         // if (eflags & EFL_IF)
         enable_interrupts();
 

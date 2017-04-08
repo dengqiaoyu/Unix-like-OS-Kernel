@@ -27,15 +27,20 @@ typedef struct id_counter {
 typedef struct task {
     int task_id;
     uint32_t *page_dir;
-    struct thread *main_thread;
+    map_list_t *maps;
+
     struct task *parent_task;
     unsigned int child_task_cnt;
+    list_t child_task_list;
+    // mutex
+
+    list_t zombie_task_list;
+    list_t waiting_thread_list;
+    // mutex
+
+    struct thread *main_thread;
     unsigned int thread_cnt;
-
     // list of threads
-
-    // virtual memory mapped regions
-    map_list_t *maps;
 } task_t;
 
 typedef struct thread {

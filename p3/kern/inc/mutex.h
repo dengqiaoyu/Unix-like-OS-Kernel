@@ -11,8 +11,6 @@
 
 #include "list.h"
 
-#define INIT_MUTEX {.lock = 0}
-
 typedef struct mutex {
     int lock;
     list_t list;

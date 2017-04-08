@@ -224,10 +224,8 @@ int copy_pgdir(uint32_t *new_pgdir, uint32_t *old_pgdir) {
 // maps RW_PHYS_VA to physical address addr
 void access_physical(uint32_t addr) {
     page_inval((void *)RW_PHYS_VA);
-    uint32_t *page_dir = (uint32_t *)get_cr3();
-    uint32_t *pt_va = ENTRY_TO_ADDR(page_dir[RW_PHYS_PD_INDEX]);
     uint32_t entry = addr & PAGE_ALIGN_MASK;
-    pt_va[RW_PHYS_PT_INDEX] = entry | PTE_WRITE | PTE_PRESENT;
+    set_pte(RW_PHYS_VA, entry, PTE_WRITE | PTE_PRESENT);
 }
 
 void read_physical(void *virtual_dest, uint32_t phys_src, uint32_t n) {
