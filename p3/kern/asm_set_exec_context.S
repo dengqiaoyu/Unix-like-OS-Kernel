@@ -15,8 +15,8 @@ asm_set_exec_context:
     pushl %ecx              /* parameter 3 len */
     pushl %eax              /* parameter 2 old thread esp */
     pushl %edx              /* parameter 1 new thread esp */
-    movl 12(%ebx), %eax     /* %eax = &new_thread->curr_esp */
-    movl %edx, (%eax)       /* *new_thread->curr_esp = new thread %esp */
+    movl 12(%ebx), %eax     /* %eax = &new_thread->cur_esp */
+    movl %edx, (%eax)       /* *new_thread->cur_esp = new thread %esp */
     call memcpy             /* memcpy(new_thread_esp, old_thread_esp, len) */
     addl $12, %esp          /* restore %esp */
     call get_eip

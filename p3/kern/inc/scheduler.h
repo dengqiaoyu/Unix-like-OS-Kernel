@@ -10,22 +10,23 @@
         ((tcb_tb_node_t *)((sche_node)->data))
 #define GET_TCB(sche_node)\
         ((thread_t *)(((tcb_tb_node_t *)((sche_node)->data))->data))
+#define GET_SCHE_NODE(tcb_ptr)\
+        ((sche_node_t *)(((void *)(tcb_ptr)) - 16))
 
 typedef struct schedule_list_struct schedule_t;
 
 struct schedule_list_struct {
     list_t active_list;
-    list_t deactive_list;
-    mutex_t sche_list_mutex;
 };
 
 typedef node_t sche_node_t;
 typedef node_t tcb_tb_node_t;
 
 int scheduler_init();
-void append_to_scheduler(sche_node_t *sche_node);
-sche_node_t *pop_scheduler_active();
-void sche_yield();
-sche_node_t *get_mainthr_sche_node(task_t *psb);
+void set_cur_run_thread(thread_t *tcb_ptr);
+void sche_yield(int if_suspend);
+thread_t *get_cur_tcb();
+void sche_push_back(thread_t *tcb_ptr);
+void sche_push_front(thread_t *tcb_ptr);
 
 #endif

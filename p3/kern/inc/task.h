@@ -48,7 +48,7 @@ typedef struct thread {
     task_t *task;
     uint32_t kern_sp;
     uint32_t user_sp;
-    uint32_t curr_esp;
+    uint32_t cur_esp;
     uint32_t ip;
     int status;
 } thread_t;

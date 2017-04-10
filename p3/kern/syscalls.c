@@ -20,7 +20,6 @@
 #include "allocator.h" /* allocator */
 #include "asm_set_exec_context.h"
 
-extern sche_node_t *cur_sche_node;
 extern id_counter_t id_counter;
 extern allocator_t *sche_allocator;
 
@@ -29,7 +28,7 @@ extern uint32_t zfod_frame;
 extern int num_free_frames;
 
 int kern_gettid(void) {
-    thread_t *thread = GET_TCB(cur_sche_node);
+    thread_t *thread = get_cur_tcb();
     return thread->tid;
 }
 
@@ -71,7 +70,7 @@ int kern_exec(void) {
     }
     ptrbuf[argc] = NULL;
 
-    thread_t *thread = GET_TCB(cur_sche_node);
+    thread_t *thread = get_cur_tcb();
     /*
     // need to free old kernel stack?
     void *kern_stack = malloc(KERN_STACK_SIZE);
@@ -141,7 +140,7 @@ int kern_new_pages(void) {
         return -1;
     }
 
-    thread_t *thread = GET_TCB(cur_sche_node);
+    thread_t *thread = get_cur_tcb();
     task_t *task = thread->task;
     if (maps_find(task->maps, base, len)) {
         // already mapped or reserved

@@ -16,8 +16,10 @@
 #define NUM_CHUNK_SCHEDULER 64
 
 allocator_t *sche_allocator = NULL;
-sche_node_t *cur_sche_node = NULL;
+static sche_node_t *cur_sche_node = NULL;
 static schedule_t sche_list = {{0}};
+
+sche_node_t *_sche_node_pop_front();
 
 int scheduler_init() {
     int ret = SUCCESS;
@@ -32,38 +34,23 @@ int scheduler_init() {
     if (ret != SUCCESS)
         return ret;
 
-    ret = list_init(&sche_list.deactive_list);
-    if (ret != SUCCESS)
-        return ret;
-
-    ret = mutex_init(&sche_list.sche_list_mutex);
-    if (ret != SUCCESS)
-        return ret;
-
     return SUCCESS;
 }
 
-void append_to_scheduler(sche_node_t *sche_node) {
-    mutex_lock(&sche_list.sche_list_mutex);
-    add_node_to_tail(&sche_list.active_list, sche_node);
-    mutex_unlock(&sche_list.sche_list_mutex);
+void set_cur_run_thread(thread_t *tcb_ptr) {
+    sche_node_t *sche_node = GET_SCHE_NODE(tcb_ptr);
+    cur_sche_node = sche_node;
 }
 
-sche_node_t *pop_scheduler_active() {
-    mutex_lock(&sche_list.sche_list_mutex);
-    sche_node_t *sche_node =  pop_first_node(&sche_list.active_list);
-    mutex_unlock(&sche_list.sche_list_mutex);
-    return sche_node;
-}
-
-void sche_yield() {
+void sche_yield(int suspend_flag) {
     disable_interrupts();
     outb(INT_ACK_CURRENT, INT_CTL_PORT);
     thread_t *cur_tcb_ptr = GET_TCB(cur_sche_node);
-    sche_node_t *new_sche_node = pop_scheduler_active();
+    sche_node_t *new_sche_node = _sche_node_pop_front();
     if (new_sche_node != NULL) {
         thread_t *new_tcb_ptr = GET_TCB(new_sche_node);
-        append_to_scheduler(cur_sche_node);
+        if (suspend_flag) cur_tcb_ptr->status = SUSPENDED;
+        else sche_push_back(cur_tcb_ptr);
         cur_sche_node = new_sche_node;
         set_esp0(new_tcb_ptr->kern_sp);
         int original_task_id = cur_tcb_ptr->task->task_id;
@@ -74,35 +61,35 @@ void sche_yield() {
             }
             // previous asm
             // __asm__("PUSHA");
-            // __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->curr_esp));
-            // __asm__("movl %0, %%esp" :: "r" (new_tcb_ptr->curr_esp));
+            // __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->cur_esp));
+            // __asm__("movl %0, %%esp" :: "r" (new_tcb_ptr->cur_esp));
             // __asm__("POPA");
             // previous asm
-            asm_switch_to_runnable(&cur_tcb_ptr->curr_esp,
-                                   new_tcb_ptr->curr_esp);
+            asm_switch_to_runnable(&cur_tcb_ptr->cur_esp,
+                                   new_tcb_ptr->cur_esp);
         } else if (new_tcb_ptr->status == INITIALIZED) {
             set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
             new_tcb_ptr->status = RUNNABLE;
             // previous asm
             // __asm__("PUSHA");
-            // __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->curr_esp));
+            // __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->cur_esp));
             // kern_to_user(new_tcb_ptr->user_sp, new_tcb_ptr->ip);
             // never reach here
             // previous asm
-            asm_switch_to_initialized(&cur_tcb_ptr->curr_esp,
+            asm_switch_to_initialized(&cur_tcb_ptr->cur_esp,
                                       new_tcb_ptr->user_sp, new_tcb_ptr->ip);
         } else if (new_tcb_ptr->status == FORKED) {
             set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
             new_tcb_ptr->status = RUNNABLE;
             // previous asm
             // __asm__("PUSHA");
-            // __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->curr_esp));
-            // __asm__("movl %0, %%esp" :: "r" (new_tcb_ptr->curr_esp));
+            // __asm__("movl %%esp, %0" : "=r" (cur_tcb_ptr->cur_esp));
+            // __asm__("movl %0, %%esp" :: "r" (new_tcb_ptr->cur_esp));
             // __asm__("jmp %0" :: "r" (new_tcb_ptr->ip));
             // never reach here
             // previous asm
-            asm_switch_to_forked(&cur_tcb_ptr->curr_esp,
-                                 new_tcb_ptr->curr_esp,
+            asm_switch_to_forked(&cur_tcb_ptr->cur_esp,
+                                 new_tcb_ptr->cur_esp,
                                  new_tcb_ptr->ip);
         }
     }
@@ -111,7 +98,20 @@ void sche_yield() {
     enable_interrupts();
 }
 
-sche_node_t *get_mainthr_sche_node(task_t *psb) {
-    uint32_t *main_thread = (void *)psb->main_thread;
-    return (sche_node_t *)(main_thread - 4);
+thread_t *get_cur_tcb() {
+    return GET_TCB(cur_sche_node);
+}
+
+void sche_push_back(thread_t *tcb_ptr) {
+    sche_node_t *sche_node = GET_SCHE_NODE(tcb_ptr);
+    add_node_to_tail(&sche_list.active_list, sche_node);
+}
+
+void sche_push_front(thread_t *tcb_ptr) {
+    sche_node_t *sche_node = GET_SCHE_NODE(tcb_ptr);
+    add_node_to_head(&sche_list.active_list, sche_node);
+}
+
+sche_node_t *_sche_node_pop_front() {
+    return pop_first_node(&sche_list.active_list);
 }
