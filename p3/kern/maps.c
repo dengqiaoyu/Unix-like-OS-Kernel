@@ -14,7 +14,7 @@
 
 map_list_t *maps_init() {
     map_list_t *list = malloc(sizeof(map_list_t));
-    list->root = NULL;
+    if (list != NULL) list->root = NULL;
     return list;
 }
 

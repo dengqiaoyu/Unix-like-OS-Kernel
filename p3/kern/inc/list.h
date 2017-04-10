@@ -10,19 +10,17 @@
 
 #include "return_type.h"
 
-typedef struct node node_t;
-struct node {
-    node_t *prev;
-    node_t *next;
+typedef struct node {
+    struct node *prev;
+    struct node *next;
     char data[0];
-};
+} node_t;
 
-typedef struct list list_t;
-struct list {
+typedef struct list {
     int node_cnt;
     node_t *head;
     node_t *tail;
-};
+} list_t;
 
 /**
  * Initailize the list.
@@ -30,7 +28,12 @@ struct list {
  * @return      SUCCESS(0) for success, ERROR_INIT_LIST_CALLOC_FAILED(-1) for
  *              fail
  */
-int list_init(list_t *list);
+list_t *list_init();
+
+// TODO
+void list_destroy(list_t *list);
+
+int get_list_size(list_t *list);
 
 /**
  * Add new node after the dummy head node.

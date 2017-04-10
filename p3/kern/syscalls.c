@@ -9,19 +9,16 @@
 #include <page.h>
 #include <simics.h>
 #include <x86/cr.h>
-#include <mutex.h>  /* mutex */
-#include <string.h> /* memset */
 #include <malloc.h> /* malloc, smemalign, sfree */
 
 #include "vm.h"
 #include "scheduler.h"
+#include "mutex.h"
 #include "asm_registers.h"
 #include "asm_switch.h"
 #include "allocator.h" /* allocator */
-#include "asm_set_exec_context.h"
 
 extern sche_node_t *cur_sche_node;
-extern id_counter_t id_counter;
 extern allocator_t *sche_allocator;
 
 extern uint32_t *kern_page_dir;
@@ -77,7 +74,7 @@ int kern_exec(void) {
     void *kern_stack = malloc(KERN_STACK_SIZE);
     thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
     */
-    thread->user_sp = USER_STACK_START;
+    thread->cur_sp = USER_STACK_START;
     thread->ip = elf_header.e_entry;
 
     task_t *task = thread->task;
@@ -150,6 +147,8 @@ int kern_new_pages(void) {
 
     if (dec_num_free_frames(len / PAGE_SIZE) < 0) {
         // not enough memory
+
+        // maps_print(task->maps);
         return -1;
     }
 

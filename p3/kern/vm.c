@@ -124,7 +124,7 @@ int dec_num_free_frames(int n) {
     int ret = 0;
     mutex_lock(&num_free_frames_mutex);
     if (num_free_frames < n) ret = -1;
-    num_free_frames -= n;
+    else num_free_frames -= n;
     mutex_unlock(&num_free_frames_mutex);
     return ret;
 }

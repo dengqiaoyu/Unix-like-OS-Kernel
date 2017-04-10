@@ -19,7 +19,7 @@
 /* see allocator.c for details */
 typedef struct allocator allocator_t;
 struct allocator {
-    list_t list;
+    list_t *list;
     mutex_t allocator_mutex;
 };
 
