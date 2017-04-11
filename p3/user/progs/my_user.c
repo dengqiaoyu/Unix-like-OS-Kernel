@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <simics.h>   /* lprintf() */
+#include <syscall.h>
 
 int main() {
-    int i = 0;
-    while (1) {
-        i++;
-        if (i % 1000000 == 0)
-            lprintf("my_user : %d\n", i);
-    }
+    lprintf("Hi I am thread %d\n", gettid());
+    int j = 0;
+    int ret = deschedule(&j);
+    lprintf("ret: %d\n", ret);
+    lprintf("You should never see me %d\n", gettid());
 }

@@ -42,7 +42,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the user/progs
 # directory.
 #
-STUDENTTESTS = my_fork_test
+STUDENTTESTS = my_fork_test my_user
 
 ###########################################################################
 # Data files provided by course staff to build into the RAM disk
@@ -76,7 +76,7 @@ THREAD_OBJS = malloc.o panic.o
 ###########################################################################
 # Object files for your syscall wrappers
 ###########################################################################
-SYSCALL_OBJS = syscall.o exec.o gettid.o fork.o new_pages.o
+SYSCALL_OBJS = syscall.o exec.o gettid.o fork.o new_pages.o deschedule.o
 
 ###########################################################################
 # Object files for your automatic stack handling
@@ -100,6 +100,7 @@ KERNEL_OBJS = fake_console.o kernel.o loader.o malloc_wrappers.o\
           asm_page_inval.o asm_syscalls.o asm_registers.o\
           scheduler.o asm_context_switch.o\
           fork.o asm_set_exec_context.o\
+          utils.o
 
 ###########################################################################
 # WARNING: Do not put **test** programs into the REQPROGS variables.  Your

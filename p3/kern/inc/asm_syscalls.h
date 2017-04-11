@@ -13,4 +13,6 @@ void asm_gettid(void);
 
 void asm_new_pages(void);
 
+void asm_deschedule(void);
+
 #endif

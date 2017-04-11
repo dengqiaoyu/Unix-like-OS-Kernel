@@ -12,6 +12,7 @@
 #include <mutex.h>  /* mutex */
 #include <string.h> /* memset */
 #include <malloc.h> /* malloc, smemalign, sfree */
+#include <asm.h>    /* disable_interrupt(), enable... */
 
 #include "vm.h"
 #include "scheduler.h"
@@ -19,6 +20,7 @@
 #include "asm_switch.h"
 #include "allocator.h" /* allocator */
 #include "asm_set_exec_context.h"
+#include "utils.h"
 
 extern id_counter_t id_counter;
 extern allocator_t *sche_allocator;
@@ -159,5 +161,22 @@ int kern_new_pages(void) {
 
     maps_insert(task->maps, base, len, MAP_USER | MAP_WRITE);
 
+    return 0;
+}
+
+int kern_deschedule(void) {
+    uint32_t *esi = (uint32_t *)get_esi();
+    int *reject = (int *)esi;
+    // if (check_ptr_valid((uint32_t)reject, (uint32_t *)get_cr3(), 0) == -1)
+    //     return -1;
+
+    disable_interrupts();
+    if (*reject != 0) {
+        enable_interrupts();
+        return 0;
+    }
+    lprintf("%d\n", __LINE__);
+    sche_yield(1);
+    enable_interrupts();
     return 0;
 }

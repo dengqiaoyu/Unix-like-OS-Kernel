@@ -35,8 +35,7 @@ void pf_handler() {
     if (!(pte & PTE_PRESENT) || (pte & PAGE_ALIGN_MASK) == zfod_frame) {
         uint32_t frame_addr = get_frame();
         set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
-    }
-    else {
+    } else {
         lprintf("%x\n", (unsigned int)pf_addr);
         roll_over();
     }
@@ -80,6 +79,10 @@ int syscall_init() {
                 FLAG_TRAP_GATE | FLAG_PL_USER);
     idt_install(NEW_PAGES_INT,
                 (void *)asm_new_pages,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(DESCHEDULE_INT,
+                (void *)asm_deschedule,
                 SEGSEL_KERNEL_CS,
                 FLAG_TRAP_GATE | FLAG_PL_USER);
     return SUCCESS;

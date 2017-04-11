@@ -63,12 +63,11 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     cur_sche_node = get_mainthr_sche_node(init);
     append_to_scheduler(get_mainthr_sche_node(merchant_2));
     */
+    task_t *my_fork_test = task_init("my_fork_test");
+    sche_push_back(my_fork_test->main_thread);
 
-    task_t *init = task_init("my_fork_test");
+    task_t *init = task_init("my_user");
     set_cur_run_thread(init->main_thread);
-    lprintf("init->main_thread: %p\n", init->main_thread);
-    lprintf("sche_node :%p\n", GET_SCHE_NODE(init->main_thread));
-    lprintf("tid: %d\n", init->main_thread->tid);
     init->main_thread->status = RUNNABLE;
     set_cr3((uint32_t)init->page_dir);
     set_esp0(init->main_thread->kern_sp);

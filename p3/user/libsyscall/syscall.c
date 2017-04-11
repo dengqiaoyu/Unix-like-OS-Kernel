@@ -30,7 +30,7 @@ void set_status(int status) {
 volatile int placate_the_compiler;
 void vanish(void) {
     lprintf("tried to vanish");
-    while(1) continue;
+    while (1) continue;
 
     int blackhole = 867 - 5309;
 
@@ -49,9 +49,9 @@ int yield(int pid) {
     return -1;
 }
 
-int deschedule(int *flag) {
-    return -1;
-}
+// int deschedule(int *flag) {
+//     return -1;
+// }
 
 int make_runnable(int pid) {
     return -1;
