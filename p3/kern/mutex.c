@@ -20,8 +20,6 @@ int mutex_lock_asm(mutex_t *mp);
 int mutex_unlock_asm(mutex_t *mp);
 */
 
-extern sche_node_t *cur_sche_node;
-
 int mutex_init(mutex_t *mp) {
     mp->lock = 0;
     mp->blocked_list = list_init();
@@ -34,19 +32,15 @@ void mutex_destroy(mutex_t *mp) {
 }
 
 void mutex_lock(mutex_t *mp) {
-    // uint32_t eflags = get_eflags();
+    thread_t *cur_thread = get_cur_tcb();
 
     disable_interrupts();
+
     if (mp->lock == 1) {
-        MAGIC_BREAK;
-        GET_TCB(cur_sche_node)->status = BLOCKED_MUTEX;
-        add_node_to_tail(mp->blocked_list, cur_sche_node);
+        cur_thread->status = BLOCKED_MUTEX;
+        add_node_to_tail(mp->blocked_list, GET_SCHE_NODE(cur_thread));
 
-        // TODO will interrupts ever be disabled here?
-        // if (eflags & EFL_IF)
-        enable_interrupts();
-
-        sche_yield();
+        sche_yield(BLOCKED_MUTEX);
     } else {
         mp->lock = 1;
         enable_interrupts();
@@ -54,17 +48,16 @@ void mutex_lock(mutex_t *mp) {
 }
 
 void mutex_unlock(mutex_t *mp) {
-    // uint32_t eflags = get_eflags();
-
     disable_interrupts();
+
     sche_node_t *new_sche_node = pop_first_node(mp->blocked_list);
     if (new_sche_node == NULL) {
         mp->lock = 0;
     } else {
-        GET_TCB(new_sche_node)->status = RUNNABLE;
-        append_to_scheduler(new_sche_node);
+        thread_t *new_thread = GET_TCB(new_sche_node);
+        new_thread->status = RUNNABLE;
+        sche_push_back(new_thread);
     }
 
-    // if (eflags & EFL_IF)
     enable_interrupts();
 }

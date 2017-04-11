@@ -82,11 +82,23 @@ int syscall_init() {
                 (void *)asm_new_pages,
                 SEGSEL_KERNEL_CS,
                 FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(WAIT_INT,
+                (void *)asm_wait,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(VANISH_INT,
+                (void *)asm_vanish,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(SET_STATUS_INT,
+                (void *)asm_set_status,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
     return SUCCESS;
 }
 
 int device_init() {
-    init_timer(cnt_seconds);
+    timer_init(timer_callback);
     idt_install(TIMER_IDT_ENTRY,
                 (void *)asm_timer_handler,
                 SEGSEL_KERNEL_CS,

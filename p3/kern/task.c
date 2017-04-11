@@ -78,27 +78,36 @@ task_t *task_init() {
 }
 
 int task_lists_init(task_t *task) {
-    task->thread_list = list_init();
-    if (task->thread_list == NULL) return -1;
+    task->live_thread_list = list_init();
+    if (task->live_thread_list == NULL) return -1;
+
+    task->zombie_thread_list = list_init();
+    if (task->zombie_thread_list == NULL) {
+        list_destroy(task->live_thread_list);
+        return -1;
+    }
 
     task->child_task_list = list_init();
     if (task->child_task_list == NULL) {
-        list_destroy(task->thread_list);
+        list_destroy(task->live_thread_list);
+        list_destroy(task->zombie_thread_list);
         return -1;
     }
 
     task->zombie_task_list = list_init();
     if (task->zombie_task_list == NULL) {
+        list_destroy(task->live_thread_list);
+        list_destroy(task->zombie_thread_list);
         list_destroy(task->child_task_list);
-        list_destroy(task->thread_list);
         return -1;
     }
 
     task->waiting_thread_list = list_init();
     if (task->waiting_thread_list == NULL) {
-        list_destroy(task->zombie_task_list);
+        list_destroy(task->live_thread_list);
+        list_destroy(task->zombie_thread_list);
         list_destroy(task->child_task_list);
-        list_destroy(task->thread_list);
+        list_destroy(task->zombie_task_list);
         return -1;
     }
 
@@ -106,7 +115,8 @@ int task_lists_init(task_t *task) {
 }
 
 void task_lists_destroy(task_t *task) {
-    list_destroy(task->thread_list);
+    list_destroy(task->live_thread_list);
+    list_destroy(task->zombie_thread_list);
     list_destroy(task->child_task_list);
     list_destroy(task->zombie_task_list);
     list_destroy(task->waiting_thread_list);
@@ -115,19 +125,27 @@ void task_lists_destroy(task_t *task) {
 int task_mutexes_init(task_t *task) {
     int ret;
 
-    ret = mutex_init(&(task->thread_list_mutex));
+    ret = mutex_init(&(task->live_thread_list_mutex));
     if (ret < 0) return -1;
+
+    ret = mutex_init(&(task->zombie_thread_list_mutex));
+    if (ret < 0) {
+        mutex_destroy(&(task->live_thread_list_mutex));
+        return -1;
+    }
 
     ret = mutex_init(&(task->child_task_list_mutex));
     if (ret < 0) {
-        mutex_destroy(&(task->thread_list_mutex));
+        mutex_destroy(&(task->live_thread_list_mutex));
+        mutex_destroy(&(task->zombie_thread_list_mutex));
         return -1;
     }
 
     ret = mutex_init(&(task->wait_mutex));
     if (ret < 0) {
+        mutex_destroy(&(task->live_thread_list_mutex));
+        mutex_destroy(&(task->zombie_thread_list_mutex));
         mutex_destroy(&(task->child_task_list_mutex));
-        mutex_destroy(&(task->thread_list_mutex));
         return -1;
     }
 
@@ -135,7 +153,8 @@ int task_mutexes_init(task_t *task) {
 }
 
 void task_mutexes_destroy(task_t *task) {
-    mutex_destroy(&(task->thread_list_mutex));
+    mutex_destroy(&(task->live_thread_list_mutex));
+    mutex_destroy(&(task->zombie_thread_list_mutex));
     mutex_destroy(&(task->child_task_list_mutex));
     mutex_destroy(&(task->wait_mutex));
 }

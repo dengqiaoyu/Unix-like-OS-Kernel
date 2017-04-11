@@ -30,3 +30,12 @@ WRAP_SYSCALL(asm_fork, kern_fork)
 
 .global asm_new_pages
 WRAP_SYSCALL(asm_new_pages, kern_new_pages)
+
+.global asm_wait
+WRAP_SYSCALL(asm_wait, kern_wait)
+
+.global asm_vanish
+WRAP_SYSCALL(asm_vanish, kern_vanish)
+
+.global asm_set_status
+WRAP_SYSCALL(asm_set_status, kern_set_status)

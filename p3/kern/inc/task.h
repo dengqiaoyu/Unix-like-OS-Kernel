@@ -34,8 +34,10 @@ typedef struct task {
     uint32_t *page_dir;
     map_list_t *maps;
 
-    list_t *thread_list;
-    mutex_t thread_list_mutex;
+    list_t *live_thread_list;
+    mutex_t live_thread_list_mutex;
+    list_t *zombie_thread_list;
+    mutex_t zombie_thread_list_mutex;
 
     struct task *parent_task;
     list_t *child_task_list;
@@ -56,12 +58,20 @@ typedef struct thread {
     uint32_t ip;
 } thread_t;
 
+typedef struct wait_node {
+    node_t node;
+    thread_t *thread;
+    task_t *zombie;
+} wait_node_t;
+
 /* status define */
-#define INITIALIZED 0
-#define RUNNABLE 1
+#define RUNNABLE 0
+#define INITIALIZED 1
 #define SUSPENDED 2
 #define FORKED 3
 #define BLOCKED_MUTEX 4
+#define BLOCKED_WAIT 5
+#define ZOMBIE 6
 
 int id_counter_init();
 

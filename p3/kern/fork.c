@@ -15,18 +15,17 @@
 #include "task.h"
 #include "asm_set_exec_context.h"
 
-extern sche_node_t *cur_sche_node;
 extern allocator_t *sche_allocator;
 
 int kern_fork(void) {
     int ret = SUCCESS;
-    // Do we need a mutex to protect this one?
-    thread_t *old_thread = (GET_TCB(cur_sche_node));
+
+    thread_t *old_thread = get_cur_tcb();
     int old_tid = old_thread->tid;
     task_t *old_task = old_thread->task;
-    thread_t *cur_thr = NULL;
-    sche_node_t *sche_node = NULL;
-    if (get_list_size(old_task->thread_list) != 1)
+    thread_t *cur_thr;
+
+    if (get_list_size(old_task->live_thread_list) != 1)
         return ERROR_FORK_TASK_MORE_THAN_ONE_THREAD;
 
     task_t *new_task = task_init();
@@ -51,7 +50,7 @@ int kern_fork(void) {
     new_task->task_id = new_thread->tid;
     new_thread->task = new_task;
     new_thread->status = FORKED;
-    add_node_to_head(new_task->thread_list, TCB_TO_NODE(new_thread));
+    add_node_to_head(new_task->live_thread_list, TCB_TO_NODE(new_thread));
 
     add_node_to_head(old_task->child_task_list, PCB_TO_NODE(new_task));
     asm_set_exec_context(old_thread->kern_sp,
@@ -63,13 +62,12 @@ int kern_fork(void) {
     // BUG that has been found!!! cannot declare var here, because we will break
     // stack
     // Do we need a mutex to protect this one?
-    cur_thr = GET_TCB(cur_sche_node);
-    sche_node = GET_SCHE_NODE(new_thread);
+    cur_thr = get_cur_tcb();
     // if (get_list_size(cur_thr->task->child_task_list) == 0) {
     if (cur_thr->tid != old_tid) {
         return 0;
     } else {
-        append_to_scheduler(sche_node);
+        sche_push_back(new_thread);
         return new_thread->tid;
     }
 }

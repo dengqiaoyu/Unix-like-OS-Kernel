@@ -31,9 +31,7 @@
 #include "scheduler.h"
 #include "return_type.h"
 
-extern sche_node_t *cur_sche_node;
-
-// will need to ginf a better way to do this eventually
+// will need to find a better way to do this eventually
 extern mutex_t malloc_mutex;
 
 /** @brief Kernel entrypoint.
@@ -63,7 +61,7 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     task_t *init = task_init();
     thread_t *thread = thread_init();
     thread->task = init;
-    add_node_to_head(init->thread_list, TCB_TO_NODE(thread));
+    add_node_to_head(init->live_thread_list, TCB_TO_NODE(thread));
 
     init->task_id = thread->tid;
     init->parent_task = NULL;
@@ -71,19 +69,18 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     maps_insert(init->maps, 0, PAGE_SIZE * NUM_KERN_PAGES, 0);
     maps_insert(init->maps, RW_PHYS_VA, PAGE_SIZE, 0);
     // /*
-    const char *fname = "my_fork_test";
+    const char *fname = "fork_exit_bomb";
     simple_elf_t elf_header;
     elf_load_helper(&elf_header, fname);
     thread->ip = elf_header.e_entry;
 
+    set_cur_run_thread(thread);
     // register new task for simics symbolic debugging
     sim_reg_process(init->page_dir, fname);
 
     set_cr3((uint32_t)init->page_dir);
     load_program(&elf_header, init->maps);
     // */
-
-    cur_sche_node = GET_SCHE_NODE(thread);
 
     thread->status = RUNNABLE;
     set_esp0(thread->kern_sp);

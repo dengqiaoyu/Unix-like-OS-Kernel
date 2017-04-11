@@ -23,6 +23,7 @@
 #include <syscall.h>
 #include <simics.h>
 
+/*
 void set_status(int status) {
     return;
 }
@@ -36,7 +37,7 @@ void vanish(void) {
 
     blackhole ^= blackhole;
     blackhole /= blackhole;
-    *(int *) blackhole = blackhole; /* won't get here */
+    *(int *) blackhole = blackhole; // won't get here
     while (1)
         ++placate_the_compiler;
 }
@@ -44,6 +45,7 @@ void vanish(void) {
 int wait(int *status_ptr) {
     return -1;
 }
+*/
 
 int yield(int pid) {
     return -1;

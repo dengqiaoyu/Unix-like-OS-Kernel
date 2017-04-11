@@ -10,15 +10,16 @@
 #include <simics.h>
 #include <x86/cr.h>
 #include <malloc.h> /* malloc, smemalign, sfree */
+#include <asm.h>        /* disable_interrupts enable_interrupts */
 
 #include "vm.h"
+#include "task.h"
 #include "scheduler.h"
 #include "mutex.h"
 #include "asm_registers.h"
 #include "asm_switch.h"
 #include "allocator.h" /* allocator */
 
-extern sche_node_t *cur_sche_node;
 extern allocator_t *sche_allocator;
 
 extern uint32_t *kern_page_dir;
@@ -26,7 +27,7 @@ extern uint32_t zfod_frame;
 extern int num_free_frames;
 
 int kern_gettid(void) {
-    thread_t *thread = GET_TCB(cur_sche_node);
+    thread_t *thread = get_cur_tcb();
     return thread->tid;
 }
 
@@ -68,7 +69,7 @@ int kern_exec(void) {
     }
     ptrbuf[argc] = NULL;
 
-    thread_t *thread = GET_TCB(cur_sche_node);
+    thread_t *thread = get_cur_tcb();
     /*
     // need to free old kernel stack?
     void *kern_stack = malloc(KERN_STACK_SIZE);
@@ -138,7 +139,7 @@ int kern_new_pages(void) {
         return -1;
     }
 
-    thread_t *thread = GET_TCB(cur_sche_node);
+    thread_t *thread = get_cur_tcb();
     task_t *task = thread->task;
     if (maps_find(task->maps, base, len)) {
         // already mapped or reserved
@@ -160,4 +161,104 @@ int kern_new_pages(void) {
     maps_insert(task->maps, base, len, MAP_USER | MAP_WRITE);
 
     return 0;
+}
+
+int kern_wait(void) {
+    int *status_ptr = (int *)get_esi();
+
+    thread_t *thread = get_cur_tcb();
+    task_t *task = thread->task;
+
+    if (status_ptr != NULL) {
+        map_t *map = maps_find(task->maps, (uint32_t)status_ptr, sizeof(int));
+        if (map == NULL) return -1;
+        if (!(map->perms & MAP_USER)) return -1;
+        if (!(map->perms & MAP_WRITE)) return -1;
+    }
+
+    task_t *zombie;
+    mutex_lock(&(task->wait_mutex));
+    if (get_list_size(task->zombie_task_list) > 0) {
+        zombie = NODE_TO_PCB(pop_first_node(task->zombie_task_list));
+        mutex_unlock(&(task->wait_mutex));
+    }
+    else {
+        mutex_lock(&(task->child_task_list_mutex));
+        int active_children = get_list_size(task->child_task_list);
+        mutex_unlock(&(task->child_task_list_mutex));
+        if (active_children == 0) {
+            mutex_unlock(&(task->wait_mutex));
+            return -1;
+        }
+
+        // declare on stack
+        wait_node_t wait_node;
+        wait_node.thread = thread;
+
+        disable_interrupts();
+        mutex_unlock(&(task->wait_mutex));
+        add_node_to_tail(task->waiting_thread_list, &(wait_node.node));
+        sche_yield(BLOCKED_WAIT);
+
+        if (wait_node.zombie == NULL) return -1;
+        else zombie = wait_node.zombie;
+    }
+
+    int ret = zombie->task_id;
+    if (status_ptr != NULL) *status_ptr = zombie->status;
+
+    // TODO free things
+    return ret;
+}
+
+void kern_vanish(void) {
+    thread_t *thread = get_cur_tcb();
+    task_t *task = thread->task;
+    task_t *parent = task->parent_task;
+
+    mutex_lock(&(task->live_thread_list_mutex));
+    remove_node(task->live_thread_list, TCB_TO_NODE(thread));
+    int live_threads = get_list_size(task->live_thread_list);
+    mutex_unlock(&(task->live_thread_list_mutex));
+
+    mutex_lock(&(task->zombie_thread_list_mutex));
+    add_node_to_head(task->zombie_thread_list, TCB_TO_NODE(thread));
+    mutex_unlock(&(task->zombie_thread_list_mutex));
+
+    if (live_threads == 0 && parent != NULL) {
+        wait_node_t *waiter;
+        mutex_lock(&(parent->wait_mutex));
+
+        mutex_lock(&(parent->child_task_list_mutex));
+        remove_node(parent->child_task_list, PCB_TO_NODE(task));
+        mutex_unlock(&(parent->child_task_list_mutex));
+        // is there a race here?
+
+        if (get_list_size(parent->waiting_thread_list) > 0) {
+            waiter = (wait_node_t *)pop_first_node(parent->waiting_thread_list);
+            mutex_unlock(&(parent->wait_mutex));
+            // probably a race here
+
+            waiter->zombie = task;
+            waiter->thread->status = RUNNABLE;
+            sche_push_back(waiter->thread);
+        }
+        else {
+            add_node_to_tail(parent->zombie_task_list, PCB_TO_NODE(task));
+            mutex_unlock(&(parent->wait_mutex));
+        }
+    }
+
+    sche_yield(ZOMBIE);
+    
+    lprintf("returned from end of vanish");
+    while (1) continue;
+}
+
+void kern_set_status(void) {
+    int status = (int)get_esi();
+
+    thread_t *thread = get_cur_tcb();
+    task_t *task = thread->task;
+    task->status = status;
 }

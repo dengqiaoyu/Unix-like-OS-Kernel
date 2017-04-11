@@ -77,6 +77,19 @@ void add_node_to_tail(list_t *list, node_t *node) {
     list->tail->prev = node;
 }
 
+// TODO restructure this code
+/**
+ * @param list the pointer to the list
+ * @param node the pointer to the node
+ */
+void remove_node(list_t *list, node_t *node) {
+    list->node_cnt--;
+    node_t *prev_node = node->prev;
+    node_t *next_node = node->next;
+    prev_node->next = next_node;
+    next_node->prev = prev_node;
+}
+
 /**
  * Delete node list.
  * @param list the pointer to the list
@@ -113,6 +126,11 @@ node_t *get_last_node(list_t *list) {
         return list->tail->prev;
     else
         return NULL;
+}
+
+// TODO
+node_t *get_next_node(node_t *node) {
+    return node->next;
 }
 
 /**
