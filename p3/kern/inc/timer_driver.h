@@ -19,13 +19,13 @@
  * @brief Initialize timer.
  * @param tickback the address of call back function.
  */
-void init_timer(void (*tickback)(unsigned int));
+void timer_init(void (*tickback)(unsigned int));
 
 /**
  * @brief Callback function that is called by the handler.
  * @param numTicks the number of TIMER_RATE that is triggered.
  */
-void cnt_seconds(unsigned int numTicks);
+void timer_callback(unsigned int numTicks);
 
 /**
  * @brief get current time.

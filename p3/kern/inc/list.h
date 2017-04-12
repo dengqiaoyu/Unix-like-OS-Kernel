@@ -10,27 +10,25 @@
 
 #include "return_type.h"
 
-typedef struct node node_t;
-struct node {
-    node_t *prev;
-    node_t *next;
+typedef struct node {
+    struct node *prev;
+    struct node *next;
     char data[0];
-};
+} node_t;
 
-typedef struct list list_t;
-struct list {
+typedef struct list {
     int node_cnt;
     node_t *head;
     node_t *tail;
-};
+} list_t;
 
-/**
- * Initailize the list.
- * @param  list the pointer to the list
- * @return      SUCCESS(0) for success, ERROR_INIT_LIST_CALLOC_FAILED(-1) for
- *              fail
- */
-int list_init(list_t *list);
+
+list_t *list_init();
+
+// TODO
+void list_destroy(list_t *list);
+
+int get_list_size(list_t *list);
 
 /**
  * Add new node after the dummy head node.
@@ -45,6 +43,9 @@ void add_node_to_head(list_t *list, node_t *node);
  * @param node the pointer to the node
  */
 void add_node_to_tail(list_t *list, node_t *node);
+
+// TODO
+void remove_node(list_t *list, node_t *node);
 
 /**
  * Delete node list.
@@ -70,7 +71,9 @@ node_t *get_first_node(list_t *list);
 node_t *get_last_node(list_t *list);
 
 int has_next(list_t *list, node_t *node);
+
 node_t *get_next_node(node_t *node);
+
 node_t *get_prev_node(node_t *node);
 
 /**

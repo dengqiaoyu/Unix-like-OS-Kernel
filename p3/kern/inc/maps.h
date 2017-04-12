@@ -23,7 +23,9 @@ map_list_t *maps_init();
 
 void maps_destroy(map_list_t *maps);
 
-map_list_t *maps_copy(map_list_t *list);
+void maps_clear(map_list_t *maps);
+
+int maps_copy(map_list_t *from, map_list_t *to);
 
 //TODO delete me, eventually?
 void maps_print(map_list_t *maps);

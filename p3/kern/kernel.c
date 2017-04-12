@@ -13,6 +13,7 @@
 
 /* libc includes. */
 #include <stdio.h>
+#include <page.h>
 #include <simics.h>                 /* lprintf() */
 
 /* multiboot header file */
@@ -31,9 +32,7 @@
 #include "tcb_hashtab.h"
 #include "return_type.h"
 
-extern sche_node_t *cur_sche_node;
-
-// will need to ginf a better way to do this eventually
+// will need to find a better way to do this eventually
 extern mutex_t malloc_mutex;
 
 /** @brief Kernel entrypoint.
@@ -45,36 +44,46 @@ extern mutex_t malloc_mutex;
 int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     lprintf( "Hello from a brand new kernel!" );
 
-    RETURN_IF_ERROR(handler_init(), ERROR_KERNEL_HANDLER_INIT_FAILED);
+    handler_init();
     vm_init();
-    RETURN_IF_ERROR(scheduler_init(), ERROR_KERNEL_SCHEDULER_INIT_FAILED);
-    RETURN_IF_ERROR(id_counter_init(), ERROR_KERNEL_ID_COUNTER_INIT_FAILED);
+    scheduler_init();
+    id_counter_init();
 
     // TODO find a better way to init mutexes
     mutex_init(&malloc_mutex);
     tcb_hashtab_init();
 
     /*
-    task_t *idle = task_init("idle_user");
-    append_to_scheduler(get_mainthr_sche_node(idle));
-    */
-
-    /*
     task_t *init = task_init("peon");
     task_t *merchant_2 = task_init("peon");
-    cur_sche_node = get_mainthr_sche_node(init);
     append_to_scheduler(get_mainthr_sche_node(merchant_2));
     */
 
-    task_t *init = task_init("my_fork_test");
-    task_t *my_fork_test = task_init("my_user");
-    sche_push_back(my_fork_test->main_thread);
-    set_cur_run_thread(init->main_thread);
-    init->main_thread->status = RUNNABLE;
-    set_cr3((uint32_t)init->page_dir);
-    set_esp0(init->main_thread->kern_sp);
-    kern_to_user(init->main_thread->user_sp, init->main_thread->ip);
+    task_t *init = task_init();
+    thread_t *thread = thread_init();
+    thread->task = init;
+    add_node_to_head(init->live_thread_list, TCB_TO_LIST_NODE(thread));
 
+    init->task_id = thread->tid;
+    init->parent_task = NULL;
+    maps_insert(init->maps, 0, PAGE_SIZE * NUM_KERN_PAGES, 0);
+    maps_insert(init->maps, RW_PHYS_VA, PAGE_SIZE, 0);
+    // /*
+    const char *fname = "fork_exit_bomb";
+    simple_elf_t elf_header;
+    elf_load_helper(&elf_header, fname);
+    thread->ip = elf_header.e_entry;
+
+    set_cur_run_thread(thread);
+    // register new task for simics symbolic debugging
+    sim_reg_process(init->page_dir, fname);
+    set_cr3((uint32_t)init->page_dir);
+    load_program(&elf_header, init->maps);
+    // */
+
+    thread->status = RUNNABLE;
+    set_esp0(thread->kern_sp);
+    kern_to_user(thread->cur_sp, thread->ip);
 
     while (1) {
         continue;

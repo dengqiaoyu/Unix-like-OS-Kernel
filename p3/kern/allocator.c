@@ -63,13 +63,14 @@ int allocator_init(allocator_t **allocator,
     allocator_t *allocator_ptr = malloc(sizeof(allocator_t));
     if (allocator_ptr == NULL) return ERROR_ALLOCATOR_INIT_FAILED;
 
-    ret = list_init(&(allocator_ptr->list));
-    if (ret != SUCCESS) {
+    allocator_ptr->list = list_init();
+    if (allocator_ptr->list == NULL) {
         free(allocator_ptr);
         return ERROR_ALLOCATOR_INIT_FAILED;
     }
     ret = mutex_init(&(allocator_ptr->allocator_mutex));
     if (ret != SUCCESS) {
+        list_destroy(allocator_ptr->list);
         free(allocator_ptr);
         return ERROR_ALLOCATOR_INIT_FAILED;
     }
@@ -95,7 +96,7 @@ int allocator_init(allocator_t **allocator,
  * @return           the address of memory for success, NULL for fail
  */
 void *allocator_alloc(allocator_t *allocator) {
-    allocator_node_t *node_rover = get_first_node(&(allocator->list));
+    allocator_node_t *node_rover = get_first_node(allocator->list);
     /* get the block info */
     allocator_block_t *allocator_block =
         (allocator_block_t *)(node_rover->data);
@@ -121,7 +122,7 @@ void *allocator_alloc(allocator_t *allocator) {
     }
     void *chunk_ptr =
         get_free_chunk(
-            (allocator_block_t *)get_first_node(&(allocator->list))->data,
+            (allocator_block_t *)get_first_node(allocator->list)->data,
             chunk_size);
     return chunk_ptr;
 }
@@ -151,7 +152,7 @@ void allocator_free(void* chunk_ptr) {
  * @param allocator the pointer to the allocator
  */
 void destroy_allocator(allocator_t *allocator) {
-    clear_list(&(allocator->list));
+    clear_list(allocator->list);
     mutex_destroy(&(allocator->allocator_mutex));
 }
 
@@ -261,7 +262,7 @@ int add_new_block_to_front(allocator_t *allocator,
         *allocator_block_back_ptr = allocator_block;
     }
     mutex_lock(&(allocator->allocator_mutex));
-    add_node_to_head(&(allocator->list), block_node);
+    add_node_to_head(allocator->list, block_node);
     mutex_unlock(&(allocator->allocator_mutex));
 
     return SUCCESS;

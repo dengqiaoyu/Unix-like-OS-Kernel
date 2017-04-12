@@ -8,66 +8,91 @@
 
 #include <stdint.h>
 #include <elf_410.h>
-#include <mutex.h>
-#include <maps.h>
 
-#define KERN_STACK_SIZE 0x1000
+#include "list.h"
+#include "mutex.h"
+#include "maps.h"
+
+#define KERN_STACK_SIZE 0x400
 
 #define USER_STACK_LOW 0xFFB00000
 #define USER_STACK_SIZE 0x1000
-#define USER_STACK_START 0xFFB00F00
+#define USER_STACK_START 0xFFB00E00
 
+#define LIST_NODE_TO_TCB(thread_node) ((thread_t *)((char *)thread_node + 8))
+#define TCB_TO_LIST_NODE(thread) ((thread_node_t *)((char *)thread - 8))
 
-typedef struct id_counter {
-    int task_id_counter;
-    mutex_t task_id_counter_mutex;
-    int thread_id_counter;
-    mutex_t thread_id_counter_mutex;
-} id_counter_t;
+#define LIST_NODE_TO_TASK(task_node) ((task_t *)((char *)task_node + 8))
+#define TASK_TO_LIST_NODE(task) ((task_node_t *)((char *)task - 8))
+
+typedef node_t task_node_t;
+typedef node_t thread_node_t;
 
 typedef struct task {
     int task_id;
+    int status;
     uint32_t *page_dir;
     map_list_t *maps;
 
+    list_t *live_thread_list;
+    list_t *zombie_thread_list;
+    mutex_t thread_list_mutex;
+
     struct task *parent_task;
-    unsigned int child_task_cnt;
-    list_t child_task_list;
-    // mutex
+    list_t *child_task_list;
+    mutex_t child_task_list_mutex;
 
-    list_t zombie_task_list;
-    list_t waiting_thread_list;
-    // mutex
-
-    struct thread *main_thread;
-    unsigned int thread_cnt;
-    // list of threads
+    list_t *zombie_task_list;
+    list_t *waiting_thread_list;
+    mutex_t wait_mutex;
 } task_t;
 
 typedef struct thread {
     int tid;
-    task_t *task;
-    uint32_t kern_sp;
-    uint32_t user_sp;
-    uint32_t cur_esp;
-    uint32_t ip;
     int status;
+    task_t *task;
+
+    uint32_t kern_sp;
+    uint32_t cur_sp;
+    uint32_t ip;
 } thread_t;
 
+typedef struct wait_node {
+    node_t node;
+    thread_t *thread;
+    task_t *zombie;
+} wait_node_t;
+
 /* status define */
-#define INITIALIZED 0
-#define RUNNABLE 1
+#define RUNNABLE 0
+#define INITIALIZED 1
 #define SUSPENDED 2
 #define FORKED 3
 #define BLOCKED_MUTEX 4
+#define BLOCKED_WAIT 5
+#define ZOMBIE 6
 
 int id_counter_init();
 
-int tcb_hashtab_init();
+int gen_thread_id();
 
-task_t *task_init(const char *fname);
+task_t *task_init();
+
+void task_destroy(task_t *task);
+
+void reap_threads(task_t *task);
+
+int task_lists_init(task_t *task);
+
+void task_lists_destroy(task_t *task);
+
+int task_mutexes_init(task_t *task);
+
+void task_mutexes_destroy(task_t *task);
 
 thread_t *thread_init();
+
+void thread_destroy(thread_t *thread);
 
 int load_program(simple_elf_t *header, map_list_t *maps);
 

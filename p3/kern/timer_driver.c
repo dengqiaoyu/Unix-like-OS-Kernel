@@ -21,19 +21,18 @@
 #include "scheduler.h"
 
 
-static int numTicks;
+static int num_ticks;
 static int seconds = 0;
 /* control whether to count seconds */
-int if_cnt_time = 0;
+int cnt_seconds_flag = 0;
 /* to store the address of callback function */
 void (*callback_func)();
-extern sche_node_t *cur_sche_node;
 
 /**
  * @brief Initialize timer.
  * @param tickback the address of call back function.
  */
-void init_timer(void (*tickback)(unsigned int)) {
+void timer_init(void (*tickback)(unsigned int)) {
     unsigned short cycles_per_interrupt =
         (TIMER_RATE / (MS_PER_S / MS_PER_INTERRUPT));
     /* set to zero */
@@ -42,30 +41,30 @@ void init_timer(void (*tickback)(unsigned int)) {
     outb(TIMER_PERIOD_IO_PORT, LSB(cycles_per_interrupt));
     outb(TIMER_PERIOD_IO_PORT, MSB(cycles_per_interrupt));
     /* initiallize callback function */
-    numTicks = 0;
+    num_ticks = 0;
     callback_func = tickback;
 }
 
 /**
- * @brief Increment numTicks per 10 ms and set callback function.
+ * @brief Increment num_ticks per 10 ms and set callback function.
  */
-void ticktock() {
-    numTicks++;
-    callback_func(numTicks);
+void timer_handler() {
+    num_ticks++;
+    callback_func(num_ticks);
     // outb(INT_ACK_CURRENT, INT_CTL_PORT);
 }
 
 /**
  * @brief Callback function that is called by the handler.
- * @param numTicks the number of 10 ms that is triggered.
+ * @param num_ticks the number of 10 ms that is triggered.
  */
-void cnt_seconds(unsigned int numTicks) {
-    if (numTicks % 100 == 0 && if_cnt_time) {
+void timer_callback(unsigned int num_ticks) {
+    if (cnt_seconds_flag && (num_ticks % 100 == 0)) {
         // lprintf("time: %d", seconds);
         seconds++;
     }
     // outb(INT_ACK_CURRENT, INT_CTL_PORT);
-    sche_yield(0);
+    sche_yield(RUNNABLE);
 }
 
 /**

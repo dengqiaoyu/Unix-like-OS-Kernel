@@ -13,40 +13,44 @@
 #define MAP_PERMS(node) (node->map.perms)
 
 map_list_t *maps_init() {
-    map_list_t *list = malloc(sizeof(map_list_t));
-    list->root = NULL;
-    return list;
+    map_list_t *maps = malloc(sizeof(map_list_t));
+    if (maps != NULL) maps->root = NULL;
+    return maps;
 }
 
-void maps_destroy(map_list_t *list) {
-    tree_destroy(list->root);
-    free(list);
+void maps_destroy(map_list_t *maps) {
+    tree_destroy(maps->root);
+    free(maps);
 }
 
-map_list_t *maps_copy(map_list_t *list) {
-    map_list_t *copy = malloc(sizeof(map_list_t));
-    copy->root = tree_copy(list->root);
-    return copy;
+void maps_clear(map_list_t *maps) {
+    tree_destroy(maps->root);
 }
 
-//TODO end me
-void maps_print(map_list_t *list) {
-    tree_print(list->root);
+int maps_copy(map_list_t *from, map_list_t *to) {
+    map_node_t *copy = tree_copy(from->root);
+    if (copy == NULL && from->root != NULL) return -1;
+    to->root = copy;
+    return 0;
+}
+
+void maps_print(map_list_t *maps) {
+    tree_print(maps->root);
 }
 
 // assumes no overlaps
-void maps_insert(map_list_t *list, uint32_t addr, uint32_t size, int perms) {
+void maps_insert(map_list_t *maps, uint32_t addr, uint32_t size, int perms) {
     map_node_t *node = make_node(addr, size, perms);
-    list->root = tree_insert(list->root, node);
+    maps->root = tree_insert(maps->root, node);
 }
 
-map_t *maps_find(map_list_t *list, uint32_t addr, uint32_t size) {
-    map_node_t *node = tree_find(list->root, addr, size);
+map_t *maps_find(map_list_t *maps, uint32_t addr, uint32_t size) {
+    map_node_t *node = tree_find(maps->root, addr, size);
     return &(node->map);
 }
 
-void maps_delete(map_list_t *list, uint32_t addr) {
-    tree_delete(list->root, addr);
+void maps_delete(map_list_t *maps, uint32_t addr) {
+    tree_delete(maps->root, addr);
 }
 
 int max(int a, int b) {
@@ -194,24 +198,33 @@ map_node_t *tree_delete(map_node_t *tree, uint32_t addr) {
 
 void tree_destroy(map_node_t *tree) {
     if (tree == NULL) return;
-    map_node_t *left = tree->left;
-    map_node_t *right = tree->right;
+    tree_destroy(tree->left);
+    tree_destroy(tree->right);
     free(tree);
-    tree_destroy(left);
-    tree_destroy(right);
 }
 
 map_node_t *tree_copy(map_node_t *tree) {
     if (tree == NULL) return NULL;
 
     map_node_t *copy = malloc(sizeof(map_node_t));
+    if (copy == NULL) return NULL;
     MAP_START(copy) = MAP_START(tree);
     MAP_SIZE(copy) = MAP_SIZE(tree);
     MAP_PERMS(copy) = MAP_PERMS(tree);
     copy->height = tree->height;
 
     copy->left = tree_copy(tree->left);
+    if (copy->left == NULL && tree->left != NULL) {
+        free(copy);
+        return NULL;
+    }
+    
     copy->right = tree_copy(tree->right);
+    if (copy->right == NULL && tree->right != NULL) {
+        tree_destroy(copy->left);
+        free(copy);
+        return NULL;
+    }
 
     return copy;
 }

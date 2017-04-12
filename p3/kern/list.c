@@ -17,35 +17,41 @@
 
 /**
  * Initailize the list.
- * @param  list the pointer to the list
- * @return      SUCCESS(0) for success, ERROR_INIT_LIST_CALLOC_FAILED(-1) for
- *              fail
+ * @return pointer to the list on success and NULL on failure
  */
-int list_init(list_t *list) {
+list_t *list_init() {
+    list_t *list = malloc(sizeof(list_t));
+    if (list == NULL) return NULL;
+    list->node_cnt = 0;
+
     node_t *head_node = calloc(1, sizeof(node_t));
     if (head_node == NULL) {
-        // int tid = gettid();
-        // printf("Cannot allocate more memory for thread %d\n", tid);
-        return ERROR_INIT_LIST_CALLOC_FAILED;
+        free(list);
+        return NULL;
     }
-    /* this is the dummy head for easy iterate */
     list->head = head_node;
 
     node_t *tail_node = calloc(1, sizeof(node_t));
     if (tail_node == NULL) {
         free(head_node);
-        list->head = NULL;
-        // int tid = gettid();
-        // printf("Cannot allocate more memory for thread %d\n", tid);
-        return ERROR_INIT_LIST_CALLOC_FAILED;
+        free(list);
+        return NULL;
     }
-    /* this is the dummy tail for easy iterate */
     list->tail = tail_node;
 
     head_node->next = tail_node;
     tail_node->prev = head_node;
 
-    return SUCCESS;
+    return list;
+}
+
+void list_destroy(list_t *list) {
+    clear_list(list);
+    free(list);
+}
+
+int get_list_size(list_t *list) {
+    return list->node_cnt;
 }
 
 /**
@@ -72,6 +78,19 @@ void add_node_to_tail(list_t *list, node_t *node) {
     node->prev->next = node;
     node->next = list->tail;
     list->tail->prev = node;
+}
+
+// TODO restructure this code
+/**
+ * @param list the pointer to the list
+ * @param node the pointer to the node
+ */
+void remove_node(list_t *list, node_t *node) {
+    list->node_cnt--;
+    node_t *prev_node = node->prev;
+    node_t *next_node = node->next;
+    prev_node->next = next_node;
+    next_node->prev = prev_node;
 }
 
 /**
@@ -132,7 +151,6 @@ node_t *get_prev_node(node_t *node) {
 int has_next(list_t *list, node_t *node) {
     return node->next != list->tail;
 }
-
 /**
  * Get the first node in the list and unlinked it in the list.
  * @param  list the pointer to the list

@@ -34,7 +34,10 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the 410user/progs
 # directory.
 #
-410TESTS = loader_test1 loader_test2 ck1 merchant peon knife new_pages deschedule_hang
+410TESTS = loader_test1 loader_test2 ck1 merchant peon knife new_pages\
+	   exec_basic exec_basic_helper fork_test1 fork_wait getpid_test1\
+	   wait_getpid stack_test1 mem_eat_test wild_test1 fork_bomb\
+	   fork_exit_bomb fork_wait_bomb sleep_test1
 
 ###########################################################################
 # Test programs you have written which you wish to run
@@ -76,7 +79,8 @@ THREAD_OBJS = malloc.o panic.o
 ###########################################################################
 # Object files for your syscall wrappers
 ###########################################################################
-SYSCALL_OBJS = syscall.o exec.o gettid.o fork.o new_pages.o deschedule.o make_runnable.o
+SYSCALL_OBJS = fork.o exec.o wait.o deschedule.o make_runnable.o gettid.o\
+			   new_pages.o set_status.o vanish.o
 
 ###########################################################################
 # Object files for your automatic stack handling
@@ -94,13 +98,13 @@ AUTOSTACK_OBJS = autostack.o
 # Kernel object files you provide in from kern/
 #
 KERNEL_OBJS = fake_console.o kernel.o loader.o malloc_wrappers.o\
-          asm_switch.o handlers.o task.o vm.o asm_exceptions.o\
-          asm_interrupts.o timer_driver.o keyboard_driver.o\
-          mutex.o maps.o allocator.o list.o syscalls.o\
-          asm_page_inval.o asm_syscalls.o asm_registers.o\
-          scheduler.o asm_context_switch.o\
-          fork.o asm_set_exec_context.o\
-          utils.o tcb_hashtab.o
+          	  asm_switch.o handlers.o task.o vm.o asm_exceptions.o\
+          	  asm_interrupts.o timer_driver.o keyboard_driver.o\
+          	  mutex.o maps.o allocator.o list.o syscalls.o\
+          	  asm_page_inval.o asm_syscalls.o asm_registers.o\
+          	  scheduler.o asm_context_switch.o\
+          	  fork.o asm_set_exec_context.o\
+          	  tcb_hashtab.o
 
 ###########################################################################
 # WARNING: Do not put **test** programs into the REQPROGS variables.  Your

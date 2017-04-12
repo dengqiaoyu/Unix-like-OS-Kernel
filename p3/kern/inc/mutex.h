@@ -13,7 +13,7 @@
 
 typedef struct mutex {
     int lock;
-    list_t list;
+    list_t *blocked_list;
 } mutex_t;
 
 int mutex_init(mutex_t *mp);
