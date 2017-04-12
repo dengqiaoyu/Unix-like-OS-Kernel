@@ -70,21 +70,15 @@ int kern_exec(void) {
     ptrbuf[argc] = NULL;
 
     thread_t *thread = get_cur_tcb();
-    /*
-    // need to free old kernel stack?
-    void *kern_stack = malloc(KERN_STACK_SIZE);
-    thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
-    */
     thread->cur_sp = USER_STACK_START;
     thread->ip = elf_header.e_entry;
 
     task_t *task = thread->task;
-    maps_destroy(task->maps);
-    task->maps = maps_init();
+    maps_clear(task->maps);
     maps_insert(task->maps, 0, PAGE_SIZE * NUM_KERN_PAGES, 0);
     maps_insert(task->maps, RW_PHYS_VA, PAGE_SIZE, 0);
 
-    clear_pgdir(task->page_dir);
+    page_dir_clear(task->page_dir);
     set_cr3((uint32_t)task->page_dir);
 
     load_program(&elf_header, task->maps);
@@ -169,23 +163,27 @@ int kern_wait(void) {
     thread_t *thread = get_cur_tcb();
     task_t *task = thread->task;
 
+    /*
     if (status_ptr != NULL) {
         map_t *map = maps_find(task->maps, (uint32_t)status_ptr, sizeof(int));
         if (map == NULL) return -1;
         if (!(map->perms & MAP_USER)) return -1;
         if (!(map->perms & MAP_WRITE)) return -1;
     }
+    */
 
     task_t *zombie;
     mutex_lock(&(task->wait_mutex));
     if (get_list_size(task->zombie_task_list) > 0) {
-        zombie = NODE_TO_PCB(pop_first_node(task->zombie_task_list));
+        zombie = LIST_NODE_TO_TASK(pop_first_node(task->zombie_task_list));
         mutex_unlock(&(task->wait_mutex));
     }
     else {
         mutex_lock(&(task->child_task_list_mutex));
         int active_children = get_list_size(task->child_task_list);
         mutex_unlock(&(task->child_task_list_mutex));
+        
+        // another fork could happen in between, but that's fine
         if (active_children == 0) {
             mutex_unlock(&(task->wait_mutex));
             return -1;
@@ -196,6 +194,10 @@ int kern_wait(void) {
         wait_node.thread = thread;
 
         disable_interrupts();
+
+        // this unlock goes after disable_interrupts
+        // otherwise, a child could turn into a zombie before blocking
+        // then we might incorrectly block forever
         mutex_unlock(&(task->wait_mutex));
         add_node_to_tail(task->waiting_thread_list, &(wait_node.node));
         sche_yield(BLOCKED_WAIT);
@@ -207,7 +209,7 @@ int kern_wait(void) {
     int ret = zombie->task_id;
     if (status_ptr != NULL) *status_ptr = zombie->status;
 
-    // TODO free things
+    task_destroy(zombie);
     return ret;
 }
 
@@ -216,35 +218,48 @@ void kern_vanish(void) {
     task_t *task = thread->task;
     task_t *parent = task->parent_task;
 
-    mutex_lock(&(task->live_thread_list_mutex));
-    remove_node(task->live_thread_list, TCB_TO_NODE(thread));
+    mutex_lock(&(task->thread_list_mutex));
+    remove_node(task->live_thread_list, TCB_TO_LIST_NODE(thread));
     int live_threads = get_list_size(task->live_thread_list);
-    mutex_unlock(&(task->live_thread_list_mutex));
-
-    mutex_lock(&(task->zombie_thread_list_mutex));
-    add_node_to_head(task->zombie_thread_list, TCB_TO_NODE(thread));
-    mutex_unlock(&(task->zombie_thread_list_mutex));
+    add_node_to_head(task->zombie_thread_list, TCB_TO_LIST_NODE(thread));
+    mutex_unlock(&(task->thread_list_mutex));
 
     if (live_threads == 0 && parent != NULL) {
-        wait_node_t *waiter;
         mutex_lock(&(parent->wait_mutex));
 
         mutex_lock(&(parent->child_task_list_mutex));
-        remove_node(parent->child_task_list, PCB_TO_NODE(task));
+        remove_node(parent->child_task_list, TASK_TO_LIST_NODE(task));
         mutex_unlock(&(parent->child_task_list_mutex));
-        // is there a race here?
 
         if (get_list_size(parent->waiting_thread_list) > 0) {
+            wait_node_t *waiter;
             waiter = (wait_node_t *)pop_first_node(parent->waiting_thread_list);
             mutex_unlock(&(parent->wait_mutex));
-            // probably a race here
-
             waiter->zombie = task;
+
+            // must disable interrupts here
+            // otherwise, the waiting thread might free us before we yield
+            disable_interrupts();
             waiter->thread->status = RUNNABLE;
             sche_push_back(waiter->thread);
         }
         else {
-            add_node_to_tail(parent->zombie_task_list, PCB_TO_NODE(task));
+            node_t *last_node = get_last_node(parent->zombie_task_list);
+            if (last_node != NULL) {
+                task_t *prev_zombie = LIST_NODE_TO_TASK(last_node);
+
+                // we can free the previous zombie's vm and thread resources
+                page_dir_clear(prev_zombie->page_dir);
+                sfree(prev_zombie->page_dir, PAGE_SIZE);
+                prev_zombie->page_dir = NULL;
+
+                maps_destroy(prev_zombie->maps);
+                prev_zombie->maps = NULL;
+
+                reap_threads(LIST_NODE_TO_TASK(prev_zombie));
+            }
+
+            add_node_to_tail(parent->zombie_task_list, TASK_TO_LIST_NODE(task));
             mutex_unlock(&(parent->wait_mutex));
         }
     }

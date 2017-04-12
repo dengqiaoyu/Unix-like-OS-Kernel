@@ -54,18 +54,16 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     /*
     task_t *init = task_init("peon");
     task_t *merchant_2 = task_init("peon");
-    cur_sche_node = get_mainthr_sche_node(init);
     append_to_scheduler(get_mainthr_sche_node(merchant_2));
     */
 
     task_t *init = task_init();
     thread_t *thread = thread_init();
     thread->task = init;
-    add_node_to_head(init->live_thread_list, TCB_TO_NODE(thread));
+    add_node_to_head(init->live_thread_list, TCB_TO_LIST_NODE(thread));
 
     init->task_id = thread->tid;
     init->parent_task = NULL;
-    init->maps = maps_init();
     maps_insert(init->maps, 0, PAGE_SIZE * NUM_KERN_PAGES, 0);
     maps_insert(init->maps, RW_PHYS_VA, PAGE_SIZE, 0);
     // /*

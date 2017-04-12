@@ -45,8 +45,10 @@ int dec_num_free_frames(int n);
 
 void inc_num_free_frames(int n);
 
-int clear_pgdir(uint32_t *pgdir);
+uint32_t *page_dir_init();
 
-int copy_pgdir(uint32_t *new_pgdir, uint32_t *old_pgdir);
+int page_dir_clear(uint32_t *page_dir);
+
+int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir);
 
 #endif

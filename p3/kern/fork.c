@@ -23,36 +23,44 @@ int kern_fork(void) {
     thread_t *old_thread = get_cur_tcb();
     int old_tid = old_thread->tid;
     task_t *old_task = old_thread->task;
-    thread_t *cur_thr;
+    thread_t *cur_thr = NULL;
 
     if (get_list_size(old_task->live_thread_list) != 1)
         return ERROR_FORK_TASK_MORE_THAN_ONE_THREAD;
 
     task_t *new_task = task_init();
-    if (new_task == NULL) return ERROR_FORK_MALLOC_TASK_FAILED;
+    if (new_task == NULL) {
+        lprintf("f1");
+        return ERROR_FORK_MALLOC_TASK_FAILED;
+    }
     new_task->parent_task = old_task;
 
-    ret = copy_pgdir(new_task->page_dir, old_task->page_dir);
+    ret = page_dir_copy(new_task->page_dir, old_task->page_dir);
     if (ret != SUCCESS) {
         // TODO destroy task
+        lprintf("f2");
         return ERROR_FORK_COPY_PAGE_FAILED;
     }
 
-    // TODO copy maps
+    ret = maps_copy(old_task->maps, new_task->maps);
+    if (ret != SUCCESS) {
+        lprintf("fa");
+        return -1;
+    }
 
-    // init_thread
     thread_t *new_thread = thread_init();
     if (new_thread == NULL) {
         // TODO destroy task
         // TODO unmap new page directory
+        lprintf("f3");
         return -1;
     }
     new_task->task_id = new_thread->tid;
     new_thread->task = new_task;
     new_thread->status = FORKED;
-    add_node_to_head(new_task->live_thread_list, TCB_TO_NODE(new_thread));
+    add_node_to_head(new_task->live_thread_list, TCB_TO_LIST_NODE(new_thread));
 
-    add_node_to_head(old_task->child_task_list, PCB_TO_NODE(new_task));
+    add_node_to_head(old_task->child_task_list, TASK_TO_LIST_NODE(new_task));
     asm_set_exec_context(old_thread->kern_sp,
                          new_thread->kern_sp,
                          &(new_thread->cur_sp),

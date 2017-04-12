@@ -13,17 +13,17 @@
 #include "mutex.h"
 #include "maps.h"
 
-#define KERN_STACK_SIZE 0x1000
+#define KERN_STACK_SIZE 0x400
 
 #define USER_STACK_LOW 0xFFB00000
 #define USER_STACK_SIZE 0x1000
 #define USER_STACK_START 0xFFB00E00
 
-#define NODE_TO_TCB(thread_node) ((thread_t *)(thread_node->data))
-#define TCB_TO_NODE(thread) ((thread_node_t *)((char *)thread - 8))
+#define LIST_NODE_TO_TCB(thread_node) ((thread_t *)((char *)thread_node + 8))
+#define TCB_TO_LIST_NODE(thread) ((thread_node_t *)((char *)thread - 8))
 
-#define NODE_TO_PCB(task_node) ((task_t *)(task_node->data))
-#define PCB_TO_NODE(task) ((task_node_t *)((char *)task - 8))
+#define LIST_NODE_TO_TASK(task_node) ((task_t *)((char *)task_node + 8))
+#define TASK_TO_LIST_NODE(task) ((task_node_t *)((char *)task - 8))
 
 typedef node_t task_node_t;
 typedef node_t thread_node_t;
@@ -35,9 +35,8 @@ typedef struct task {
     map_list_t *maps;
 
     list_t *live_thread_list;
-    mutex_t live_thread_list_mutex;
     list_t *zombie_thread_list;
-    mutex_t zombie_thread_list_mutex;
+    mutex_t thread_list_mutex;
 
     struct task *parent_task;
     list_t *child_task_list;
@@ -79,6 +78,10 @@ int gen_thread_id();
 
 task_t *task_init();
 
+void task_destroy(task_t *task);
+
+void reap_threads(task_t *task);
+
 int task_lists_init(task_t *task);
 
 void task_lists_destroy(task_t *task);
@@ -87,9 +90,9 @@ int task_mutexes_init(task_t *task);
 
 void task_mutexes_destroy(task_t *task);
 
-uint32_t *page_dir_init();
-
 thread_t *thread_init();
+
+void thread_destroy(thread_t *thread);
 
 int load_program(simple_elf_t *header, map_list_t *maps);
 

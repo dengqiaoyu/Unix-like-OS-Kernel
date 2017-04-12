@@ -41,40 +41,71 @@ int gen_thread_id() {
 task_t *task_init() {
     task_node_t *task_node = malloc(sizeof(task_node_t) + sizeof(task_t));
     // TODO put in allocator here
-    if (task_node == NULL) return NULL;
-    task_t *task = NODE_TO_PCB(task_node);
+    if (task_node == NULL) {
+        lprintf("f6");
+        return NULL;
+    }
+    task_t *task = LIST_NODE_TO_TASK(task_node);
 
     task->page_dir = page_dir_init();
     if (task->page_dir == NULL) {
+        lprintf("f7");
         free(task_node);
         return NULL;
     }
 
     if (task_lists_init(task) < 0) {
+        lprintf("f8");
         sfree(task->page_dir, PAGE_SIZE);
         free(task_node);
         return NULL;
     }
 
     if (task_mutexes_init(task) < 0) {
-        task_lists_destroy(task);
+        lprintf("f9");
         sfree(task->page_dir, PAGE_SIZE);
+        task_lists_destroy(task);
         free(task_node);
         return NULL;
     }
 
-    /*
     task->maps = maps_init();
     if (task->maps == NULL) {
         sfree(task->page_dir, PAGE_SIZE);
-        free(task);
+        task_lists_destroy(task);
+        task_mutexes_destroy(task);
+        free(task_node);
         return NULL;
     }
-    maps_insert(task->maps, 0, PAGE_SIZE * NUM_KERN_PAGES, 0);
-    maps_insert(task->maps, RW_PHYS_VA, PAGE_SIZE, 0);
-    */
 
     return task;
+}
+
+// assumes no active children
+void task_destroy(task_t *task) {
+    if (task->page_dir != NULL) {
+        page_dir_clear(task->page_dir);
+        sfree(task->page_dir, PAGE_SIZE);
+    }
+
+    if (task->maps != NULL) {
+        maps_destroy(task->maps);
+    }
+
+    reap_threads(task);
+
+    task_lists_destroy(task);
+    task_mutexes_destroy(task);
+
+    free(TASK_TO_LIST_NODE(task));
+}
+
+void reap_threads(task_t *task) {
+    node_t *thread_node = pop_first_node(task->zombie_thread_list);
+    while (thread_node != NULL) {
+        thread_destroy(LIST_NODE_TO_TCB(thread_node));
+        thread_node = pop_first_node(task->zombie_thread_list);
+    }
 }
 
 int task_lists_init(task_t *task) {
@@ -125,26 +156,20 @@ void task_lists_destroy(task_t *task) {
 int task_mutexes_init(task_t *task) {
     int ret;
 
-    ret = mutex_init(&(task->live_thread_list_mutex));
-    if (ret < 0) return -1;
-
-    ret = mutex_init(&(task->zombie_thread_list_mutex));
+    ret = mutex_init(&(task->thread_list_mutex));
     if (ret < 0) {
-        mutex_destroy(&(task->live_thread_list_mutex));
         return -1;
     }
 
     ret = mutex_init(&(task->child_task_list_mutex));
     if (ret < 0) {
-        mutex_destroy(&(task->live_thread_list_mutex));
-        mutex_destroy(&(task->zombie_thread_list_mutex));
+        mutex_destroy(&(task->thread_list_mutex));
         return -1;
     }
 
     ret = mutex_init(&(task->wait_mutex));
     if (ret < 0) {
-        mutex_destroy(&(task->live_thread_list_mutex));
-        mutex_destroy(&(task->zombie_thread_list_mutex));
+        mutex_destroy(&(task->thread_list_mutex));
         mutex_destroy(&(task->child_task_list_mutex));
         return -1;
     }
@@ -153,22 +178,9 @@ int task_mutexes_init(task_t *task) {
 }
 
 void task_mutexes_destroy(task_t *task) {
-    mutex_destroy(&(task->live_thread_list_mutex));
-    mutex_destroy(&(task->zombie_thread_list_mutex));
+    mutex_destroy(&(task->thread_list_mutex));
     mutex_destroy(&(task->child_task_list_mutex));
     mutex_destroy(&(task->wait_mutex));
-}
-
-uint32_t *page_dir_init() {
-    uint32_t *page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);
-    if (page_dir == NULL) return NULL;
-    memset(page_dir, 0, PAGE_SIZE);
-
-    int i;
-    for (i = 0; i < NUM_KERN_TABLES; i++) {
-        page_dir[i] = kern_page_dir[i];
-    }
-    return page_dir;
 }
 
 // leaves task pointer and status to be set outside
@@ -176,14 +188,16 @@ thread_t *thread_init() {
     sche_node_t *sche_node = allocator_alloc(sche_allocator);
     if (sche_node == NULL) {
         // TODO error handling
+        lprintf("f4");
         return NULL;
     }
 
-    thread_t *thread = GET_TCB(sche_node);
+    thread_t *thread = SCHE_NODE_TO_TCB(sche_node);
     thread->tid = gen_thread_id();
 
     void *kern_stack = malloc(KERN_STACK_SIZE);
     if (kern_stack == NULL) {
+        lprintf("f5");
         allocator_free(sche_node);
         return NULL;
     }
@@ -191,6 +205,12 @@ thread_t *thread_init() {
     thread->cur_sp = USER_STACK_START;
 
     return thread;
+}
+
+void thread_destroy(thread_t *thread) {
+    void *kern_stack = (void *)(thread->kern_sp - KERN_STACK_SIZE);
+    free(kern_stack);
+    allocator_free(TCB_TO_SCHE_NODE(thread));
 }
 
 // assumes cr3 is already set

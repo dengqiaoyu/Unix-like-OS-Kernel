@@ -135,89 +135,74 @@ void inc_num_free_frames(int n) {
     mutex_unlock(&num_free_frames_mutex);
 }
 
-int clear_pgdir(uint32_t *pgdir) {
+uint32_t *page_dir_init() {
+    uint32_t *page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);
+    if (page_dir == NULL) return NULL;
+    memset(page_dir, 0, PAGE_SIZE);
+
+    int i;
+    for (i = 0; i < NUM_KERN_TABLES; i++) {
+        page_dir[i] = kern_page_dir[i];
+    }
+    return page_dir;
+}
+
+int page_dir_clear(uint32_t *page_dir) {
     int i, j;
     for (i = NUM_KERN_TABLES; i < NUM_PD_ENTRIES; i++) {
-        uint32_t pde = pgdir[i];
+        uint32_t pde = page_dir[i];
         if ((pde & PDE_PRESENT) == 0) continue;
-        uint32_t *pgtable = ENTRY_TO_ADDR(pde);
+        uint32_t *page_tab = ENTRY_TO_ADDR(pde);
 
         for (j = 0; j < NUM_PT_ENTRIES; j++) {
-            uint32_t pte = pgtable[j];
+            uint32_t pte = page_tab[j];
             if ((pte & PTE_PRESENT) == 0) continue;
 
             // don't mess with the RW_PHYS reserved page
             if (i == RW_PHYS_PD_INDEX && j == RW_PHYS_PT_INDEX) continue;
-            pgtable[j] = 0;
 
+            page_tab[j] = 0;
             uint32_t frame = pte & PAGE_ALIGN_MASK;
             free_frame(frame);
         }
 
-        // don't mess with the RW_PHYS reserved page table
-        if (i == RW_PHYS_PD_INDEX) continue;
-
-        sfree(pgtable, PAGE_SIZE);
-        pgdir[i] = 0;
+        page_dir[i] = 0;
+        sfree(page_tab, PAGE_SIZE);
     }
 
     return SUCCESS;
 }
 
-int copy_pgdir(uint32_t *new_pgdir, uint32_t *old_pgdir) {
+int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
     int i, j;
-    for (i = 0; i < NUM_KERN_TABLES; i++) {
-        new_pgdir[i] = kern_page_dir[i];
-    }
-
     for (i = NUM_KERN_TABLES; i < NUM_PD_ENTRIES; i++) {
-        uint32_t old_pde = old_pgdir[i];
+        uint32_t old_pde = old_page_dir[i];
         if ((old_pde & PDE_PRESENT) == 0) continue;
         int new_pde_flag = old_pde & PAGE_FLAG_MASK;
-        uint32_t *old_pgtable = ENTRY_TO_ADDR(old_pde);
+        uint32_t *old_page_tab = ENTRY_TO_ADDR(old_pde);
 
-        uint32_t *new_pgtable = smemalign(PAGE_SIZE, PAGE_SIZE);
-        memset(new_pgtable, 0, PAGE_SIZE);
-        new_pgdir[i] = (uint32_t)new_pgtable | new_pde_flag;
-        // if ((new_pgdir[i] & PDE_PRESENT) == 1) {
-        //     lprintf("pgdir %d set successful", i);
-        // }
-        // print_line;
-        // print_line;
+        uint32_t *new_page_tab = smemalign(PAGE_SIZE, PAGE_SIZE);
+        memset(new_page_tab, 0, PAGE_SIZE);
+        new_page_dir[i] = (uint32_t)new_page_tab | new_pde_flag;
+
         for (j = 0; j < NUM_PT_ENTRIES; j++) {
-            uint32_t old_pte = old_pgtable[j];
+            uint32_t old_pte = old_page_tab[j];
             if ((old_pte & PTE_PRESENT) == 0) continue;
 
             // don't mess with the RW_PHYS reserved page
             if (i == RW_PHYS_PD_INDEX && j == RW_PHYS_PT_INDEX) continue;
 
-            // lprintf("read_and_write: i: %d, j: %d", i, j);
-            // lprintf("read_and_write, virtual address: %p",
-            //         (void *)virtual_addr);
-            // print_line;
-            // print_line;
-            // BUG mutex
-
-            //mutex_lock(&first_free_frame_mutex);
             uint32_t new_physical_frame = get_frame();
-            //mutex_unlock(&first_free_frame_mutex);
 
-            // print_line;
             int new_pte_flag = old_pte & PAGE_FLAG_MASK;
-            // print_line;
             uint32_t new_pte = new_physical_frame | new_pte_flag;
-            // print_line;
+
             uint32_t virtual_addr = ((uint32_t)i << 22) | ((uint32_t)j << 12);
             write_physical(new_physical_frame, (void *)virtual_addr, PAGE_SIZE);
-            // print_line;
-            new_pgtable[j] = new_pte;
-            // print_line;
+            new_page_tab[j] = new_pte;
         }
     }
-    // lprintf("page_dir: %p", new_pgdir);
-    // set_cr3((uint32_t)new_pgdir);
-    // MAGIC_BREAK;
-    // print_line;
+
     return SUCCESS;
 }
 

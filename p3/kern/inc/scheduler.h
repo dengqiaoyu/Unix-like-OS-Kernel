@@ -6,11 +6,11 @@
 #include "list.h"
 #include "task.h"
 
-#define GET_TCB_TB_NODE(sche_node)\
+#define SCHE_NODE_TO_TABLE_NODE(sche_node)\
         ((tcb_tb_node_t *)((char *)sche_node + 8))
-#define GET_TCB(sche_node)\
+#define SCHE_NODE_TO_TCB(sche_node)\
         ((thread_t *)((char *)sche_node + 24))
-#define GET_SCHE_NODE(tcb_ptr)\
+#define TCB_TO_SCHE_NODE(tcb_ptr)\
         ((sche_node_t *)((char *)tcb_ptr - 24))
 
 typedef struct schedule_list_struct {

@@ -37,9 +37,7 @@ void mutex_lock(mutex_t *mp) {
     disable_interrupts();
 
     if (mp->lock == 1) {
-        cur_thread->status = BLOCKED_MUTEX;
-        add_node_to_tail(mp->blocked_list, GET_SCHE_NODE(cur_thread));
-
+        add_node_to_tail(mp->blocked_list, TCB_TO_SCHE_NODE(cur_thread));
         sche_yield(BLOCKED_MUTEX);
     } else {
         mp->lock = 1;
@@ -54,7 +52,7 @@ void mutex_unlock(mutex_t *mp) {
     if (new_sche_node == NULL) {
         mp->lock = 0;
     } else {
-        thread_t *new_thread = GET_TCB(new_sche_node);
+        thread_t *new_thread = SCHE_NODE_TO_TCB(new_sche_node);
         new_thread->status = RUNNABLE;
         sche_push_back(new_thread);
     }

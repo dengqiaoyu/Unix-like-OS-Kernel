@@ -27,7 +27,6 @@ static int seconds = 0;
 int cnt_seconds_flag = 0;
 /* to store the address of callback function */
 void (*callback_func)();
-extern sche_node_t *cur_sche_node;
 
 /**
  * @brief Initialize timer.
@@ -60,7 +59,7 @@ void timer_handler() {
  * @param num_ticks the number of 10 ms that is triggered.
  */
 void timer_callback(unsigned int num_ticks) {
-    if (cnt_seconds_flag && num_ticks % 100 == 0) {
+    if (cnt_seconds_flag && (num_ticks % 100 == 0)) {
         // lprintf("time: %d", seconds);
         seconds++;
     }
