@@ -37,7 +37,7 @@ UPDATE_METHOD = afs
 410TESTS = loader_test1 loader_test2 ck1 merchant peon knife new_pages\
 	   exec_basic exec_basic_helper fork_test1 fork_wait getpid_test1\
 	   wait_getpid stack_test1 mem_eat_test wild_test1 fork_bomb\
-	   fork_exit_bomb fork_wait_bomb sleep_test1
+	   fork_exit_bomb fork_wait_bomb
 
 ###########################################################################
 # Test programs you have written which you wish to run
@@ -45,7 +45,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the user/progs
 # directory.
 #
-STUDENTTESTS = my_fork_test my_user
+STUDENTTESTS = my_fork_test my_maker_deschedule
 
 ###########################################################################
 # Data files provided by course staff to build into the RAM disk
@@ -80,7 +80,8 @@ THREAD_OBJS = malloc.o panic.o
 # Object files for your syscall wrappers
 ###########################################################################
 SYSCALL_OBJS = fork.o exec.o wait.o deschedule.o make_runnable.o gettid.o\
-			   new_pages.o set_status.o vanish.o
+			   new_pages.o set_status.o vanish.o\
+			   print.o readfile.o readline.o get_cursor_pos.o set_cursor_pos.o
 
 ###########################################################################
 # Object files for your automatic stack handling

@@ -13,7 +13,6 @@
 #include "vm.h"
 #include "maps.h"
 #include "task.h"
-#include "task_internal.h"
 #include "allocator.h"
 #include "scheduler.h"
 #include "tcb_hashtab.h"

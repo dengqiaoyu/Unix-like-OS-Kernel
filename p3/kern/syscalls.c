@@ -176,7 +176,7 @@ int kern_deschedule(void) {
         enable_interrupts();
         return 0;
     }
-    sche_yield(1);
+    sche_yield(RUNNABLE);
     enable_interrupts();
     return 0;
 }

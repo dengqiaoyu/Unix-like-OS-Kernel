@@ -59,6 +59,7 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     append_to_scheduler(get_mainthr_sche_node(merchant_2));
     */
 
+
     task_t *init = task_init();
     thread_t *thread = thread_init();
     thread->task = init;
@@ -69,7 +70,7 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     maps_insert(init->maps, 0, PAGE_SIZE * NUM_KERN_PAGES, 0);
     maps_insert(init->maps, RW_PHYS_VA, PAGE_SIZE, 0);
     // /*
-    const char *fname = "fork_exit_bomb";
+    const char *fname = "fork_wait_bomb";
     simple_elf_t elf_header;
     elf_load_helper(&elf_header, fname);
     thread->ip = elf_header.e_entry;
@@ -80,7 +81,6 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     set_cr3((uint32_t)init->page_dir);
     load_program(&elf_header, init->maps);
     // */
-
     thread->status = RUNNABLE;
     set_esp0(thread->kern_sp);
     kern_to_user(thread->cur_sp, thread->ip);
