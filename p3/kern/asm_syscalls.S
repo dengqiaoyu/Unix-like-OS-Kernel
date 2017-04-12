@@ -33,3 +33,6 @@ WRAP_SYSCALL(asm_new_pages, kern_new_pages)
 
 .global asm_deschedule
 WRAP_SYSCALL(asm_deschedule, kern_deschedule)
+
+.global asm_make_runnable
+WRAP_SYSCALL(asm_make_runnable, kern_make_runnable)

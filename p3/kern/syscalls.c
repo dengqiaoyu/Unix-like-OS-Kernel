@@ -20,6 +20,7 @@
 #include "asm_switch.h"
 #include "allocator.h" /* allocator */
 #include "asm_set_exec_context.h"
+#include "tcb_hashtab.h"
 #include "utils.h"
 
 extern id_counter_t id_counter;
@@ -167,16 +168,25 @@ int kern_new_pages(void) {
 int kern_deschedule(void) {
     uint32_t *esi = (uint32_t *)get_esi();
     int *reject = (int *)esi;
-    // if (check_ptr_valid((uint32_t)reject, (uint32_t *)get_cr3(), 0) == -1)
-    //     return -1;
-
     disable_interrupts();
     if (*reject != 0) {
         enable_interrupts();
         return 0;
     }
-    lprintf("%d\n", __LINE__);
     sche_yield(1);
+    enable_interrupts();
+    return 0;
+}
+
+int kern_make_runnable(void) {
+    uint32_t *esi = (uint32_t *)get_esi();
+    int tid = (int)esi;
+    thread_t *thr = tcb_hashtab_get(tid);
+    if (thr == NULL) return -1;
+    if (thr->status != SUSPENDED) return -1;
+    disable_interrupts();
+    thr->status = RUNNABLE;
+    sche_push_back(thr);
     enable_interrupts();
     return 0;
 }

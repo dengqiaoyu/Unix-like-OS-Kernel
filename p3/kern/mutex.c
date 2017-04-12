@@ -36,7 +36,7 @@ void mutex_lock(mutex_t *mp) {
     disable_interrupts();
     if (mp->lock == 1) {
         thread_t *cur_thr_node = get_cur_tcb();
-        add_node_to_tail(&mp->list, GET_SCHE_NODE(cur_thr_node));
+        add_node_to_tail(&mp->list, GET_SCHE_NODE_FROM_TCB(cur_thr_node));
 
         // TODO will interrupts ever be disabled here?
         // if (eflags & EFL_IF)

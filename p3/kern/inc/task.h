@@ -17,6 +17,7 @@
 #define USER_STACK_SIZE 0x1000
 #define USER_STACK_START 0xFFB00F00
 
+
 typedef struct id_counter {
     int task_id_counter;
     mutex_t task_id_counter_mutex;
@@ -61,6 +62,8 @@ typedef struct thread {
 #define BLOCKED_MUTEX 4
 
 int id_counter_init();
+
+int tcb_hashtab_init();
 
 task_t *task_init(const char *fname);
 

@@ -85,6 +85,10 @@ int syscall_init() {
                 (void *)asm_deschedule,
                 SEGSEL_KERNEL_CS,
                 FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(MAKE_RUNNABLE_INT,
+                (void *)asm_make_runnable,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
     return SUCCESS;
 }
 

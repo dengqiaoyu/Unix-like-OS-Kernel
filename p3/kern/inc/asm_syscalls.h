@@ -15,4 +15,6 @@ void asm_new_pages(void);
 
 void asm_deschedule(void);
 
+void asm_make_runnable(void);
+
 #endif

@@ -28,6 +28,7 @@
 #include "task.h"
 #include "asm_switch.h"
 #include "scheduler.h"
+#include "tcb_hashtab.h"
 #include "return_type.h"
 
 extern sche_node_t *cur_sche_node;
@@ -51,6 +52,7 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
 
     // TODO find a better way to init mutexes
     mutex_init(&malloc_mutex);
+    tcb_hashtab_init();
 
     /*
     task_t *idle = task_init("idle_user");
@@ -63,10 +65,10 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     cur_sche_node = get_mainthr_sche_node(init);
     append_to_scheduler(get_mainthr_sche_node(merchant_2));
     */
-    task_t *my_fork_test = task_init("my_fork_test");
-    sche_push_back(my_fork_test->main_thread);
 
-    task_t *init = task_init("my_user");
+    task_t *init = task_init("my_fork_test");
+    task_t *my_fork_test = task_init("my_user");
+    sche_push_back(my_fork_test->main_thread);
     set_cur_run_thread(init->main_thread);
     init->main_thread->status = RUNNABLE;
     set_cr3((uint32_t)init->page_dir);

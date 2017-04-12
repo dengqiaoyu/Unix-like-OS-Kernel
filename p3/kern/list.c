@@ -10,6 +10,9 @@
 #include <string.h>     /* memset */
 #include <stdio.h>      /* printf() */
 #include <syscall.h>    /* gettid() */
+#include <simics.h>
+#include "scheduler.h"
+#include "task.h"
 #include "list.h"       /* header file of this code */
 
 /**
@@ -99,10 +102,11 @@ void unlink_node(list_t *list, node_t *node) {
  * @return      the pointer to the node for success, NULL for fail
  */
 node_t *get_first_node(list_t *list) {
-    if (list->node_cnt > 0)
+    if (list->node_cnt > 0) {
         return list->head->next;
-    else
+    } else {
         return NULL;
+    }
 }
 
 /**
@@ -115,6 +119,18 @@ node_t *get_last_node(list_t *list) {
         return list->tail->prev;
     else
         return NULL;
+}
+
+node_t *get_next_node(node_t *node) {
+    return node->next;
+}
+
+node_t *get_prev_node(node_t *node) {
+    return node->prev;
+}
+
+int has_next(list_t *list, node_t *node) {
+    return node->next != list->tail;
 }
 
 /**

@@ -16,17 +16,16 @@
 
 DEF_TEST_NAME("deschedule_hang:");
 
-int main()
-{
-  int error, reject;
-  report_start(START_4EVER);
+int main() {
+    int error, reject;
+    report_start(START_4EVER);
 
-  reject = 0;
-  /* stop running for quite a while */
-  error = deschedule(&reject);
+    reject = 0;
+    /* stop running for quite a while */
+    error = deschedule(&reject);
 
-  report_fmt("deschedule() returned %d", error);
+    report_fmt("deschedule() returned %d", error);
 
-  report_end(END_FAIL);
-  exit(1);
+    report_end(END_FAIL);
+    exit(1);
 }

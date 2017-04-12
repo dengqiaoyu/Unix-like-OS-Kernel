@@ -60,4 +60,3 @@ temp/
 sftp-config.json
 *.sublime-project
 *.sublime-workspace
-qdeng_test/

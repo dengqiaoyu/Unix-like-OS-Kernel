@@ -15,6 +15,7 @@
 #include "task.h"
 #include "allocator.h"
 #include "scheduler.h"
+#include "tcb_hashtab.h"
 #include "return_type.h"
 
 extern uint32_t *kern_page_dir;
@@ -66,13 +67,12 @@ task_t *task_init(const char *fname) {
 
 thread_t *thread_init() {
     sche_node_t *sche_node = allocator_alloc(sche_allocator);
-    thread_t *thread = GET_TCB(sche_node);
+    thread_t *thread = GET_TCB_FROM_SCHE(sche_node);
     thread->tid = id_counter.thread_id_counter++;
-
     void *kern_stack = malloc(KERN_STACK_SIZE);
     thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
     thread->user_sp = USER_STACK_START;
-
+    tcb_hashtab_put(thread);
     return thread;
 }
 

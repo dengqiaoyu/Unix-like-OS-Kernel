@@ -1,4 +1,5 @@
 #include "syscalls.h"
+#include "tcb_hashtab.h"
 
 static task_t  *_fork_task_init(task_t *old_task);
 static int _fork_page_init(uint32_t **new_pgdir_ptr, uint32_t *old_pgdir);
@@ -75,6 +76,7 @@ int _fork_page_init(uint32_t **new_pgdir_ptr, uint32_t *old_pgdir) {
 }
 
 int _fork_thread_init(thread_t **main_thread_ptr, task_t *new_task) {
+    // Allocate on the kernel stack.
     sche_node_t *sche_node = allocator_alloc(sche_allocator);
     if (sche_node == NULL) {
         //free_page_dir(new_task->page_dir);
@@ -83,7 +85,7 @@ int _fork_thread_init(thread_t **main_thread_ptr, task_t *new_task) {
         free(new_task);
         return ERROR_FORK_MALLOC_THREAD_FAILED;
     }
-    thread_t *new_thread = GET_TCB(sche_node);
+    thread_t *new_thread = GET_TCB_FROM_SCHE(sche_node);
     mutex_lock(&id_counter.thread_id_counter_mutex);
     new_thread->tid = id_counter.thread_id_counter++;
     mutex_unlock(&id_counter.thread_id_counter_mutex);
@@ -101,6 +103,7 @@ int _fork_thread_init(thread_t **main_thread_ptr, task_t *new_task) {
     new_thread->task = new_task;
     new_thread->status = FORKED;
     *main_thread_ptr = new_thread;
+    tcb_hashtab_put(new_thread);
     return SUCCESS;
 }
 
