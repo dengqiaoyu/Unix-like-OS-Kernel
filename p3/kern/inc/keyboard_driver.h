@@ -9,7 +9,22 @@
 #ifndef H_KEYBOARD_DRIVER
 #define H_KEYBOARD_DRIVER
 
-#define KB_BUF_LEN 4096
+#include <mutex.h>
+#include "kern_cond.h"
+#include "kern_sem.h"
+
+#define KB_BUF_LEN 256
+
+typedef struct keyboard_buffer {
+    char buf[KB_BUF_LEN];
+    int buf_start;
+    int buf_ending;
+    int newline_cnt;
+    int is_waiting;
+    mutex_t mutex;
+    kern_cond_t cond;
+    kern_sem_t readline_sem;
+} keyboard_buffer_t;
 
 /* function declarations */
 /**

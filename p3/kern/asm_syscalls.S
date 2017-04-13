@@ -43,6 +43,9 @@ WRAP_SYSCALL(asm_gettid, kern_gettid)
 .global asm_new_pages
 WRAP_SYSCALL(asm_new_pages, kern_new_pages)
 
+.global asm_readline
+WRAP_SYSCALL(asm_readline, kern_readline)
+
 .global asm_set_status
 WRAP_SYSCALL(asm_set_status, kern_set_status)
 

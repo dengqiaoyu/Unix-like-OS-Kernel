@@ -97,6 +97,10 @@ int syscall_init() {
                 (void *)asm_new_pages,
                 SEGSEL_KERNEL_CS,
                 FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(READLINE_INT,
+                (void *)asm_readline,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
     idt_install(SET_STATUS_INT,
                 (void *)asm_set_status,
                 SEGSEL_KERNEL_CS,

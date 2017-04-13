@@ -71,9 +71,9 @@ int getchar(void) {
     return -1;
 }
 
-int readline(int size, char *buf) {
-    return -1;
-}
+// int readline(int size, char *buf) {
+//     return -1;
+// }
 
 int print(int size, char *buf) {
     return -1;

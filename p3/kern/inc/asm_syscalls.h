@@ -21,6 +21,8 @@ void asm_gettid(void);
 
 void asm_new_pages(void);
 
+void asm_readline(void);
+
 void asm_set_status(void);
 
 void asm_vanish(void);
