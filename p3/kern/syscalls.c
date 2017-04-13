@@ -166,7 +166,26 @@ int kern_wait(void) {
     return ret;
 }
 
-/* yield */
+int kern_yield(void) {
+    uint32_t *esi = (uint32_t *)get_esi();
+    int tid = (int)esi;
+    if (tid < -1) return -1;
+    if (tid == -1) {
+        sche_yield(RUNNABLE);
+        return 0;
+    }
+    thread_t *thr = tcb_hashtab_get(tid);
+    if (thr == NULL) return -1;
+    disable_interrupts();
+    if (thr->status != RUNNABLE) {
+        enable_interrupts();
+        return -1;
+    }
+    sche_push_front(thr);
+    sche_yield(RUNNABLE);
+    enable_interrupts();
+    return 0;
+}
 
 int kern_deschedule(void) {
     uint32_t *esi = (uint32_t *)get_esi();

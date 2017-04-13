@@ -11,6 +11,8 @@ int kern_exec(void);
 
 int kern_wait(void);
 
+int kern_yield(void);
+
 int kern_deschedule(void);
 
 int kern_make_runnable(void);

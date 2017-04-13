@@ -77,6 +77,10 @@ int syscall_init() {
                 (void *)asm_wait,
                 SEGSEL_KERNEL_CS,
                 FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(YIELD_INT,
+                (void *)asm_yield,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
     idt_install(DESCHEDULE_INT,
                 (void *)asm_deschedule,
                 SEGSEL_KERNEL_CS,

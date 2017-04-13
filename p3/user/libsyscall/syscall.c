@@ -47,9 +47,9 @@ int wait(int *status_ptr) {
 }
 */
 
-int yield(int pid) {
-    return -1;
-}
+// int yield(int pid) {
+//     return -1;
+// }
 
 // int deschedule(int *flag) {
 //     return -1;

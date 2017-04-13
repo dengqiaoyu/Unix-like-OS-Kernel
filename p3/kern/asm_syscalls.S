@@ -28,6 +28,9 @@ WRAP_SYSCALL(asm_exec, kern_exec)
 .global asm_wait
 WRAP_SYSCALL(asm_wait, kern_wait)
 
+.global asm_yield
+WRAP_SYSCALL(asm_yield, kern_yield)
+
 .global asm_deschedule
 WRAP_SYSCALL(asm_deschedule, kern_deschedule)
 

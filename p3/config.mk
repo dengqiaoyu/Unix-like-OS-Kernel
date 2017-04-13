@@ -37,7 +37,7 @@ UPDATE_METHOD = afs
 410TESTS = loader_test1 loader_test2 ck1 merchant peon knife new_pages\
 	   exec_basic exec_basic_helper fork_test1 fork_wait getpid_test1\
 	   wait_getpid stack_test1 mem_eat_test wild_test1 fork_bomb\
-	   fork_exit_bomb fork_wait_bomb
+	   fork_exit_bomb fork_wait_bomb yield_desc_mkrun
 
 ###########################################################################
 # Test programs you have written which you wish to run
@@ -80,7 +80,7 @@ THREAD_OBJS = malloc.o panic.o
 # Object files for your syscall wrappers
 ###########################################################################
 SYSCALL_OBJS = fork.o exec.o wait.o deschedule.o make_runnable.o gettid.o\
-			   new_pages.o set_status.o vanish.o\
+			   new_pages.o set_status.o vanish.o yield.o\
 			   print.o readfile.o readline.o get_cursor_pos.o set_cursor_pos.o
 
 ###########################################################################

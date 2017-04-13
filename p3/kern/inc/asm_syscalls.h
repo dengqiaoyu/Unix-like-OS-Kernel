@@ -11,6 +11,8 @@ void asm_exec(void);
 
 void asm_wait(void);
 
+void asm_yield(void);
+
 void asm_deschedule(void);
 
 void asm_make_runnable(void);
