@@ -8,8 +8,8 @@
 #include "maps.h"
 #include "maps_internal.h"
 
-#define MAP_START(node) (node->map.start)
-#define MAP_SIZE(node) (node->map.size)
+#define MAP_LOW(node) (node->map.low)
+#define MAP_HIGH(node) (node->map.high)
 #define MAP_PERMS(node) (node->map.perms)
 
 map_list_t *maps_init() {
@@ -39,18 +39,18 @@ void maps_print(map_list_t *maps) {
 }
 
 // assumes no overlaps
-void maps_insert(map_list_t *maps, uint32_t addr, uint32_t size, int perms) {
-    map_node_t *node = make_node(addr, size, perms);
+void maps_insert(map_list_t *maps, uint32_t low, uint32_t high, int perms) {
+    map_node_t *node = make_node(low, high, perms);
     maps->root = tree_insert(maps->root, node);
 }
 
-map_t *maps_find(map_list_t *maps, uint32_t addr, uint32_t size) {
-    map_node_t *node = tree_find(maps->root, addr, size);
+map_t *maps_find(map_list_t *maps, uint32_t low, uint32_t high) {
+    map_node_t *node = tree_find(maps->root, low, high);
     return &(node->map);
 }
 
-void maps_delete(map_list_t *maps, uint32_t addr) {
-    tree_delete(maps->root, addr);
+void maps_delete(map_list_t *maps, uint32_t low) {
+    tree_delete(maps->root, low);
 }
 
 int max(int a, int b) {
@@ -68,10 +68,10 @@ void update_height(map_node_t *node) {
     node->height = tallest_child + 1;
 }
 
-map_node_t *make_node(uint32_t addr, uint32_t size, int perms) {
+map_node_t *make_node(uint32_t low, uint32_t high, int perms) {
     map_node_t *node = malloc(sizeof(map_node_t));
-    MAP_START(node) = addr;
-    MAP_SIZE(node) = size;
+    MAP_LOW(node) = low;
+    MAP_HIGH(node) = high;
     MAP_PERMS(node) = perms;
 
     node->left = node->right = NULL;
@@ -92,21 +92,19 @@ int get_balance(map_node_t *tree) {
 }
 
 void copy_node(map_node_t *from, map_node_t *to) {
-    MAP_START(to) = MAP_START(from);
-    MAP_SIZE(to) = MAP_SIZE(from);
+    MAP_LOW(to) = MAP_LOW(from);
+    MAP_HIGH(to) = MAP_HIGH(from);
     MAP_PERMS(to) = MAP_PERMS(from);
 }
 
-map_node_t *tree_find(map_node_t *tree, uint32_t addr, uint32_t size) {
+map_node_t *tree_find(map_node_t *tree, uint32_t low, uint32_t high) {
     if (tree == NULL) return NULL;
 
-    if (addr < MAP_START(tree)) {
-        if (MAP_START(tree) - addr >= size) {
-            return tree_find(tree->left, addr, size);
-        }
+    if (high < MAP_LOW(tree)) {
+        return tree_find(tree->left, low, high);
     }
-    else if (addr - MAP_START(tree) >= MAP_SIZE(tree)) {
-        return tree_find(tree->right, addr, size);
+    else if (MAP_HIGH(tree) < low) {
+        return tree_find(tree->right, low, high);
     }
 
     return tree;
@@ -116,12 +114,12 @@ map_node_t *tree_find(map_node_t *tree, uint32_t addr, uint32_t size) {
 map_node_t *tree_insert(map_node_t *tree, map_node_t *node) {
     if (tree == NULL) return node;
     
-    if (MAP_START(node) < MAP_START(tree)) {
-        assert(MAP_START(tree) - MAP_START(node) >= MAP_SIZE(node));
+    if (MAP_LOW(node) < MAP_LOW(tree)) {
+        assert(MAP_HIGH(node) < MAP_LOW(tree));
         tree->left = tree_insert(tree->left, node);
     }
     else {
-        assert(MAP_START(node) - MAP_START(tree) >= MAP_SIZE(tree));
+        assert(MAP_HIGH(tree) < MAP_LOW(node));
         tree->right = tree_insert(tree->right, node);
     }
 
@@ -129,14 +127,16 @@ map_node_t *tree_insert(map_node_t *tree, map_node_t *node) {
     int balance = get_balance(tree);
 
     if (balance > 1) {
-        if (MAP_START(node) < MAP_START(tree->right)) {
+        // if (MAP_LOW(node) < MAP_LOW(tree->right)) {
+        if (get_balance(tree->right) < 0) {
             tree->right = rotate_right(tree->right);
         }
         return rotate_left(tree);
     }
 
     if (balance < -1) {
-        if (MAP_START(node) > MAP_START(tree->left)) {
+        // if (MAP_LOW(tree->left) < MAP_LOW(node)) {
+        if (get_balance(tree->left) > 0) {
             tree->left = rotate_left(tree->left);
         }
         return rotate_right(tree);
@@ -145,36 +145,35 @@ map_node_t *tree_insert(map_node_t *tree, map_node_t *node) {
     return tree;
 }
 
-map_node_t *tree_delete(map_node_t *tree, uint32_t addr) {
-    if (MAP_START(tree) < addr) {
-        tree->right = tree_delete(tree->right, addr);
+// assumes low is low
+map_node_t *tree_delete(map_node_t *tree, uint32_t low) {
+    if (MAP_LOW(tree) < low) {
+        tree->right = tree_delete(tree->right, low);
     }
-    else if (addr < MAP_START(tree)) {
-        tree->left = tree_delete(tree->left, addr);
+    else if (low < MAP_LOW(tree)) {
+        tree->left = tree_delete(tree->left, low);
     }
     else {
-        if (tree->left == NULL || tree->right == NULL) {
-            map_node_t *temp;
-            if (tree->left == NULL) temp = tree->right;
-            else temp = tree->left;
-
-            if (temp == NULL) {
-                temp = tree;
-                tree = NULL;
-            }
-            else {
-                copy_node(temp, tree);
-                tree->left = NULL;
-                tree->right = NULL;
-            }
-            free(temp);
+        map_node_t *temp;
+        if (tree->left == NULL && tree->right == NULL) {
+            free(tree);
+            return NULL;
+        }
+        else if (tree->left == NULL) {
+            temp = tree->right;
+            free(tree);
+            return temp;
+        }
+        else if (tree->right == NULL) {
+            temp = tree->left;
+            free(tree);
+            return temp;
         }
         else {
             copy_node(smallest_node(tree->right), tree);
-            tree->right = tree_delete(tree->right, MAP_START(tree));
+            tree->right = tree_delete(tree->right, MAP_LOW(tree));
         }
     }
-    if (tree == NULL) return tree;
 
     update_height(tree);
     int balance = get_balance(tree);
@@ -208,9 +207,7 @@ map_node_t *tree_copy(map_node_t *tree) {
 
     map_node_t *copy = malloc(sizeof(map_node_t));
     if (copy == NULL) return NULL;
-    MAP_START(copy) = MAP_START(tree);
-    MAP_SIZE(copy) = MAP_SIZE(tree);
-    MAP_PERMS(copy) = MAP_PERMS(tree);
+    copy_node(tree, copy);
     copy->height = tree->height;
 
     copy->left = tree_copy(tree->left);
@@ -232,8 +229,10 @@ map_node_t *tree_copy(map_node_t *tree) {
 void tree_print(map_node_t *node) {
     if (node == NULL) return;
     tree_print(node->left);
-    lprintf("start: %x size: %x perms: %x height: %d", (unsigned int)MAP_START(node), 
-            (unsigned int)MAP_SIZE(node), (unsigned int)MAP_PERMS(node),
+    lprintf("low: %x high: %x perms: %x height: %d",
+            (unsigned int)MAP_LOW(node), 
+            (unsigned int)MAP_HIGH(node),
+            (unsigned int)MAP_PERMS(node),
             node->height);
     tree_print(node->right);
 }

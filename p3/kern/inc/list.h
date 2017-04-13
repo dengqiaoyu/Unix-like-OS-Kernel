@@ -74,7 +74,9 @@ node_t *get_first_node(list_t *list);
 node_t *get_last_node(list_t *list);
 
 // TODO
-node_t *get_next_node(node_t *node);
+node_t *get_next_node(list_t *list, node_t *node);
+
+void insert_before(list_t *list, node_t *cur_node, node_t *new_node);
 
 /**
  * Get the first node in the list and unlinked it in the list.

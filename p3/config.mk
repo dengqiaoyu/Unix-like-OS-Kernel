@@ -36,8 +36,9 @@ UPDATE_METHOD = afs
 #
 410TESTS = loader_test1 loader_test2 ck1 merchant peon knife new_pages\
 	   exec_basic exec_basic_helper fork_test1 fork_wait getpid_test1\
-	   wait_getpid stack_test1 mem_eat_test wild_test1 fork_bomb\
-	   fork_exit_bomb fork_wait_bomb sleep_test1
+	   wait_getpid fork_exit_bomb fork_wait_bomb sleep_test1 actual_wait\
+	   exec_nonexist print_basic remove_pages_test1 remove_pages_test2\
+	   stack_test1 mem_eat_test wild_test1 fork_bomb\
 
 ###########################################################################
 # Test programs you have written which you wish to run
@@ -80,7 +81,8 @@ THREAD_OBJS = malloc.o panic.o
 # Object files for your syscall wrappers
 ###########################################################################
 SYSCALL_OBJS = syscall.o exec.o gettid.o fork.o new_pages.o wait.o vanish.o\
-	       set_status.o
+	       set_status.o get_ticks.o sleep.o print.o set_term_color.o\
+	       get_cursor_pos.o set_cursor_pos.o remove_pages.o
 
 ###########################################################################
 # Object files for your automatic stack handling
@@ -97,7 +99,7 @@ AUTOSTACK_OBJS = autostack.o
 #
 # Kernel object files you provide in from kern/
 #
-KERNEL_OBJS = fake_console.o kernel.o loader.o malloc_wrappers.o\
+KERNEL_OBJS = console.o kernel.o loader.o malloc_wrappers.o\
           asm_switch.o handlers.o task.o vm.o asm_exceptions.o\
           asm_interrupts.o timer_driver.o keyboard_driver.o\
           mutex.o maps.o allocator.o list.o syscalls.o\

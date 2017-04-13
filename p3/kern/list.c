@@ -129,8 +129,17 @@ node_t *get_last_node(list_t *list) {
 }
 
 // TODO
-node_t *get_next_node(node_t *node) {
-    return node->next;
+node_t *get_next_node(list_t *list, node_t *node) {
+    if (node->next == list->tail) return NULL;
+    else return node->next;
+}
+
+void insert_before(list_t *list, node_t *cur_node, node_t *new_node) {
+    list->node_cnt++;
+    new_node->prev = cur_node->prev;
+    cur_node->prev->next = new_node;
+    new_node->next = cur_node;
+    cur_node->prev = new_node;
 }
 
 /**
@@ -165,6 +174,6 @@ void clear_list(list_t *list) {
     }
 
     free(list->head);
-    free(list->tail);
+    //free(list->tail);
     memset(list, 0, sizeof(list_t));
 }

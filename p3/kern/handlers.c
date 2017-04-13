@@ -23,6 +23,7 @@
 #include "asm_interrupts.h"
 #include "timer_driver.h"
 #include "return_type.h"            /* RETURN_IF_ERROR, ERROR_TYPE */
+#include "asm_page_inval.h"
 
 extern uint32_t *kern_page_dir;
 extern uint32_t zfod_frame;
@@ -32,7 +33,13 @@ void pf_handler() {
     uint32_t pte = get_pte(pf_addr);
 
     // TODO handle other cases
-    if (!(pte & PTE_PRESENT) || (pte & PAGE_ALIGN_MASK) == zfod_frame) {
+    if ((pte & PAGE_ALIGN_MASK) == zfod_frame) {
+        page_inval((void *)pf_addr);
+        uint32_t frame_addr = get_frame();
+        set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
+    }
+    else if (!(pte & PTE_PRESENT)) {
+        lprintf("alarming...");
         uint32_t frame_addr = get_frame();
         set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
     }
@@ -82,6 +89,10 @@ int syscall_init() {
                 (void *)asm_new_pages,
                 SEGSEL_KERNEL_CS,
                 FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(REMOVE_PAGES_INT,
+                (void *)asm_remove_pages,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
     idt_install(WAIT_INT,
                 (void *)asm_wait,
                 SEGSEL_KERNEL_CS,
@@ -92,6 +103,30 @@ int syscall_init() {
                 FLAG_TRAP_GATE | FLAG_PL_USER);
     idt_install(SET_STATUS_INT,
                 (void *)asm_set_status,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(GET_TICKS_INT,
+                (void *)asm_get_ticks,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(SLEEP_INT,
+                (void *)asm_sleep,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(PRINT_INT,
+                (void *)asm_print,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(SET_TERM_COLOR_INT,
+                (void *)asm_set_term_color,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(SET_CURSOR_POS_INT,
+                (void *)asm_set_cursor_pos,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(GET_CURSOR_POS_INT,
+                (void *)asm_get_cursor_pos,
                 SEGSEL_KERNEL_CS,
                 FLAG_TRAP_GATE | FLAG_PL_USER);
     return SUCCESS;
