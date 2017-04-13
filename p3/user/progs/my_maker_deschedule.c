@@ -11,7 +11,7 @@ int main() {
         deschedule(&j);
     } else {
         int i = 1;
-        while (i != 100000000) {i++;}
+        while (i != 1000000000) {i++;}
         int ret0 = make_runnable(my_tid);
         lprintf("ret0: %d\n", ret0);
     }

@@ -70,7 +70,7 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     maps_insert(init->maps, 0, PAGE_SIZE * NUM_KERN_PAGES, 0);
     maps_insert(init->maps, RW_PHYS_VA, PAGE_SIZE, 0);
     // /*
-    const char *fname = "fork_wait_bomb";
+    const char *fname = "my_maker_deschedule";
     simple_elf_t elf_header;
     elf_load_helper(&elf_header, fname);
     thread->ip = elf_header.e_entry;
