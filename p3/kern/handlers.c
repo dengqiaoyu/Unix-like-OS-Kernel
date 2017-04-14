@@ -42,8 +42,7 @@ void pf_handler() {
         lprintf("alarming...");
         uint32_t frame_addr = get_frame();
         set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
-    }
-    else {
+    } else {
         lprintf("%x\n", (unsigned int)pf_addr);
         roll_over();
     }
@@ -79,6 +78,22 @@ int syscall_init() {
                 FLAG_TRAP_GATE | FLAG_PL_USER);
     idt_install(EXEC_INT,
                 (void *)asm_exec,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(WAIT_INT,
+                (void *)asm_wait,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(YIELD_INT,
+                (void *)asm_yield,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(DESCHEDULE_INT,
+                (void *)asm_deschedule,
+                SEGSEL_KERNEL_CS,
+                FLAG_TRAP_GATE | FLAG_PL_USER);
+    idt_install(MAKE_RUNNABLE_INT,
+                (void *)asm_make_runnable,
                 SEGSEL_KERNEL_CS,
                 FLAG_TRAP_GATE | FLAG_PL_USER);
     idt_install(GETTID_INT,
@@ -129,6 +144,7 @@ int syscall_init() {
                 (void *)asm_get_cursor_pos,
                 SEGSEL_KERNEL_CS,
                 FLAG_TRAP_GATE | FLAG_PL_USER);
+
     return SUCCESS;
 }
 

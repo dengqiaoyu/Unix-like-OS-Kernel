@@ -35,7 +35,6 @@ void mutex_lock(mutex_t *mp) {
     thread_t *cur_thread = get_cur_tcb();
 
     disable_interrupts();
-
     if (mp->lock == 1) {
         add_node_to_tail(mp->blocked_list, TCB_TO_SCHE_NODE(cur_thread));
         sche_yield(BLOCKED_MUTEX);

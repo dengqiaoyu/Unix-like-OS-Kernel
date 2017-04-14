@@ -9,8 +9,8 @@
 #include <page.h>
 #include <simics.h>
 #include <x86/cr.h>
-#include <malloc.h> /* malloc, smemalign, sfree */
-#include <asm.h>        /* disable_interrupts enable_interrupts */
+#include <malloc.h>         /* malloc, smemalign, sfree */
+#include <asm.h>            /* disable_interrupts enable_interrupts */
 #include <console.h>
 #include <assert.h>
 
@@ -20,7 +20,8 @@
 #include "mutex.h"
 #include "asm_registers.h"
 #include "asm_switch.h"
-#include "allocator.h" /* allocator */
+#include "allocator.h"      /* allocator */
+#include "tcb_hashtab.h"    /* tcb hash table */
 #include "asm_page_inval.h"
 
 extern unsigned int num_ticks;
@@ -30,11 +31,6 @@ extern allocator_t *sche_allocator;
 extern uint32_t *kern_page_dir;
 extern uint32_t zfod_frame;
 extern int num_free_frames;
-
-int kern_gettid(void) {
-    thread_t *thread = get_cur_tcb();
-    return thread->tid;
-}
 
 int kern_exec(void) {
     uint32_t *esi = (uint32_t *)get_esi();
@@ -237,12 +233,11 @@ int kern_wait(void) {
     if (get_list_size(task->zombie_task_list) > 0) {
         zombie = LIST_NODE_TO_TASK(pop_first_node(task->zombie_task_list));
         mutex_unlock(&(task->wait_mutex));
-    }
-    else {
+    } else {
         mutex_lock(&(task->child_task_list_mutex));
         int active_children = get_list_size(task->child_task_list);
         mutex_unlock(&(task->child_task_list_mutex));
-        
+
         // another fork could happen in between, but that's fine
         if (active_children == 0) {
             mutex_unlock(&(task->wait_mutex));
@@ -271,6 +266,66 @@ int kern_wait(void) {
 
     task_destroy(zombie);
     return ret;
+}
+
+int kern_yield(void) {
+    uint32_t *esi = (uint32_t *)get_esi();
+    int tid = (int)esi;
+    if (tid < -1) return -1;
+    if (tid == -1) {
+        sche_yield(RUNNABLE);
+        return 0;
+    }
+    thread_t *thr = tcb_hashtab_get(tid);
+    if (thr == NULL) return -1;
+    disable_interrupts();
+    if (thr->status != RUNNABLE) {
+        enable_interrupts();
+        return -1;
+    }
+    sche_push_front(thr);
+    sche_yield(RUNNABLE);
+    enable_interrupts();
+    return 0;
+}
+
+int kern_deschedule(void) {
+    uint32_t *esi = (uint32_t *)get_esi();
+    int *reject = (int *)esi;
+    disable_interrupts();
+    if (*reject != 0) {
+        enable_interrupts();
+        return 0;
+    }
+    sche_yield(SUSPENDED);
+    enable_interrupts();
+    return 0;
+}
+
+int kern_make_runnable(void) {
+    uint32_t *esi = (uint32_t *)get_esi();
+    int tid = (int)esi;
+    thread_t *thr = tcb_hashtab_get(tid);
+    if (thr == NULL) return -1;
+    if (thr->status != SUSPENDED) return -1;
+    disable_interrupts();
+    thr->status = RUNNABLE;
+    sche_push_back(thr);
+    enable_interrupts();
+    return 0;
+}
+
+int kern_gettid(void) {
+    thread_t *thread = get_cur_tcb();
+    return thread->tid;
+}
+
+void kern_set_status(void) {
+    int status = (int)get_esi();
+
+    thread_t *thread = get_cur_tcb();
+    task_t *task = thread->task;
+    task->status = status;
 }
 
 void kern_vanish(void) {
@@ -302,8 +357,7 @@ void kern_vanish(void) {
             disable_interrupts();
             waiter->thread->status = RUNNABLE;
             sche_push_back(waiter->thread);
-        }
-        else {
+        } else {
             node_t *last_node = get_last_node(parent->zombie_task_list);
             if (last_node != NULL) {
                 task_t *prev_zombie = LIST_NODE_TO_TASK(last_node);
@@ -325,17 +379,9 @@ void kern_vanish(void) {
     }
 
     sche_yield(ZOMBIE);
-    
+
     lprintf("returned from end of vanish");
     while (1) continue;
-}
-
-void kern_set_status(void) {
-    int status = (int)get_esi();
-
-    thread_t *thread = get_cur_tcb();
-    task_t *task = thread->task;
-    task->status = status;
 }
 
 unsigned int kern_get_ticks(void) {
@@ -375,6 +421,7 @@ int kern_print(void) {
     return 0;
 }
 
+// TODO put this elsewhere
 #define COLOR_MASK 0x7F
 
 int kern_set_term_color(void) {

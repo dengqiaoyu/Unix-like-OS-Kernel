@@ -30,6 +30,7 @@
 #include "task.h"
 #include "asm_switch.h"
 #include "scheduler.h"
+#include "tcb_hashtab.h"
 #include "return_type.h"
 
 // will need to find a better way to do this eventually
@@ -74,13 +75,14 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     lprintf( "Hello from a brand new kernel!" );
     clear_console();
 
-    RETURN_IF_ERROR(handler_init(), ERROR_KERNEL_HANDLER_INIT_FAILED);
+    handler_init();
     vm_init();
-    RETURN_IF_ERROR(scheduler_init(), ERROR_KERNEL_SCHEDULER_INIT_FAILED);
-    RETURN_IF_ERROR(id_counter_init(), ERROR_KERNEL_ID_COUNTER_INIT_FAILED);
+    scheduler_init();
+    id_counter_init();
 
     // TODO find a better way to init mutexes
     mutex_init(&malloc_mutex);
+    tcb_hashtab_init();
 
     idle_thread = setup_task("idle");
 

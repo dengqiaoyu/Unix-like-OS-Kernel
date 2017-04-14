@@ -4,16 +4,212 @@
 		"selected_items":
 		[
 			[
+				"en",
+				"enable_interrupts"
+			],
+			[
+				"get",
+				"get_first_node"
+			],
+			[
+				"if",
+				"if_suspend"
+			],
+			[
+				"main",
+				"main_thread"
+			],
+			[
 				"sche",
-				"sche_node_t"
+				"sche_push_back"
+			],
+			[
+				"num_Wor",
+				"num_workers_run"
+			],
+			[
+				"num_wor",
+				"num_workers_plan"
+			],
+			[
+				"Wo",
+				"Worker_handle"
+			],
+			[
+				"num",
+				"num_request_each_type"
+			],
+			[
+				"NUM",
+				"num_projectidea"
+			],
+			[
+				"get_",
+				"get_num_cpu_intensive"
+			],
+			[
+				"pro",
+				"projectidea"
+			],
+			[
+				"new",
+				"new_worker_idx"
+			],
+			[
+				"num_",
+				"num_workers_run"
+			],
+			[
+				"recv",
+				"num_workers_recv"
+			],
+			[
+				"LOG_P",
+				"LOG_PRINT"
+			],
+			[
+				"max",
+				"max_num_workers"
+			],
+			[
+				"num_wrk",
+				"num_workers_recv"
+			],
+			[
+				"num_work",
+				"num_workers_run"
+			],
+			[
+				"num_worker",
+				"num_workers_plan"
+			],
+			[
+				"if_",
+				"if_scaling_out"
+			],
+			[
+				"log",
+				"LOG_PRINT"
+			],
+			[
+				"map",
+				"worker_idx_map"
+			],
+			[
+				"wor",
+				"worker_handle"
+			],
+			[
+				"time",
+				"time_to_be_killed"
+			],
+			[
+				"update",
+				"update_time"
+			],
+			[
+				"worker_idx",
+				"worker_idx_map"
+			],
+			[
+				"worker",
+				"worker_tag"
+			],
+			[
+				"pl",
+				"plan_num_workers"
+			],
+			[
+				"request",
+				"request_type"
+			],
+			[
+				"LOG",
+				"LOG_PRINT"
+			],
+			[
+				"ma",
+				"master_cache"
+			],
+			[
+				"DEBUG",
+				"DEBUG_PRINT"
+			],
+			[
+				"DE",
+				"DEBUG_PRINT"
+			],
+			[
+				"client",
+				"client_req"
+			],
+			[
+				"cache",
+				"cached_item_t"
+			],
+			[
+				"last",
+				"last_node"
+			],
+			[
+				"idx",
+				"idx_if_compppri"
+			],
+			[
+				"comppri",
+				"comppri_map"
+			],
+			[
+				"COMMp",
+				"COMPPRI_NUM"
+			],
+			[
+				"COUN",
+				"counter_primes_n"
+			],
+			[
+				"COMm",
+				"COMPAREPRIMES"
+			],
+			[
+				"COMM",
+				"COMPPRI_NUM"
+			],
+			[
+				"comp",
+				"comppri_item_t"
+			],
+			[
+				"COMPA",
+				"COMPAREPRIMES_NUM_CNT"
+			],
+			[
+				"fio",
+				"fifo_queue"
+			],
+			[
+				"fast",
+				"fast_queue"
+			],
+			[
+				"MAX",
+				"MAX_RUNNING_TELLMENOW"
+			],
+			[
+				"fifo",
+				"fifo_queue"
+			],
+			[
+				"decrease_",
+				"decrease_pending_request_cnt"
+			],
+			[
+				"numw",
+				"num_wisdom418"
 			],
 			[
 				"temp",
 				"temp_func2"
-			],
-			[
-				"new",
-				"new_thread"
 			],
 			[
 				"SCHE",
@@ -76,16 +272,8 @@
 				"end_vertex"
 			],
 			[
-				"get_",
-				"get_remote_frontier_size"
-			],
-			[
 				"NOT",
 				"NOT_VISITED_MARKER"
-			],
-			[
-				"get",
-				"GET_INDEX"
 			],
 			[
 				"old_",
@@ -232,10 +420,6 @@
 				"startCircleTime"
 			],
 			[
-				"num",
-				"numCircles"
-			],
-			[
 				"deno",
 				"denorMaxXf"
 			],
@@ -330,188 +514,62 @@
 			[
 				"EDN",
 				"endif"
-			],
-			[
-				"cuda",
-				"cudaMemcpy"
-			],
-			[
-				"game_sess",
-				"game_session"
-			],
-			[
-				"abs_",
-				"abs_src_row"
-			],
-			[
-				"expected",
-				"expected_row"
-			],
-			[
-				"virus",
-				"virus_col"
-			],
-			[
-				"player_",
-				"player_col"
-			],
-			[
-				"pla",
-				"player_col"
-			],
-			[
-				"game_",
-				"game_session"
-			],
-			[
-				"vir",
-				"virus_col"
-			],
-			[
-				"move_",
-				"move_virus"
-			],
-			[
-				"best",
-				"best_record"
-			],
-			[
-				"call",
-				"calloc"
-			],
-			[
-				"game",
-				"game_session"
-			],
-			[
-				"player",
-				"player_col"
-			],
-			[
-				"expectd",
-				"expected_row"
-			],
-			[
-				"pal",
-				"player_row"
-			],
-			[
-				"ori_",
-				"ori_player_row"
-			],
-			[
-				"pl",
-				"player_row"
-			],
-			[
-				"put",
-				"putbyte"
-			],
-			[
-				"abs",
-				"abs_virus_col"
-			],
-			[
-				"offset",
-				"offset_row"
-			],
-			[
-				"ori",
-				"ori_player_col"
-			],
-			[
-				"positio",
-				"position_y_virus"
-			],
-			[
-				"posi",
-				"position_x_virus"
-			],
-			[
-				"position",
-				"position_y_player"
-			],
-			[
-				"po",
-				"position_y_virus"
-			],
-			[
-				"pos",
-				"position_y_player"
-			],
-			[
-				"putb",
-				"putbytes"
-			],
-			[
-				"cur",
-				"cur_row"
-			],
-			[
-				"CON",
-				"CONSOLE_HEIGHT"
-			],
-			[
-				"char",
-				"char_addr"
-			],
-			[
-				"cur_",
-				"cur_col"
-			],
-			[
-				"bgnd",
-				"bgnd_color"
-			],
-			[
-				"bg",
-				"bgnd_color"
-			],
-			[
-				"check",
-				"check_valid"
-			],
-			[
-				"b",
-				"b"
-			],
-			[
-				"array",
-				"array_len"
-			],
-			[
-				"value_",
-				"value_str"
-			],
-			[
-				"seek_",
-				"seek_end_addr"
-			],
-			[
-				"argv",
-				"argv_description"
-			],
-			[
-				"args",
-				"argsym_t"
-			],
-			[
-				"if",
-				"if_hit_main"
-			],
-			[
-				"print",
-				"printf\tprintf …"
 			]
 		]
 	},
 	"buffers":
 	[
 		{
-			"file": "kern/scheduler.c",
+			"file": "kern/task.c",
 			"settings":
 			{
-				"buffer_size": 4801,
+				"buffer_size": 7452,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "user/libsyscall/syscall.c",
+			"settings":
+			{
+				"buffer_size": 2309,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "kern/inc/syscalls.h",
+			"settings":
+			{
+				"buffer_size": 309,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "config.mk",
+			"settings":
+			{
+				"buffer_size": 6403,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "user/progs/my_maker_deschedule.c",
+			"settings":
+			{
+				"buffer_size": 555,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "/** @file kernel.c\n *  @brief An initial kernel.c\n *\n *  You should initialize things in kernel_main(),\n *  and then run stuff.\n *\n *  @author Harry Q. Bovik (hqbovik)\n *  @author Fred Hacker (fhacker)\n *  @bug No known bugs.\n */\n\n#include <common_kern.h>\n\n/* libc includes. */\n#include <stdio.h>\n#include <page.h>\n#include <simics.h>                 /* lprintf() */\n\n/* multiboot header file */\n#include <multiboot.h>              /* boot_info */\n\n/* x86 specific includes */\n#include <x86/asm.h>                /* enable_interrupts() */\n#include <x86/cr.h>\n#include <x86/eflags.h>\n\n#include \"handlers.h\"\n#include \"vm.h\"\n#include \"task.h\"\n#include \"asm_switch.h\"\n#include \"scheduler.h\"\n#include \"tcb_hashtab.h\"\n#include \"return_type.h\"\n\n// will need to find a better way to do this eventually\nextern mutex_t malloc_mutex;\n\n/** @brief Kernel entrypoint.\n *\n *  This is the entrypoint for the kernel.\n *\n * @return Does not return\n */\nint kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {\n    lprintf( \"Hello from a brand new kernel!\" );\n\n    handler_init();\n    vm_init();\n    scheduler_init();\n    id_counter_init();\n\n    // TODO find a better way to init mutexes\n    mutex_init(&malloc_mutex);\n    tcb_hashtab_init();\n\n    /*\n    task_t *init = task_init(\"peon\");\n    task_t *merchant_2 = task_init(\"peon\");\n    append_to_scheduler(get_mainthr_sche_node(merchant_2));\n    */\n\n    task_t *init = task_init();\n    thread_t *thread = thread_init();\n    thread->task = init;\n    add_node_to_head(init->live_thread_list, TCB_TO_LIST_NODE(thread));\n\n    init->task_id = thread->tid;\n    init->parent_task = NULL;\n    maps_insert(init->maps, 0, PAGE_SIZE * NUM_KERN_PAGES, 0);\n    maps_insert(init->maps, RW_PHYS_VA, PAGE_SIZE, 0);\n    // /*\n    const char *fname = \"my_maker_deschedule\";\n    simple_elf_t elf_header;\n    elf_load_helper(&elf_header, fname);\n    thread->ip = elf_header.e_entry;\n\n    \n\n    task_t *init = task_init();\n    thread_t *thread = thread_init();\n    thread->task = init;\n    add_node_to_head(init->live_thread_list, TCB_TO_LIST_NODE(thread));\n\n    init->task_id = thread->tid;\n    init->parent_task = NULL;\n    maps_insert(init->maps, 0, PAGE_SIZE * NUM_KERN_PAGES, 0);\n    maps_insert(init->maps, RW_PHYS_VA, PAGE_SIZE, 0);\n    // /*\n    const char *fname = \"my_fork_test\";\n    simple_elf_t elf_header;\n    elf_load_helper(&elf_header, fname);\n    thread->ip = elf_header.e_entry;\n\n    set_cur_run_thread(thread);\n    // register new task for simics symbolic debugging\n    sim_reg_process(init->page_dir, fname);\n    set_cr3((uint32_t)init->page_dir);\n    load_program(&elf_header, init->maps);\n    // */\n    thread->status = RUNNABLE;\n    set_esp0(thread->kern_sp);\n    kern_to_user(thread->cur_sp, thread->ip);\n\n    while (1) {\n        continue;\n    }\n\n    return 0;\n}\n",
+			"file": "kern/kernel.c",
+			"file_size": 2806,
+			"file_write_time": 131364932450000000,
+			"settings":
+			{
+				"buffer_size": 2812,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -521,40 +579,6 @@
 			"settings":
 			{
 				"buffer_size": 1078,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "410kern/simics/simics.h",
-			"settings":
-			{
-				"buffer_size": 2090,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "kern/asm_interrupts.S",
-			"settings":
-			{
-				"buffer_size": 586,
-				"encoding": "UTF-8",
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "kern/kernel.c",
-			"settings":
-			{
-				"buffer_size": 2695,
-				"encoding": "UTF-8",
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "kern/timer_driver.c",
-			"settings":
-			{
-				"buffer_size": 1913,
 				"line_ending": "Unix"
 			}
 		}
@@ -625,40 +649,106 @@
 	"expanded_folders":
 	[
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern"
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/progs"
 	],
 	"file_history":
 	[
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/simics/simics.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/libsyscall/print.S",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/fake_console.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/progs/my_makerunnable_and_deshcedule_test.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/tcb_hashtab.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/inc/scheduler.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/inc/tcb_hashtab.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/libthread/allocator.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/libthread/list.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/config.mk",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_set_exec_context.S",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_context_switch.S",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_syscalls.S",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/fork.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/handlers.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/inc/asm_set_exec_context.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/inc/asm_syscalls.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/inc/syscalls.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/spec/syscall_int.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/inc/list.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/kernel.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/list.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/mutex.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/scheduler.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/inc/task.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/task.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/timer_driver.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/syscalls.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/.gitignore",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/progs/my_fork_test.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/libsyscall/syscall.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/progs/my_user.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410user/progs/fork_bomb.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410user/progs/fork_test1.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410user/progs/fork_wait.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410user/progs/fork_wait_bomb.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410user/progs/yield_desc_mkrun.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410user/progs/deschedule_hang.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/p3.sublime-project",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/scratch/pebble-master/15-410/prj_03/src/p3/kern/thread.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/scratch/pebble-master/15-410/prj_03/src/p3/kern/inc/frame.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/scratch/pebble-master/15-410/prj_03/src/p3/kern/utils.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/scratch/pebble-master/15-410/prj_03/src/p3/kern/sche.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/scratch/pebble-master/15-410/prj_03/src/p3/kern/keyboard.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/scratch/pebble-master/15-410/prj_03/src/p3/kern/list.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_registers.S",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/driver/kern_timer.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/driver/asm_drivers.S",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/inc/keyboard_driver.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/driver/timer_driver.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/inc/return_type.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/inc/timer_driver.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410user/progs/swexn_cookie_monster.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/maps.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/return_type.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/inc/handlers.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/syscalls",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/myserver/master.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/myserver/return_error.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/myserver/lru_cache.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/myserver/master.cpp",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/myserver/worker.cpp",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/a4.sublime-project",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/sftp-config.json",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/tests/grading_nonuniform2.txt",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/myserver/worker_sche_queue.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/tests/hello418.txt",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/myserver/list.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/asst4harness/worker/work_engine.cpp",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/asst4harness/types/messages.cpp",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/asst4include/server/messages.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/myserver/worker_sche_queue.cpp",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/myserver/lru_cache.cpp",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/myserver/list.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/myserver/lru_cache.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/myserver/worker_sche_queue.c",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/myserver/request_type_def.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/asst4include/tools/work_queue.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/myserver/worker.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/myserver/my_worker_queue.h",
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/simics/simics.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/scheduler.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_mutex.S",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/vm.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/mutex.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/malloc_wrappers.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410user/libstring/memset.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/string/memset.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/vm.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/kernel.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/syscalls.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/config.mk",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/progs/my_user.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/return_type.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/syscall/kern_fork.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/syscalls.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_syscalls.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/progs/my_fork_test.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/malloc/memalign.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/libthread/malloc.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/timer_driver.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/x86/seg.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_switch.S",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_syscalls.S",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/p3.sublime-project",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/.gitignore",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_set_exec_context.S",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/handlers.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/task.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/new_vm.bk.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/x86/cr.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/x86/page.h",
@@ -668,28 +758,22 @@
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/handlers.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/task.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_timer_handler.S",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/libsyscall/syscall.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/libsyscall/gettid.S",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/libsyscall/fork.S",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/libsyscall/exec.S",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/allocator.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_handlers.S",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410user/progs/merchant.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/src/asst4include/server/messages.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/a4.sublime-project",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/4/sftp-config.json",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410user/progs/bistromath.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_get_eip_next.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_page_inval.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/inc/malloc.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/malloc/sfree.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/spec/syscall_int.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_keyboard_handler.S",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_keyboard_handler.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_timer_handler.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/install.old",
 		"/Users/dengqiaoyu/Library/Application Support/Sublime Text 3/Packages/User/SFTP.errors.log",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/list.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410user/progs/ck1.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410user/progs/idle.c",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/mutex.h",
@@ -698,49 +782,7 @@
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/allocator.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/x86/idt.h",
 		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_switch.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/inc/mutex_type.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/libthread/allocator.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/libthread/allocator_internal.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/libthread/list.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/libthread/list.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/keyboard_driver.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/x86/asm.S",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/libautostack/autostack.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/inc/keyboard_driver.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/x86/keyhelp.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/inc/timer_driver.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/x86/eflags.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/elf/load_helper.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/elf/elf_410.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/malloc/malloc.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/lmm/lmm_alloc.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/spec/limits.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/libthread/thr_internals.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/spec/common_kern.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/asm_handlers.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/inc/console.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/inc/loader.h",
-		"/Users/dengqiaoyu/Desktop/page_rank.cpp",
-		"/Users/dengqiaoyu/Library/Group Containers/3L68KQB4HG.group.com.readdle.smartemail/cache/messagesData/3/4072/page_rank.cpp",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/3/part2/pagerank/page_rank.cpp",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/3/part2/bfs/frontier_dist.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/3/part2/include/graph_dist.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/3/part2/bfs/bfs.cpp",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/3/pagerank/page_rank.cpp",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/3/bfs/bfs.cpp",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/scratch/pebble-master/15-410/prj_03/src/p3/kern/frame.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/scratch/pebble-master/15-410/prj_03/src/p3/kern/mem.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Parallel_Computing_15-618/repo/assignment/3/part2/bfs/main.cpp",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/entry.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/lmm/README",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/lmm/lmm_alloc_aligned.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/boot/multiboot.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/410kern/lmm/lmm.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/inc/cond_type.h",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/kern/fake_console.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/libthread/panic.c",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/sftp-config.json",
-		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/p2.sublime-project"
+		"/Users/dengqiaoyu/Documents/Learning/CMU/2_Semester/Operating_System_Design_and_Implementation_15-605/repo_group/p3/user/inc/mutex_type.h"
 	],
 	"find":
 	{
@@ -758,137 +800,137 @@
 	},
 	"find_state":
 	{
-		"case_sensitive": true,
+		"case_sensitive": false,
 		"find_history":
 		[
-			"temp_func2",
-			"_fork_page_init",
-			"1022",
-			"new_pgdir_ptr",
-			"_fork_init_task",
-			"//",
+			"node",
+			"list_init",
+			"thread_destroy",
+			"GET_TAB_NODE_FROM_TCB",
+			"// lprintf(",
+			"node",
 			"lprintf",
-			"get_free_frame",
-			"ERROR_FORK_MALLOC_TASK_FAILED",
-			"write_physical",
-			"copy_pgdir",
-			"print_line",
-			"MASK",
-			"lprintf",
-			"write_physical",
-			"first_free_frame_mutex",
-			"old_pte",
-			"fork",
-			"frame, ",
-			"PTE",
-			"RW_PHYS_VA",
-			"new_pte",
-			"write_physical",
-			"PT_VA",
-			"PD_VA",
-			"RW_PHYS_VA",
-			"access_physical",
-			"pte_flags",
-			"RW_PHYS_PD_ENTRY",
-			"pte_flag",
-			"pgd_flags",
-			"flags",
-			"read_physical",
-			"set_pte",
-			"call sim_breakpoint",
-			"simics.h",
-			"eax",
-			" ",
-			"addl",
-			"curr_esp",
-			"magic",
-			"fork",
-			"pop",
-			"push",
-			"mov",
-			"cur_esp",
-			"waiting_client",
+			"==",
+			"sys_readline",
+			"_INTERNAL",
+			"curr_",
+			"curr",
+			"CURR",
+			"curr",
+			"if_suspend",
+			"tcb_ptr",
+			"sche_push_back",
+			"get_curr_tcb",
+			"Email address",
+			"message field",
+			"part",
+			"adj",
+			"thing",
+			"get_req",
+			"get_next_worker_idx_countprimes",
+			"create_computeprimes_req",
+			"handle_compareprimes_req",
+			"handle_comppri_response",
+			"NUM_CONTEXT",
+			"Give projectidea",
+			"Give projectidea to a killing worker",
+			"mstate.num_workers_run",
+			"mstate.num_workers_recv",
+			"kill_worker",
+			"ck_scale_cond",
+			"get_next_worker_idx_countprimes",
+			"get_free_idx",
+			"my_worker[",
+			"get_free_idx",
+			"ck_scale_cond",
+			"if_scaling_out",
+			"get_next_worker_idx_countprimes",
+			"handle_worker_response",
+			"get_works_num",
+			"my_worker[",
+			"clear_worker_info",
+			"my_worker[",
 			"my_worker",
-			"malloc",
-			"child_cnt",
-			"movl",
-			"asm_get_eip_next",
-			"thread",
-			"thread_init",
-			"smemalign",
-			"set_pte",
-			"page_inval",
-			"(uint32_t)",
-			"PAGE_SIZE",
-			"(uint32_t)",
-			"uint32_t)",
-			"(uint32_t)",
-			"read_physical",
-			"write_physical",
-			"set_pte",
-			"write_physical",
-			"task",
-			"cur_thread",
-			"keyboard_handler",
-			"timer_handler",
-			"FLAG_PL_KERNEL",
-			"ACCESS",
-			"install_handlers",
-			"init_scheduler",
-			"asm_registers",
-			"we made it back",
-			"init",
-			"//",
-			"// lprintf",
-			"lprintf",
-			"sche_node",
-			"lanch task",
-			"roll_over",
-			"feeLs bad man",
-			"gettid",
-			"GET_TCB_NODE",
-			"tcb_hashtb_node",
-			"timer_handler",
-			"task_init",
-			"chunk_size",
-			"EMPTY_TAG",
-			"worldSize",
-			"converged",
-			"vertices_per_process",
-			"MPI_Allgather",
-			"load_section",
-			"set_edges",
-			"get_vertex_edges_size",
-			"machine",
-			"multiboot_info",
-			"best_time_sol",
-			"bfs_step",
-			"global_frontier_sync",
-			"bfs_step",
-			"global_frontier_sync",
-			"printf",
-			"get_incoming_edges",
-			"  printf",
-			"printf",
-			"bfs_step",
-			"global_frontier_sync",
-			"bfs_step",
-			"out_edge_dst_size",
-			"bfs_step",
-			"global_frontier_sync",
-			"check_validation",
-			"global_frontier_sync",
-			"bfs_step",
-			"check_validation",
-			"rank",
-			"depths",
-			"bfs_step",
-			"global_frontier_sync",
-			"bfs_step",
-			"global_frontier_sync",
-			"bfs_step",
-			"global_frontier_sync",
-			"bfs_step"
+			"kill_worker",
+			"scale_out",
+			"worker",
+			"kill_worker_node",
+			"scale_out",
+			"my_worker[worker_id]",
+			"scale_out",
+			"get_cpu_intensive_num",
+			"get_cpu_intensive",
+			"kill_worker",
+			"time_since_last_new",
+			"if_scaling_out",
+			"ave_cpu_intensive",
+			"if_scaling_out",
+			"LOG2_PRINT",
+			"LOG_PRINT",
+			"printf_worker_info",
+			"num_workers_run",
+			"num_workers_plan",
+			"if_scaling_out",
+			"mstate.plan_num_workers",
+			"max_num_workers",
+			"new_worker_idx",
+			"plan_num_workers",
+			"scale_in",
+			"time_since_last_new",
+			"num_projectidea",
+			"scale_out",
+			"time_to_be_killed = -1;",
+			"min_num_request",
+			"plan_num_workers",
+			"handle_compareprimes_req",
+			"num_cpu_intensive",
+			"DEBUG2_PRINT",
+			"LOG",
+			"kill_worker",
+			"num_workers",
+			"scale_out",
+			"update_time",
+			"kill_worker",
+			"num_works_total",
+			"j",
+			"void scale_in",
+			"void scale_out",
+			"int scale_in",
+			"int scale_out",
+			"plan_num_workers",
+			"j",
+			"i",
+			"my_worker_info",
+			"num_workers",
+			"fifo_queue_t",
+			"num_request_each_type[COUNTERPRIMES]",
+			"get_next_worker_idx",
+			"sum_primes_countprimes",
+			"get_next_worker_idx_countprimes",
+			"handle_compareprimes_req",
+			"get_next_worker_idx",
+			"state",
+			"min_num_request",
+			"get_next_worker_idx_countprimes",
+			"DEBUG",
+			"MAX_RUNNING_PROJECTIDEA",
+			"handle_compareprimes_req",
+			"increase_running_req_cnt",
+			"get_req",
+			"57297",
+			"73458",
+			"74977",
+			"66175",
+			"77823",
+			"62475",
+			"66499",
+			"78499",
+			"62402",
+			"67497",
+			"64509",
+			"72699",
+			"75023",
+			"76764"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -896,6 +938,12 @@
 		"regex": false,
 		"replace_history":
 		[
+			"cur_",
+			"get_next_worker_idx_cntpri",
+			"create_comppri_req",
+			"handle_comppri_req",
+			"handle_comppri_resp",
+			"countprimes",
 			"handler_init",
 			"scheduler_init",
 			"tcb_tb_node",
@@ -925,30 +973,137 @@
 		"reverse": false,
 		"show_context": true,
 		"use_buffer2": true,
-		"whole_word": true,
+		"whole_word": false,
 		"wrap": false
 	},
 	"groups":
 	[
 		{
-			"selected": 1,
+			"selected": 3,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "kern/scheduler.c",
+					"file": "kern/task.c",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 4801,
+						"buffer_size": 7452,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								4114,
-								4114
+								245,
+								245
+							]
+						],
+						"settings":
+						{
+							"bracket_highlighter.busy": false,
+							"bracket_highlighter.locations":
+							{
+								"close":
+								{
+								},
+								"icon":
+								{
+								},
+								"open":
+								{
+								},
+								"unmatched":
+								{
+								}
+							},
+							"bracket_highlighter.regions":
+							[
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content"
+							],
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"synced": true,
+							"syntax": "Packages/C Improved/C Improved.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "user/libsyscall/syscall.c",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2309,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1709,
+								1709
 							]
 						],
 						"settings":
@@ -960,8 +1115,8 @@
 								{
 									"1":
 									[
-										4534,
-										4535
+										1708,
+										1709
 									]
 								},
 								"icon":
@@ -976,8 +1131,8 @@
 								{
 									"1":
 									[
-										3456,
-										3457
+										1691,
+										1692
 									]
 								},
 								"unmatched":
@@ -986,6 +1141,16 @@
 							},
 							"bracket_highlighter.regions":
 							[
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
 								"bh_single_quote",
 								"bh_single_quote_center",
 								"bh_single_quote_open",
@@ -996,51 +1161,41 @@
 								"bh_curly_open",
 								"bh_curly_close",
 								"bh_curly_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content",
 								"bh_double_quote",
 								"bh_double_quote_center",
 								"bh_double_quote_open",
 								"bh_double_quote_close",
 								"bh_double_quote_content",
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
 								"bh_round",
 								"bh_round_center",
 								"bh_round_open",
 								"bh_round_close",
 								"bh_round_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content"
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content"
 							],
 							"incomplete_sync": null,
 							"remote_loading": false,
@@ -1049,15 +1204,460 @@
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
-						"translation.x": 53.0,
-						"translation.y": 1523.0,
+						"translation.x": 0.0,
+						"translation.y": 1646.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "kern/inc/syscalls.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 309,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								70,
+								70
+							]
+						],
+						"settings":
+						{
+							"bracket_highlighter.busy": false,
+							"bracket_highlighter.locations":
+							{
+								"close":
+								{
+									"1":
+									[
+										302,
+										308
+									]
+								},
+								"icon":
+								{
+									"1":
+									[
+										"Packages/BracketHighlighter/icons/hash.png",
+										"brackethighlighter.default"
+									]
+								},
+								"open":
+								{
+									"1":
+									[
+										29,
+										36
+									]
+								},
+								"unmatched":
+								{
+								}
+							},
+							"bracket_highlighter.regions":
+							[
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content"
+							],
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"synced": true,
+							"syntax": "Packages/C Improved/C Improved.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "config.mk",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6403,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2283,
+								2302
+							]
+						],
+						"settings":
+						{
+							"bracket_highlighter.busy": false,
+							"bracket_highlighter.locations":
+							{
+								"close":
+								{
+								},
+								"icon":
+								{
+								},
+								"open":
+								{
+								},
+								"unmatched":
+								{
+								}
+							},
+							"bracket_highlighter.regions":
+							[
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content"
+							],
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"synced": true,
+							"syntax": "Packages/Makefile/Makefile.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 686.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "user/progs/my_maker_deschedule.c",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 555,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"bracket_highlighter.busy": false,
+							"bracket_highlighter.locations":
+							{
+								"close":
+								{
+								},
+								"icon":
+								{
+								},
+								"open":
+								{
+								},
+								"unmatched":
+								{
+								}
+							},
+							"bracket_highlighter.regions":
+							[
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content"
+							],
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"synced": true,
+							"syntax": "Packages/C Improved/C Improved.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 1,
+			"sheets":
+			[
+				{
+					"buffer": 5,
+					"file": "kern/kernel.c",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2812,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								243,
+								243
+							]
+						],
+						"settings":
+						{
+							"bracket_highlighter.busy": false,
+							"bracket_highlighter.locations":
+							{
+								"close":
+								{
+								},
+								"icon":
+								{
+								},
+								"open":
+								{
+								},
+								"unmatched":
+								{
+								}
+							},
+							"bracket_highlighter.regions":
+							[
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content"
+							],
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"synced": true,
+							"syntax": "Packages/C Improved/C Improved.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 1,
 					"type": "text"
 				},
 				{
-					"buffer": 1,
+					"buffer": 6,
 					"file": "p3.sublime-project",
 					"semi_transient": true,
 					"settings":
@@ -1108,6 +1708,16 @@
 							},
 							"bracket_highlighter.regions":
 							[
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
 								"bh_single_quote",
 								"bh_single_quote_center",
 								"bh_single_quote_open",
@@ -1118,51 +1728,41 @@
 								"bh_curly_open",
 								"bh_curly_close",
 								"bh_curly_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content",
 								"bh_double_quote",
 								"bh_double_quote_center",
 								"bh_double_quote_open",
 								"bh_double_quote_close",
 								"bh_double_quote_content",
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
 								"bh_round",
 								"bh_round_center",
 								"bh_round_open",
 								"bh_round_close",
 								"bh_round_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content"
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content"
 							],
 							"incomplete_sync": null,
 							"remote_loading": false,
@@ -1176,481 +1776,6 @@
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "410kern/simics/simics.h",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2090,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1975,
-								1989
-							]
-						],
-						"settings":
-						{
-							"bracket_highlighter.busy": false,
-							"bracket_highlighter.locations":
-							{
-								"close":
-								{
-									"1":
-									[
-										1990,
-										1991
-									]
-								},
-								"icon":
-								{
-									"1":
-									[
-										"Packages/BracketHighlighter/icons/round_bracket.png",
-										"brackethighlighter.default"
-									]
-								},
-								"open":
-								{
-									"1":
-									[
-										1989,
-										1990
-									]
-								},
-								"unmatched":
-								{
-								}
-							},
-							"bracket_highlighter.regions":
-							[
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_curly_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content"
-							],
-							"incomplete_sync": null,
-							"remote_loading": false,
-							"synced": true,
-							"syntax": "Packages/C Improved/C Improved.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 601.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 5,
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "kern/asm_interrupts.S",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 586,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								433,
-								433
-							]
-						],
-						"settings":
-						{
-							"bracket_highlighter.busy": false,
-							"bracket_highlighter.locations":
-							{
-								"close":
-								{
-								},
-								"icon":
-								{
-								},
-								"open":
-								{
-								},
-								"unmatched":
-								{
-								}
-							},
-							"bracket_highlighter.regions":
-							[
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_curly_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content"
-							],
-							"incomplete_sync": null,
-							"remote_loading": false,
-							"synced": true,
-							"syntax": "Packages/x86 and x86_64 Assembly/x86_64 Assembly.tmbundle/Syntaxes/x86_64 Assembly.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
-					"type": "text"
-				}
-			]
-		},
-		{
-			"selected": 1,
-			"sheets":
-			[
-				{
-					"buffer": 4,
-					"file": "kern/kernel.c",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2695,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2139,
-								2139
-							]
-						],
-						"settings":
-						{
-							"bracket_highlighter.busy": false,
-							"bracket_highlighter.locations":
-							{
-								"close":
-								{
-									"1":
-									[
-										2693,
-										2694
-									]
-								},
-								"icon":
-								{
-									"1":
-									[
-										"Packages/BracketHighlighter/icons/curly_bracket.png",
-										"brackethighlighter.default"
-									]
-								},
-								"open":
-								{
-									"1":
-									[
-										911,
-										912
-									]
-								},
-								"unmatched":
-								{
-								}
-							},
-							"bracket_highlighter.regions":
-							[
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_curly_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content"
-							],
-							"incomplete_sync": null,
-							"remote_loading": false,
-							"synced": true,
-							"syntax": "Packages/C Improved/C Improved.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 895.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 3,
-					"type": "text"
-				},
-				{
-					"buffer": 5,
-					"file": "kern/timer_driver.c",
-					"semi_transient": true,
-					"settings":
-					{
-						"buffer_size": 1913,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1280,
-								1280
-							]
-						],
-						"settings":
-						{
-							"bracket_highlighter.busy": false,
-							"bracket_highlighter.locations":
-							{
-								"close":
-								{
-									"1":
-									[
-										1279,
-										1280
-									]
-								},
-								"icon":
-								{
-									"1":
-									[
-										"Packages/BracketHighlighter/icons/curly_bracket.png",
-										"brackethighlighter.default"
-									]
-								},
-								"open":
-								{
-									"1":
-									[
-										876,
-										877
-									]
-								},
-								"unmatched":
-								{
-								}
-							},
-							"bracket_highlighter.regions":
-							[
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_curly_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content"
-							],
-							"incomplete_sync": null,
-							"remote_loading": false,
-							"synced": true,
-							"syntax": "Packages/C Improved/C Improved.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 643.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 2,
 					"type": "text"
 				}
 			]
@@ -1748,7 +1873,7 @@
 		],
 		"width": 0.0
 	},
-	"selected_group": 0,
+	"selected_group": 1,
 	"settings":
 	{
 	},
@@ -1756,7 +1881,7 @@
 	"show_open_files": false,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 265.0,
+	"side_bar_width": 182.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{

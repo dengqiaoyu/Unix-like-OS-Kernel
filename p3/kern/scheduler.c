@@ -33,7 +33,6 @@ int scheduler_init() {
               NUM_CHUNK_SCHEDULER);
     if (ret != SUCCESS)
         return ret;
-
     sche_list.active_list = list_init();
     if (sche_list.active_list == NULL) return -1;
 

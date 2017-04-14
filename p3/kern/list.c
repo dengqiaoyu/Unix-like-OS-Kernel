@@ -10,6 +10,9 @@
 #include <string.h>     /* memset */
 #include <stdio.h>      /* printf() */
 #include <syscall.h>    /* gettid() */
+#include <simics.h>
+#include "scheduler.h"
+#include "task.h"
 #include "list.h"       /* header file of this code */
 
 /**
@@ -104,16 +107,25 @@ void delete_node(list_t *list, node_t *node) {
     free(node);
 }
 
+void unlink_node(list_t *list, node_t *node) {
+    list->node_cnt--;
+    node_t *prev_node = node->prev;
+    node_t *next_node = node->next;
+    prev_node->next = next_node;
+    next_node->prev = prev_node;
+}
+
 /**
  * Get the first node's in the list(not the head node)
  * @param  list the pointer to the list
  * @return      the pointer to the node for success, NULL for fail
  */
 node_t *get_first_node(list_t *list) {
-    if (list->node_cnt > 0)
+    if (list->node_cnt > 0) {
         return list->head->next;
-    else
+    } else {
         return NULL;
+    }
 }
 
 /**
@@ -142,6 +154,13 @@ void insert_before(list_t *list, node_t *cur_node, node_t *new_node) {
     cur_node->prev = new_node;
 }
 
+node_t *get_prev_node(node_t *node) {
+    return node->prev;
+}
+
+int has_next(list_t *list, node_t *node) {
+    return node->next != list->tail;
+}
 /**
  * Get the first node in the list and unlinked it in the list.
  * @param  list the pointer to the list

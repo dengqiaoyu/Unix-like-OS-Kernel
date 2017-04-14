@@ -22,12 +22,7 @@ typedef struct list {
     node_t *tail;
 } list_t;
 
-/**
- * Initailize the list.
- * @param  list the pointer to the list
- * @return      SUCCESS(0) for success, ERROR_INIT_LIST_CALLOC_FAILED(-1) for
- *              fail
- */
+
 list_t *list_init();
 
 // TODO
@@ -59,6 +54,8 @@ void remove_node(list_t *list, node_t *node);
  */
 void delete_node(list_t *list, node_t *node);
 
+void unlink_node(list_t *list, node_t *node);
+
 /**
  * Get the first node's in the list(not the head node)
  * @param  list the pointer to the list
@@ -77,6 +74,8 @@ node_t *get_last_node(list_t *list);
 node_t *get_next_node(list_t *list, node_t *node);
 
 void insert_before(list_t *list, node_t *cur_node, node_t *new_node);
+
+node_t *get_prev_node(node_t *node);
 
 /**
  * Get the first node in the list and unlinked it in the list.

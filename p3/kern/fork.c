@@ -13,20 +13,23 @@
 #include "asm_switch.h"
 #include "allocator.h" /* allocator */
 #include "task.h"
+#include "tcb_hashtab.h"
 #include "asm_set_exec_context.h"
 
 extern allocator_t *sche_allocator;
 
 int kern_fork(void) {
     int ret = SUCCESS;
-
     thread_t *old_thread = get_cur_tcb();
     int old_tid = old_thread->tid;
     task_t *old_task = old_thread->task;
     thread_t *cur_thr = NULL;
 
-    if (get_list_size(old_task->live_thread_list) != 1)
+
+    if (get_list_size(old_task->live_thread_list) != 1) {
         return ERROR_FORK_TASK_MORE_THAN_ONE_THREAD;
+    }
+
 
     task_t *new_task = task_init();
     if (new_task == NULL) {
@@ -65,7 +68,6 @@ int kern_fork(void) {
                          new_thread->kern_sp,
                          &(new_thread->cur_sp),
                          &(new_thread->ip));
-
     // Now, we will have two tasks running
     // BUG that has been found!!! cannot declare var here, because we will break
     // stack

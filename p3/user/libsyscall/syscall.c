@@ -23,18 +23,6 @@
 #include <syscall.h>
 #include <simics.h>
 
-int yield(int pid) {
-    return -1;
-}
-
-int deschedule(int *flag) {
-    return -1;
-}
-
-int make_runnable(int pid) {
-    return -1;
-}
-
 int swexn(void *esp3, swexn_handler_t eip, void *arg, ureg_t *newureg) {
     return -1;
 }

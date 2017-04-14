@@ -15,6 +15,7 @@
 #include "task.h"
 #include "allocator.h"
 #include "scheduler.h"
+#include "tcb_hashtab.h"
 #include "return_type.h"
 
 extern uint32_t *kern_page_dir;
@@ -202,7 +203,7 @@ thread_t *thread_init() {
     }
     thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
     thread->cur_sp = USER_STACK_START;
-
+    tcb_hashtab_put(thread);
     return thread;
 }
 
@@ -240,7 +241,9 @@ int validate_user_mem(uint32_t addr, uint32_t len, int perms) {
 }
 
 // TODO
-// returns negative if no good and len including null otherwise
+// returns negative if string goes outside user memory
+// returns 0 if string is in valid memory but does not terminate in max_len
+// returns length including null terminator otherwise
 int validate_user_string(uint32_t addr, int max_len) {
     /*
     thread_t *thread = get_cur_tcb();

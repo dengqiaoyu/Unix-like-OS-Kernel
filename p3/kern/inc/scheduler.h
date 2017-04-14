@@ -8,6 +8,12 @@
 
 #define SCHE_NODE_TO_TABLE_NODE(sche_node)\
         ((tcb_tb_node_t *)((char *)sche_node + 8))
+#define TABLE_NODE_TO_SCHE_NODE(tcb_tb_node)\
+        ((sche_node_t *)((char *)tcb_tb_node - 8))
+#define TABLE_NODE_TO_TCB(tcb_tb_node)\
+        ((thread_t *)((char *)tcb_tb_node + 16))
+#define TCB_TO_TABLE_NODE(tcb_ptr)\
+        ((tcb_tb_node_t *)((char *)tcb_ptr - 16))
 #define SCHE_NODE_TO_TCB(sche_node)\
         ((thread_t *)((char *)sche_node + 24))
 #define TCB_TO_SCHE_NODE(tcb_ptr)\
