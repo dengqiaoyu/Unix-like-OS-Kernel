@@ -35,11 +35,11 @@ int kern_set_cursor_pos(void);
 
 int kern_get_cursor_pos(void);
 
-// int thread_fork(void);
+int kern_thread_fork(void);
 
 unsigned int kern_get_ticks(void);
 
-// void halt(void);
+void kern_halt(void);
 
 void kern_set_status(void);
 

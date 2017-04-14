@@ -67,27 +67,27 @@ int exception_init() {
 int syscall_init() {
     int kern_cs = SEGSEL_KERNEL_CS;
     int flag = FLAG_TRAP_GATE | FLAG_PL_USER;
-    idt_install(FORK_INT, (void *)asm_fork, kern_cs, flag);
-    idt_install(EXEC_INT, (void *)asm_exec, kern_cs, flag);
-    idt_install(WAIT_INT, (void *)asm_wait, kern_cs, flag);
-    idt_install(YIELD_INT, (void *)asm_yield, kern_cs, flag);
-    idt_install(DESCHEDULE_INT, (void *)asm_deschedule, kern_cs, flag);
-    idt_install(MAKE_RUNNABLE_INT, (void *)asm_make_runnable, kern_cs, flag);
-    idt_install(GETTID_INT, (void *)asm_gettid, kern_cs, flag);
-    idt_install(NEW_PAGES_INT, (void *)asm_new_pages, kern_cs, flag);
-    idt_install(REMOVE_PAGES_INT, (void *)asm_remove_pages, kern_cs, flag);
-    idt_install(SLEEP_INT, (void *)asm_sleep, kern_cs, flag);
-    idt_install(READLINE_INT, (void *)asm_readline, kern_cs, flag);
-    idt_install(PRINT_INT, (void *)asm_print, kern_cs, flag);
+    idt_install(FORK_INT,           (void *)asm_fork,           kern_cs, flag);
+    idt_install(EXEC_INT,           (void *)asm_exec,           kern_cs, flag);
+    idt_install(WAIT_INT,           (void *)asm_wait,           kern_cs, flag);
+    idt_install(YIELD_INT,          (void *)asm_yield,          kern_cs, flag);
+    idt_install(DESCHEDULE_INT,     (void *)asm_deschedule,     kern_cs, flag);
+    idt_install(MAKE_RUNNABLE_INT,  (void *)asm_make_runnable,  kern_cs, flag);
+    idt_install(GETTID_INT,         (void *)asm_gettid,         kern_cs, flag);
+    idt_install(NEW_PAGES_INT,      (void *)asm_new_pages,      kern_cs, flag);
+    idt_install(REMOVE_PAGES_INT,   (void *)asm_remove_pages,   kern_cs, flag);
+    idt_install(SLEEP_INT,          (void *)asm_sleep,          kern_cs, flag);
+    idt_install(READLINE_INT,       (void *)asm_readline,       kern_cs, flag);
+    idt_install(PRINT_INT,          (void *)asm_print,          kern_cs, flag);
     idt_install(SET_TERM_COLOR_INT, (void *)asm_set_term_color, kern_cs, flag);
     idt_install(SET_CURSOR_POS_INT, (void *)asm_set_cursor_pos, kern_cs, flag);
     idt_install(GET_CURSOR_POS_INT, (void *)asm_get_cursor_pos, kern_cs, flag);
-    // idt_install(THREAD_FORK_INT, (void *)asm_thread_fork, kern_cs, flag);
-    idt_install(GET_TICKS_INT, (void *)asm_get_ticks, kern_cs, flag);
-    // idt_install(HALT_INT, (void *)asm_halt, kern_cs, flag);
-    idt_install(SET_STATUS_INT, (void *)asm_set_status, kern_cs, flag);
-    idt_install(VANISH_INT, (void *)asm_vanish, kern_cs, flag);
-    // idt_install(SWEXN_INT, (void *)asm_swexn, kern_cs, flag);
+    idt_install(THREAD_FORK_INT,    (void *)asm_thread_fork,    kern_cs, flag);
+    idt_install(GET_TICKS_INT,      (void *)asm_get_ticks,      kern_cs, flag);
+    idt_install(HALT_INT,           (void *)asm_halt,           kern_cs, flag);
+    idt_install(SET_STATUS_INT,     (void *)asm_set_status,     kern_cs, flag);
+    idt_install(VANISH_INT,         (void *)asm_vanish,         kern_cs, flag);
+    // idt_install(SWEXN_INT,       (void *)asm_swexn,          kern_cs, flag);
     return SUCCESS;
 }
 
@@ -95,8 +95,8 @@ int device_init() {
     int kern_cs = SEGSEL_KERNEL_CS;
     int flag = FLAG_TRAP_GATE | FLAG_PL_KERNEL;
     timer_init(timer_callback);
-    idt_install(TIMER_IDT_ENTRY, (void *)asm_timer_handler, kern_cs, flag);
-    idt_install(KEY_IDT_ENTRY, (void *)asm_keyboard_handler, kern_cs, flag);
+    idt_install(TIMER_IDT_ENTRY, (void *)asm_timer_handler,    kern_cs, flag);
+    idt_install(KEY_IDT_ENTRY,   (void *)asm_keyboard_handler, kern_cs, flag);
     return SUCCESS;
 }
 

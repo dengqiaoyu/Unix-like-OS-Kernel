@@ -35,11 +35,11 @@ void asm_set_cursor_pos(void);
 
 void asm_get_cursor_pos(void);
 
-// void asm_thread_fork(void);
+void asm_thread_fork(void);
 
 void asm_get_ticks(void);
 
-// void asm_halt(void);
+void asm_halt(void);
 
 void asm_set_status(void);
 

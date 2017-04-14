@@ -88,7 +88,7 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
 
     idle_thread = setup_task("idle");
 
-    const char *fname = "my_readline";
+    const char *fname = "halt_test";
     /*
     const char *fname = "remove_pages_test2";
     const char *fname = "fork_wait_bomb";

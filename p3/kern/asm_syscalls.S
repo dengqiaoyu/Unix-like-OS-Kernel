@@ -64,14 +64,14 @@ WRAP_SYSCALL(asm_set_cursor_pos, kern_set_cursor_pos)
 .global asm_get_cursor_pos
 WRAP_SYSCALL(asm_get_cursor_pos, kern_get_cursor_pos)
 
-# .global asm_thread_fork
-# WRAP_SYSCALL(asm_thread_fork, kern_thread_fork)
+.global asm_thread_fork
+WRAP_SYSCALL(asm_thread_fork, kern_thread_fork)
 
 .global asm_get_ticks
 WRAP_SYSCALL(asm_get_ticks, kern_get_ticks)
 
-# .global asm_halt
-# WRAP_SYSCALL(asm_halt, kern_halt)
+.global asm_halt
+WRAP_SYSCALL(asm_halt, kern_halt)
 
 .global asm_set_status
 WRAP_SYSCALL(asm_set_status, kern_set_status)

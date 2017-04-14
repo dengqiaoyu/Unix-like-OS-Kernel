@@ -38,9 +38,9 @@ UPDATE_METHOD = afs
 	       exec_basic exec_basic_helper fork_test1 fork_wait getpid_test1\
 	   	   wait_getpid fork_exit_bomb fork_wait_bomb sleep_test1 actual_wait\
 	       exec_nonexist print_basic remove_pages_test1 remove_pages_test2\
-	       yield_desc_mkrun deschedule_hang\
+	       yield_desc_mkrun deschedule_hang readline_basic halt_test\
 	       \
-	       halt_test readline_basic stack_test1 mem_eat_test wild_test1\
+	       halt_test stack_test1 mem_eat_test wild_test1\
 	       fork_bomb make_crash mem_permissions minclone_mem register_test\
 	       cho cho2 cho_variant\
 
@@ -88,7 +88,7 @@ SYSCALL_OBJS = exec.o gettid.o fork.o new_pages.o wait.o vanish.o\
 			   set_status.o get_ticks.o sleep.o print.o set_term_color.o\
 	      	   get_cursor_pos.o set_cursor_pos.o remove_pages.o\
 	           deschedule.o make_runnable.o yield.o readline.o\
-	           syscall.o
+	           syscall.o halt.o
 
 ###########################################################################
 # Object files for your automatic stack handling
@@ -111,7 +111,7 @@ KERNEL_OBJS = console.o kernel.o loader.o malloc_wrappers.o\
           	  mutex.o maps.o allocator.o list.o syscalls.o\
           	  asm_page_inval.o asm_syscalls.o asm_registers.o\
           	  scheduler.o asm_context_switch.o\
-          	  fork.o asm_set_exec_context.o\
+          	  asm_set_exec_context.o\
           	  tcb_hashtab.o\
           	  utils/kern_cond.o utils/kern_sem.o
 

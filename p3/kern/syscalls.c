@@ -25,13 +25,77 @@
 #include "keyboard_driver.h" /* keyboard_buffer_t */
 #include "kern_sem.h"       /* semaphore */
 #include "asm_page_inval.h"
+#include "asm_set_exec_context.h"
+
 extern unsigned int num_ticks;
-
 extern allocator_t *sche_allocator;
-
 extern uint32_t *kern_page_dir;
 extern uint32_t zfod_frame;
 extern int num_free_frames;
+
+int kern_fork(void) {
+    int ret = SUCCESS;
+    thread_t *old_thread = get_cur_tcb();
+    int old_tid = old_thread->tid;
+    task_t *old_task = old_thread->task;
+    thread_t *cur_thr = NULL;
+
+
+    if (get_list_size(old_task->live_thread_list) != 1) {
+        return ERROR_FORK_TASK_MORE_THAN_ONE_THREAD;
+    }
+
+
+    task_t *new_task = task_init();
+    if (new_task == NULL) {
+        lprintf("f1");
+        return ERROR_FORK_MALLOC_TASK_FAILED;
+    }
+    new_task->parent_task = old_task;
+
+    ret = page_dir_copy(new_task->page_dir, old_task->page_dir);
+    if (ret != SUCCESS) {
+        // TODO destroy task
+        lprintf("f2");
+        return ERROR_FORK_COPY_PAGE_FAILED;
+    }
+
+    ret = maps_copy(old_task->maps, new_task->maps);
+    if (ret != SUCCESS) {
+        lprintf("fa");
+        return -1;
+    }
+
+    thread_t *new_thread = thread_init();
+    if (new_thread == NULL) {
+        // TODO destroy task
+        // TODO unmap new page directory
+        lprintf("f3");
+        return -1;
+    }
+    new_task->task_id = new_thread->tid;
+    new_thread->task = new_task;
+    new_thread->status = FORKED;
+    add_node_to_head(new_task->live_thread_list, TCB_TO_LIST_NODE(new_thread));
+
+    add_node_to_head(old_task->child_task_list, TASK_TO_LIST_NODE(new_task));
+    asm_set_exec_context(old_thread->kern_sp,
+                         new_thread->kern_sp,
+                         &(new_thread->cur_sp),
+                         &(new_thread->ip));
+    // Now, we will have two tasks running
+    // BUG that has been found!!! cannot declare var here, because we will break
+    // stack
+    // Do we need a mutex to protect this one?
+    cur_thr = get_cur_tcb();
+    // if (get_list_size(cur_thr->task->child_task_list) == 0) {
+    if (cur_thr->tid != old_tid) {
+        return 0;
+    } else {
+        sche_push_back(new_thread);
+        return new_thread->tid;
+    }
+}
 
 int kern_exec(void) {
     uint32_t *esi = (uint32_t *)get_esi();
@@ -321,6 +385,25 @@ int kern_remove_pages(void) {
     return 0;
 }
 
+int kern_sleep(void) {
+    int ticks = (int)get_esi();
+
+    if (ticks == 0) return 0;
+    unsigned int cur_ticks = num_ticks;
+    unsigned int wakeup_ticks = cur_ticks + (unsigned int)ticks;
+    if (wakeup_ticks < cur_ticks) return -1;
+
+    sleep_node_t sleep_node;
+    sleep_node.thread = get_cur_tcb();
+    sleep_node.wakeup_ticks = wakeup_ticks;
+
+    disable_interrupts();
+    tranquilize(&sleep_node);
+    sche_yield(SLEEPING);
+
+    return 0;
+}
+
 extern keyboard_buffer_t kb_buf;
 int kern_readline(void) {
     uint32_t *esi = (uint32_t *)get_esi();
@@ -376,6 +459,95 @@ int kern_readline(void) {
     kern_sem_signal(&kb_buf.readline_sem);
 
     return 0;
+}
+
+int kern_print(void) {
+    uint32_t *esi = (uint32_t *)get_esi();
+    int len = (int)(*esi);
+    char *buf = (char *)(*(esi + 1));
+
+    // TODO macro megabyte
+    if (len > 1024 * 1024) return -1;
+    int ret = validate_user_mem((uint32_t)buf, len, MAP_USER);
+    if (ret < 0) return -1;
+
+    putbytes(buf, len);
+    return 0;
+}
+
+// TODO put this elsewhere
+#define COLOR_MASK 0x7F
+
+int kern_set_term_color(void) {
+    int color = (int)get_esi();
+
+    if (color & ~COLOR_MASK) return -1;
+    return set_term_color(color);
+}
+
+int kern_set_cursor_pos(void) {
+    uint32_t *esi = (uint32_t *)get_esi();
+    int row = (int)(*esi);
+    int col = (int)(*(esi + 1));
+
+    return set_cursor(row, col);
+}
+
+int kern_get_cursor_pos(void) {
+    uint32_t *esi = (uint32_t *)get_esi();
+    int *row = (int *)(*esi);
+    int *col = (int *)(*(esi + 1));
+
+    int ret;
+    ret = validate_user_mem((uint32_t)row, sizeof(int), MAP_USER | MAP_WRITE);
+    if (ret < 0) return -1;
+    ret = validate_user_mem((uint32_t)col, sizeof(int), MAP_USER | MAP_WRITE);
+    if (ret < 0) return -1;
+
+    get_cursor(row, col);
+    return 0;
+}
+
+int kern_thread_fork(void) {
+    thread_t *old_thread = get_cur_tcb();
+    task_t *cur_task = old_thread->task;
+    thread_t *new_thread = thread_init();
+    int old_tid = old_thread->tid;
+    thread_t *cur_thr = NULL;
+    if (new_thread == NULL) {
+        // TODO destroy task
+        // TODO unmap new page directory
+        lprintf("kern_thread_fork thread_init() failed");
+        return -1;
+    }
+    mutex_lock(&cur_task->thread_list_mutex);
+    add_node_to_head(cur_task->live_thread_list, TCB_TO_LIST_NODE(new_thread));
+    mutex_unlock(&cur_task->thread_list_mutex);
+    new_thread->task = cur_task;
+    new_thread->status = FORKED;
+    asm_set_exec_context(old_thread->kern_sp,
+                         new_thread->kern_sp,
+                         &(new_thread->cur_sp),
+                         &(new_thread->ip));
+    cur_thr = get_cur_tcb();
+    if (cur_thr->tid != old_tid) {
+        return 0;
+    } else {
+        sche_push_back(new_thread);
+        return new_thread->tid;
+    }
+}
+
+unsigned int kern_get_ticks(void) {
+    return num_ticks;
+}
+
+void kern_halt(void) {
+    disable_interrupts();
+    printf("Shutdown, Goodbye World!\n");
+    sim_halt();
+    while (1)
+        continue;
 }
 
 void kern_set_status(void) {
@@ -440,74 +612,4 @@ void kern_vanish(void) {
 
     lprintf("returned from end of vanish");
     while (1) continue;
-}
-
-unsigned int kern_get_ticks(void) {
-    return num_ticks;
-}
-
-int kern_sleep(void) {
-    int ticks = (int)get_esi();
-
-    if (ticks == 0) return 0;
-    unsigned int cur_ticks = num_ticks;
-    unsigned int wakeup_ticks = cur_ticks + (unsigned int)ticks;
-    if (wakeup_ticks < cur_ticks) return -1;
-
-    sleep_node_t sleep_node;
-    sleep_node.thread = get_cur_tcb();
-    sleep_node.wakeup_ticks = wakeup_ticks;
-
-    disable_interrupts();
-    tranquilize(&sleep_node);
-    sche_yield(SLEEPING);
-
-    return 0;
-}
-
-int kern_print(void) {
-    uint32_t *esi = (uint32_t *)get_esi();
-    int len = (int)(*esi);
-    char *buf = (char *)(*(esi + 1));
-
-    // TODO macro megabyte
-    if (len > 1024 * 1024) return -1;
-    int ret = validate_user_mem((uint32_t)buf, len, MAP_USER);
-    if (ret < 0) return -1;
-
-    putbytes(buf, len);
-    return 0;
-}
-
-// TODO put this elsewhere
-#define COLOR_MASK 0x7F
-
-int kern_set_term_color(void) {
-    int color = (int)get_esi();
-
-    if (color & ~COLOR_MASK) return -1;
-    return set_term_color(color);
-}
-
-int kern_set_cursor_pos(void) {
-    uint32_t *esi = (uint32_t *)get_esi();
-    int row = (int)(*esi);
-    int col = (int)(*(esi + 1));
-
-    return set_cursor(row, col);
-}
-
-int kern_get_cursor_pos(void) {
-    uint32_t *esi = (uint32_t *)get_esi();
-    int *row = (int *)(*esi);
-    int *col = (int *)(*(esi + 1));
-
-    int ret;
-    ret = validate_user_mem((uint32_t)row, sizeof(int), MAP_USER | MAP_WRITE);
-    if (ret < 0) return -1;
-    ret = validate_user_mem((uint32_t)col, sizeof(int), MAP_USER | MAP_WRITE);
-    if (ret < 0) return -1;
-
-    get_cursor(row, col);
-    return 0;
 }
