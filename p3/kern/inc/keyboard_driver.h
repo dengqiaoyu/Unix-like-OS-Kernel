@@ -27,16 +27,12 @@ typedef struct keyboard_buffer {
 } keyboard_buffer_t;
 
 /* function declarations */
+
+int kb_buf_init();
+
 /**
  * @brief Read from keyboard port and put it into a buffer for further handling.
  */
 void add_to_kb_buf();
-
-/**
- * @brief Read from the buffer. If it is a character that can be printed, return
- *        it.
- * @return  the integer value of character.
- */
-int readchar();
 
 #endif

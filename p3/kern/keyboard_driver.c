@@ -36,7 +36,9 @@ int kb_buf_init() {
     kb_buf.buf_ending = 0;
     kb_buf.newline_cnt = 0;
     kb_buf.is_waiting = 0;
+    lprintf("before mutex_init");
     mutex_init(&kb_buf.mutex);
+    lprintf("pass mutex_init");
     kern_cond_init(&kb_buf.cond);
     kern_sem_init(&kb_buf.readline_sem, 1);
     return 0;
@@ -46,13 +48,21 @@ int kb_buf_init() {
  * @brief Read from keyboard port and put it into a buffer for further handling.
  */
 void add_to_kb_buf(void) {
+    // lprintf("entering keyboard");
     uint8_t keypress = inb(KEYBOARD_PORT);
     char ch = _process_keypress(keypress);
+    if (ch == -1) {
+        outb(INT_ACK_CURRENT, INT_CTL_PORT);
+        return;
+    }
     int new_buf_ending = 0;
     int if_newline = 0;
     switch (ch) {
     case '\b':
-        if (kb_buf.buf_start == kb_buf.buf_ending) break;
+        if (kb_buf.buf_start == kb_buf.buf_ending) {
+            outb(INT_ACK_CURRENT, INT_CTL_PORT);
+            return;
+        }
         new_buf_ending = (kb_buf.buf_ending - 1) % KB_BUF_LEN;
         kb_buf.buf_ending = new_buf_ending;
         break;
@@ -66,18 +76,30 @@ void add_to_kb_buf(void) {
             kb_buf.buf[kb_buf.buf_ending] = ch;
             kb_buf.buf_ending = new_buf_ending;
         }
+        // lprintf("%c get into buffer", ch);
         break;
     default:
         new_buf_ending = (kb_buf.buf_ending + 1) % KB_BUF_LEN;
         if (new_buf_ending == kb_buf.buf_start) break;
         kb_buf.buf[kb_buf.buf_ending] = ch;
         kb_buf.buf_ending = new_buf_ending;
+        // lprintf("%c get into buffer", ch);
         break;
     }
+    /* DEBUG use */
+    // int i = 0;
+    // lprintf("#######Buffer Content#######");
+    // for (i = kb_buf.buf_start; i < kb_buf.buf_ending; i++)
+    //     lprintf("%c", kb_buf.buf[i]);
+    // lprintf("#######Buffer Content#######");
+    /* DEBUG use */
     outb(INT_ACK_CURRENT, INT_CTL_PORT);
 
     mutex_lock(&kb_buf.mutex);
-    if (kb_buf.is_waiting) putbyte(ch);
+    if (kb_buf.is_waiting) {
+        putbyte(ch);
+        lprintf("print to screen: %d", ch);
+    }
     if (if_newline) {
         kb_buf.newline_cnt++;
         kern_cond_signal(&kb_buf.cond);

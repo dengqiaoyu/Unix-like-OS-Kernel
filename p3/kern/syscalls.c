@@ -266,12 +266,17 @@ int kern_new_pages(void) {
 
 extern keyboard_buffer_t kb_buf;
 int kern_readline(void) {
+    lprintf("thread %d get into readline", get_cur_tcb()->tid);
     uint32_t *esi = (uint32_t *)get_esi();
     int len = (int)(*esi);
     char *buf = (char *)(*(esi + 1));
+    // lprintf("addr of buf: %p, buf start: %p, buf: %s", &buf, buf, buf);
+    // lprintf("line %d thread %d, len: %d", __LINE__, get_cur_tcb()->tid, len);
+    // lprintf("addr of len: %p", &len);
     if (len > 4096) return -1;
     /* check buf */
     kern_sem_wait(&kb_buf.readline_sem);
+    // lprintf("thread %d pass kern_sem_wait", get_cur_tcb()->tid);
     mutex_lock(&kb_buf.mutex);
     disable_interrupts();
     if (kb_buf.newline_cnt == 0) {
@@ -282,10 +287,19 @@ int kern_readline(void) {
                 i < kb_buf_ending;
                 i = (i + 1) % KB_BUF_LEN) {
             putbyte(kb_buf.buf[i]);
+            // lprintf("%c", kb_buf.buf[i]);
         }
+        // lprintf("line %d thread %d, len: %d", __LINE__, get_cur_tcb()->tid, len);
+        // lprintf("buf: %s", buf);
+        // MAGIC_BREAK;
         kern_cond_wait(&kb_buf.cond, &kb_buf.mutex);
+        // lprintf("addr of buf: %p, buf start: %p, buf: %s", &buf, buf, buf);
+        // MAGIC_BREAK;
+        // lprintf("thread %d pass kern_cond_wait", get_cur_tcb()->tid);
+        // lprintf("line %d thread %d, len: %d", __LINE__, get_cur_tcb()->tid, len);
     } else enable_interrupts();
 
+    // lprintf("begin copying");
     int if_print = 1;
     if (kb_buf.is_waiting) {
         if_print = 0;
@@ -299,17 +313,25 @@ int kern_readline(void) {
         char ch = kb_buf.buf[kb_buf.buf_start];
         kb_buf.buf_start = new_kb_buf_start;
         buf[actual_len++] = ch;
+        // lprintf("thread %d actual_len: %d", get_cur_tcb()->tid, actual_len);
         if (if_print) putbyte(ch);
         if (ch == '\n') {
+            if (actual_len < len) buf[actual_len] = '\0';
             mutex_lock(&kb_buf.mutex);
             kb_buf.newline_cnt--;
             mutex_unlock(&kb_buf.mutex);
+            // lprintf("thread %d buf: %s\n", get_cur_tcb()->tid, buf);
             break;
         }
-        if (actual_len == len)
+        // lprintf("actual_len: %d, len: %d", actual_len, len);
+        if (actual_len == len) {
+            // lprintf("thread %d reaches max", get_cur_tcb()->tid);
             break;
+        }
     }
+    // lprintf("before kern_sem_signal in readline");
     kern_sem_signal(&kb_buf.readline_sem);
+    // lprintf("after kern_sem_signal in readline");
 
     return 0;
 }

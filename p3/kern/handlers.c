@@ -22,6 +22,7 @@
 #include "asm_exceptions.h"
 #include "asm_interrupts.h"
 #include "timer_driver.h"
+#include "keyboard_driver.h"
 #include "return_type.h"            /* RETURN_IF_ERROR, ERROR_TYPE */
 
 extern uint32_t *kern_page_dir;

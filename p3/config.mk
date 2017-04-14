@@ -37,7 +37,7 @@ UPDATE_METHOD = afs
 410TESTS = loader_test1 loader_test2 ck1 merchant peon knife new_pages\
 	   exec_basic exec_basic_helper fork_test1 fork_wait getpid_test1\
 	   wait_getpid stack_test1 mem_eat_test wild_test1 fork_bomb\
-	   fork_exit_bomb fork_wait_bomb yield_desc_mkrun
+	   fork_exit_bomb fork_wait_bomb yield_desc_mkrun readline_basic\
 
 ###########################################################################
 # Test programs you have written which you wish to run
@@ -45,7 +45,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the user/progs
 # directory.
 #
-STUDENTTESTS = my_fork_test my_maker_deschedule
+STUDENTTESTS = my_fork_test my_maker_deschedule my_cond_sem_test my_readline
 
 ###########################################################################
 # Data files provided by course staff to build into the RAM disk

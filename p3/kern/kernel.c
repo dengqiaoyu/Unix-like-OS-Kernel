@@ -31,6 +31,7 @@
 #include "scheduler.h"
 #include "tcb_hashtab.h"
 #include "return_type.h"
+#include "keyboard_driver.h"
 
 // will need to find a better way to do this eventually
 extern mutex_t malloc_mutex;
@@ -45,12 +46,19 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     lprintf( "Hello from a brand new kernel!" );
 
     handler_init();
+    lprintf("pass handler_init");
     vm_init();
+    lprintf("pass vm_init");
     scheduler_init();
+    lprintf("pass scheduler_init");
     id_counter_init();
+    lprintf("pass id_counter_init");
 
     // TODO find a better way to init mutexes
     mutex_init(&malloc_mutex);
+    lprintf("before kb_buf_init");
+    kb_buf_init();
+    lprintf("after kb_buf_init");
     tcb_hashtab_init();
 
     /*
@@ -70,7 +78,7 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     maps_insert(init->maps, 0, PAGE_SIZE * NUM_KERN_PAGES, 0);
     maps_insert(init->maps, RW_PHYS_VA, PAGE_SIZE, 0);
     // /*
-    const char *fname = "yield_desc_mkrun";
+    const char *fname = "my_readline";
     simple_elf_t elf_header;
     elf_load_helper(&elf_header, fname);
     thread->ip = elf_header.e_entry;
