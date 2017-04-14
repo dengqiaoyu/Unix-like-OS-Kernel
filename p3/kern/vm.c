@@ -11,12 +11,13 @@
 #include <string.h>
 #include <common_kern.h>
 #include <x86/cr.h>
-#include <mutex.h>
+#include <assert.h>
 
 #include "vm.h"
 #include "vm_internal.h"
-#include "asm_page_inval.h"
 #include "return_type.h"
+#include "mutex.h"
+#include "asm_page_inval.h"
 
 //######## DEBUG
 #define print_line lprintf("line %d", __LINE__)
@@ -63,9 +64,15 @@ void vm_init() {
     mutex_init(&first_free_frame_mutex);
     first_free_frame = frame;
     num_free_frames = machine_frames - NUM_KERN_PAGES - 1;
+
     zfod_frame = PAGE_SIZE * (machine_frames - 1);
+    access_physical(zfod_frame);
+    memset((void *)RW_PHYS_VA, 0, PAGE_SIZE);
 
     uint32_t last_frame = zfod_frame - PAGE_SIZE;
+    access_physical(last_frame);
+    *((uint32_t *)RW_PHYS_VA) = 0;
+
     while (frame < last_frame) {
         access_physical(frame);
         *((uint32_t *)RW_PHYS_VA) = frame + PAGE_SIZE;
@@ -73,7 +80,7 @@ void vm_init() {
     }
 }
 
-// can read from physical page_dir !!!!!!!!!! assumes it's in cr3
+// assumes it's in cr3
 uint32_t get_pte(uint32_t addr) {
     uint32_t *page_dir = (uint32_t *)get_cr3();
     int pd_index = PD_INDEX(addr);
@@ -101,22 +108,25 @@ void set_pte(uint32_t addr, uint32_t frame_addr, int flags) {
 }
 
 uint32_t get_frame() {
+    // TODO make sure never called unless have free frames
     mutex_lock(&first_free_frame_mutex);
-    uint32_t ret = first_free_frame;
-    access_physical(ret);
+    uint32_t frame = first_free_frame;
+    assert(frame != 0);
+
+    access_physical(frame);
     first_free_frame = *((uint32_t *)RW_PHYS_VA);
     mutex_unlock(&first_free_frame_mutex);
 
     memset((void *)RW_PHYS_VA, 0, PAGE_SIZE);
-    return ret;
+    return frame;
 }
 
-void free_frame(uint32_t addr) {
-    access_physical(addr);
+void free_frame(uint32_t frame) {
+    access_physical(frame);
     
     mutex_lock(&first_free_frame_mutex);
     *((uint32_t *)RW_PHYS_VA) = first_free_frame;
-    first_free_frame = addr;
+    first_free_frame = frame;
     mutex_unlock(&first_free_frame_mutex);
 }
 

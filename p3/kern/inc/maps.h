@@ -10,10 +10,11 @@
 
 #define MAP_USER 0x1
 #define MAP_WRITE 0x2
+#define MAP_REMOVE 0x4
 
 typedef struct map {
-    uint32_t start;
-    uint32_t size;
+    uint32_t low;
+    uint32_t high;
     int perms;
 } map_t;
 
@@ -27,14 +28,12 @@ void maps_clear(map_list_t *maps);
 
 int maps_copy(map_list_t *from, map_list_t *to);
 
-//TODO delete me, eventually?
 void maps_print(map_list_t *maps);
 
+void maps_insert(map_list_t *maps, uint32_t low, uint32_t high, int perms);
 
-void maps_insert(map_list_t *maps, uint32_t addr, uint32_t size, int perms);
+map_t *maps_find(map_list_t *maps, uint32_t low, uint32_t high);
 
-map_t *maps_find(map_list_t *maps, uint32_t addr, uint32_t size);
-
-void maps_delete(map_list_t *maps, uint32_t addr);
+void maps_delete(map_list_t *maps, uint32_t low);
 
 #endif

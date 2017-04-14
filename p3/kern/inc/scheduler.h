@@ -21,16 +21,24 @@
 
 typedef struct schedule_list_struct {
     list_t *active_list;
+    list_t *sleeping_list;
 } schedule_t;
 
 typedef node_t sche_node_t;
 typedef node_t tcb_tb_node_t;
 
 int scheduler_init();
+
 void set_cur_run_thread(thread_t *tcb_ptr);
+
 void sche_yield(int status);
+
 thread_t *get_cur_tcb();
+
 void sche_push_back(thread_t *tcb_ptr);
+
 void sche_push_front(thread_t *tcb_ptr);
+
+void tranquilize(sleep_node_t *sleep_node);
 
 #endif

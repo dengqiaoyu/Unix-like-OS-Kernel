@@ -98,7 +98,6 @@ void add_to_kb_buf(void) {
     mutex_lock(&kb_buf.mutex);
     if (kb_buf.is_waiting) {
         putbyte(ch);
-        lprintf("print to screen: %d", ch);
     }
     if (if_newline) {
         kb_buf.newline_cnt++;

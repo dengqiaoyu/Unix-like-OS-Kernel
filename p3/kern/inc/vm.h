@@ -39,7 +39,7 @@ void set_pte(uint32_t addr, uint32_t frame_addr, int flags);
 
 uint32_t get_frame();
 
-void free_frame(uint32_t addr);
+void free_frame(uint32_t frame);
 
 int dec_num_free_frames(int n);
 

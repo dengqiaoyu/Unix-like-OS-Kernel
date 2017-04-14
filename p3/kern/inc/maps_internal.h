@@ -28,7 +28,7 @@ map_node_t *smallest_node(map_node_t *tree);
 
 int get_balance(map_node_t *tree);
 
-map_node_t *make_node(uint32_t addr, uint32_t size, int perms);
+map_node_t *make_node(uint32_t low, uint32_t high, int perms);
 
 void copy_node(map_node_t *from, map_node_t *to);
 
@@ -36,11 +36,11 @@ map_node_t *tree_insert(map_node_t *tree, map_node_t *node);
 
 void tree_print(map_node_t *node);
 
-map_node_t *tree_find(map_node_t *tree, uint32_t addr, uint32_t size);
+map_node_t *tree_find(map_node_t *tree, uint32_t low, uint32_t high);
 
 map_node_t *tree_copy(map_node_t *tree);
 
-map_node_t *tree_delete(map_node_t *tree, uint32_t addr);
+map_node_t *tree_delete(map_node_t *tree, uint32_t low);
 
 void tree_destroy(map_node_t *tree);
 

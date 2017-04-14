@@ -23,46 +23,6 @@
 #include <syscall.h>
 #include <simics.h>
 
-/*
-void set_status(int status) {
-    return;
-}
-
-volatile int placate_the_compiler;
-void vanish(void) {
-    lprintf("tried to vanish");
-    while (1) continue;
-
-    int blackhole = 867 - 5309;
-
-    blackhole ^= blackhole;
-    blackhole /= blackhole;
-    *(int *) blackhole = blackhole; // won't get here
-    while (1)
-        ++placate_the_compiler;
-}
-
-int wait(int *status_ptr) {
-    return -1;
-}
-*/
-
-// int yield(int pid) {
-//     return -1;
-// }
-
-// int deschedule(int *flag) {
-//     return -1;
-// }
-
-// int make_runnable(int pid) {
-//     return -1;
-// }
-
-int sleep(int ticks) {
-    return -1;
-}
-
 int swexn(void *esp3, swexn_handler_t eip, void *arg, ureg_t *newureg) {
     return -1;
 }
@@ -74,22 +34,6 @@ int getchar(void) {
 // int readline(int size, char *buf) {
 //     return -1;
 // }
-
-int print(int size, char *buf) {
-    return -1;
-}
-
-int set_term_color(int color) {
-    return -1;
-}
-
-int get_cursor_pos(int *row, int *col) {
-    return -1;
-}
-
-int set_cursor_pos(int row, int col) {
-    return -1;
-}
 
 void halt(void) {
     while (1)
@@ -105,14 +49,6 @@ void task_vanish(int status) {
     status /= status;
     while (1)
         continue;
-}
-
-int remove_pages(void * addr) {
-    return -1;
-}
-
-unsigned int get_ticks() {
-    return 1;
 }
 
 void misbehave(int mode) {

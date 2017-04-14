@@ -31,24 +31,16 @@ thread_t *tcb_hashtab_get(int tid) {
     int idx = tid % HASH_LEN;
     list_t *obj_list = tcb_hashtab.tcb_list[idx];
     mutex_t *obj_mutex = &(tcb_hashtab.mutex[idx]);
+
     mutex_lock(obj_mutex);
     tcb_tb_node_t *node_rover = get_first_node(obj_list);
-    if (node_rover == NULL) {
-        mutex_unlock(obj_mutex);
-        return NULL;
-    }
-    thread_t *thr_ptr = TABLE_NODE_TO_TCB(node_rover);
-    if (thr_ptr->tid == tid) {
-        mutex_unlock(obj_mutex);
-        return thr_ptr;
-    }
-    while (has_next(obj_list, node_rover) == 1) {
-        node_rover = get_next_node(node_rover);
+    while (node_rover != NULL) {
         thread_t *thr_rover = TABLE_NODE_TO_TCB(node_rover);
         if (thr_rover->tid == tid) {
             mutex_unlock(obj_mutex);
             return thr_rover;
         }
+        node_rover = get_next_node(obj_list, node_rover);
     }
     mutex_unlock(obj_mutex);
     return NULL;
@@ -58,26 +50,17 @@ int tcb_hashtab_rmv(int tid) {
     int idx = tid % HASH_LEN;
     list_t *obj_list = tcb_hashtab.tcb_list[idx];
     mutex_t *obj_mutex = &(tcb_hashtab.mutex[idx]);
+
     mutex_lock(obj_mutex);
     tcb_tb_node_t *node_rover = get_first_node(obj_list);
-    if (node_rover == NULL) {
-        mutex_unlock(obj_mutex);
-        return -1;
-    }
-    thread_t *thr_ptr = TABLE_NODE_TO_TCB(node_rover);
-    if (thr_ptr->tid == tid) {
-        delete_node(obj_list, node_rover);
-        mutex_unlock(obj_mutex);
-        return 0;
-    }
-    while (has_next(obj_list, node_rover) == 1) {
-        node_rover = get_next_node(node_rover);
+    while (node_rover != NULL) {
         thread_t *thr_rover = TABLE_NODE_TO_TCB(node_rover);
         if (thr_rover->tid == tid) {
             delete_node(obj_list, node_rover);
             mutex_unlock(obj_mutex);
             return 0;
         }
+        node_rover = get_next_node(obj_list, node_rover);
     }
     mutex_unlock(obj_mutex);
     return -1;

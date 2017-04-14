@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <page.h>
 #include <simics.h>                 /* lprintf() */
+#include <console.h>
 
 /* multiboot header file */
 #include <multiboot.h>              /* boot_info */
@@ -36,6 +37,35 @@
 // will need to find a better way to do this eventually
 extern mutex_t malloc_mutex;
 
+extern thread_t *idle_thread;
+
+thread_t *setup_task(const char *fname) {
+    task_t *task = task_init();
+    thread_t *thread = thread_init();
+    thread->task = task;
+    add_node_to_head(task->live_thread_list, TCB_TO_LIST_NODE(thread));
+    thread->status = INITIALIZED;
+
+    task->task_id = thread->tid;
+    task->parent_task = NULL;
+
+    // TODO can we macro these better?
+    maps_insert(task->maps, 0, PAGE_SIZE * NUM_KERN_PAGES - 1, 0);
+    maps_insert(task->maps, RW_PHYS_VA, RW_PHYS_VA + (PAGE_SIZE - 1), 0);
+
+    simple_elf_t elf_header;
+    elf_load_helper(&elf_header, fname);
+    thread->ip = elf_header.e_entry;
+
+    // register new task for simics symbolic debugging
+    sim_reg_process(task->page_dir, fname);
+
+    set_cr3((uint32_t)task->page_dir);
+    load_program(&elf_header, task->maps);
+
+    return thread;
+}
+
 /** @brief Kernel entrypoint.
  *
  *  This is the entrypoint for the kernel.
@@ -44,56 +74,33 @@ extern mutex_t malloc_mutex;
  */
 int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     lprintf( "Hello from a brand new kernel!" );
+    clear_console();
 
     handler_init();
-    lprintf("pass handler_init");
     vm_init();
-    lprintf("pass vm_init");
     scheduler_init();
-    lprintf("pass scheduler_init");
     id_counter_init();
-    lprintf("pass id_counter_init");
 
     // TODO find a better way to init mutexes
     mutex_init(&malloc_mutex);
-    lprintf("before kb_buf_init");
     kb_buf_init();
-    lprintf("after kb_buf_init");
     tcb_hashtab_init();
 
-    /*
-    task_t *init = task_init("peon");
-    task_t *merchant_2 = task_init("peon");
-    append_to_scheduler(get_mainthr_sche_node(merchant_2));
-    */
+    idle_thread = setup_task("idle");
 
-
-    task_t *init = task_init();
-    thread_t *thread = thread_init();
-    thread->task = init;
-    add_node_to_head(init->live_thread_list, TCB_TO_LIST_NODE(thread));
-
-    init->task_id = thread->tid;
-    init->parent_task = NULL;
-    maps_insert(init->maps, 0, PAGE_SIZE * NUM_KERN_PAGES, 0);
-    maps_insert(init->maps, RW_PHYS_VA, PAGE_SIZE, 0);
-    // /*
     const char *fname = "my_readline";
-    simple_elf_t elf_header;
-    elf_load_helper(&elf_header, fname);
-    thread->ip = elf_header.e_entry;
-
-    set_cur_run_thread(thread);
-    // register new task for simics symbolic debugging
-    sim_reg_process(init->page_dir, fname);
-    set_cr3((uint32_t)init->page_dir);
-    load_program(&elf_header, init->maps);
-    // */
-    thread->status = RUNNABLE;
-    set_esp0(thread->kern_sp);
-    kern_to_user(thread->cur_sp, thread->ip);
+    /*
+    const char *fname = "remove_pages_test2";
+    const char *fname = "fork_wait_bomb";
+    const char *fname = "fork_exit_bomb";
+    */
+    thread_t *first_thread = setup_task(fname);
+    set_cur_run_thread(first_thread);
+    set_esp0(first_thread->kern_sp);
+    kern_to_user(first_thread->cur_sp, first_thread->ip);
 
     while (1) {
+        MAGIC_BREAK;
         continue;
     }
 

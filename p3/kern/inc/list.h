@@ -70,9 +70,10 @@ node_t *get_first_node(list_t *list);
  */
 node_t *get_last_node(list_t *list);
 
-int has_next(list_t *list, node_t *node);
+// TODO
+node_t *get_next_node(list_t *list, node_t *node);
 
-node_t *get_next_node(node_t *node);
+void insert_before(list_t *list, node_t *cur_node, node_t *new_node);
 
 node_t *get_prev_node(node_t *node);
 

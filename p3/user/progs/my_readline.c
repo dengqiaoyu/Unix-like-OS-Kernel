@@ -16,12 +16,12 @@
 DEF_TEST_NAME("readline_basic:");
 
 int main() {
-    char buf[100];
+    char buf[10];
     fork();
     int i = 0;
     while (i != 10000000) {i++;}
     report_start(START_CMPLT);
-    REPORT_FAILOUT_ON_ERR(magic_readline(100, buf));
+    REPORT_FAILOUT_ON_ERR(magic_readline(10, buf));
     report_misc(buf);
     report_end(END_SUCCESS);
     while (1) {}

@@ -20,13 +20,10 @@
 #include "inc/timer_driver.h"
 #include "scheduler.h"
 
-
-static int num_ticks;
+int num_ticks;
 static int seconds = 0;
-/* control whether to count seconds */
-int cnt_seconds_flag = 0;
-/* to store the address of callback function */
-void (*callback_func)();
+int cnt_seconds_flag = 0; /* control whether to count seconds */
+void (*callback_func)(); /* to store the address of callback function */
 
 /**
  * @brief Initialize timer.
@@ -63,7 +60,7 @@ void timer_callback(unsigned int num_ticks) {
         // lprintf("time: %d", seconds);
         seconds++;
     }
-    // outb(INT_ACK_CURRENT, INT_CTL_PORT);
+    outb(INT_ACK_CURRENT, INT_CTL_PORT);
     sche_yield(RUNNABLE);
 }
 

@@ -213,32 +213,87 @@ void thread_destroy(thread_t *thread) {
     allocator_free(TCB_TO_SCHE_NODE(thread));
 }
 
+int validate_user_mem(uint32_t addr, uint32_t len, int perms) {
+    thread_t *thread = get_cur_tcb();
+    task_t *task = thread->task;
+
+    if (len == 0) return -1;
+    uint32_t low = addr;
+    uint32_t high = addr + (len - 1);
+    // check overflow
+    if (high < low) return -1;
+
+    map_t *map = maps_find(task->maps, low, high);
+    if (map == NULL) return -1;
+    if ((perms & map->perms) != perms) return -1;
+
+    int ret = 0;
+    if (low < map->low) {
+        ret = validate_user_mem(low, map->low - low, perms);
+        if (ret < 0) return -1;
+    }
+    if (map->high < high) {
+        ret = validate_user_mem(map->high + 1, high - map->high, perms);
+        if (ret < 0) return -1;
+    }
+
+    return 0;
+}
+
+// TODO
+// returns negative if string goes outside user memory
+// returns 0 if string is in valid memory but does not terminate in max_len
+// returns length including null terminator otherwise
+int validate_user_string(uint32_t addr, int max_len) {
+    /*
+    thread_t *thread = get_cur_tcb();
+    task_t *task = thread->task;
+    */
+
+    return 0;
+}
+
 // assumes cr3 is already set
 int load_program(simple_elf_t *header, map_list_t *maps) {
+    uint32_t high;
+
     lprintf("text");
     load_elf_section(header->e_fname, header->e_txtstart, header->e_txtlen,
                      header->e_txtoff, PTE_USER | PTE_PRESENT);
-    maps_insert(maps, header->e_txtstart, header->e_txtlen, MAP_USER);
+    if (header->e_txtlen > 0) {
+        high = header->e_txtstart + (header->e_txtlen - 1);
+        maps_insert(maps, header->e_txtstart, high, MAP_USER);
+    }
 
     lprintf("dat");
     load_elf_section(header->e_fname, header->e_datstart, header->e_datlen,
                      header->e_datoff, PTE_USER | PTE_WRITE | PTE_PRESENT);
-    maps_insert(maps, header->e_datstart, header->e_datlen, MAP_USER | MAP_WRITE);
+    if (header->e_datlen > 0) {
+        high = header->e_datstart + (header->e_datlen - 1);
+        maps_insert(maps, header->e_datstart, high, MAP_USER | MAP_WRITE);
+    }
 
     lprintf("rodat");
     load_elf_section(header->e_fname, header->e_rodatstart, header->e_rodatlen,
                      header->e_rodatoff, PTE_USER | PTE_PRESENT);
-    maps_insert(maps, header->e_rodatstart, header->e_rodatlen, MAP_USER);
+    if (header->e_rodatlen > 0) {
+        high = header->e_rodatstart + (header->e_rodatlen - 1);
+        maps_insert(maps, header->e_rodatstart, high, MAP_USER);
+    }
 
     lprintf("bss");
     load_elf_section(header->e_fname, header->e_bssstart, header->e_bsslen,
                      -1, PTE_USER | PTE_WRITE | PTE_PRESENT);
-    maps_insert(maps, header->e_bssstart, header->e_bsslen, MAP_USER | MAP_WRITE);
+    if (header->e_bsslen > 0) {
+        high = header->e_bssstart + (header->e_bsslen - 1);
+        maps_insert(maps, header->e_bssstart, high, MAP_USER | MAP_WRITE);
+    }
 
     lprintf("stack");
     load_elf_section(header->e_fname, USER_STACK_LOW, USER_STACK_SIZE,
                      -1, PTE_USER | PTE_WRITE | PTE_PRESENT);
-    maps_insert(maps, USER_STACK_LOW, USER_STACK_SIZE, MAP_USER | MAP_WRITE);
+    high = USER_STACK_LOW + (USER_STACK_SIZE - 1);
+    maps_insert(maps, USER_STACK_LOW, high, MAP_USER | MAP_WRITE);
 
     // test maps
     maps_print(maps);
