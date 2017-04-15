@@ -25,6 +25,7 @@ void maps_destroy(map_list_t *maps) {
 
 void maps_clear(map_list_t *maps) {
     tree_destroy(maps->root);
+    maps->root = NULL;
 }
 
 int maps_copy(map_list_t *from, map_list_t *to) {

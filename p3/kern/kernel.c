@@ -37,6 +37,7 @@
 extern mutex_t malloc_mutex;
 
 extern thread_t *idle_thread;
+extern thread_t *init_thread;
 
 thread_t *setup_task(const char *fname) {
     task_t *task = task_init();
@@ -86,17 +87,10 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
 
     idle_thread = setup_task("idle");
 
-    const char *fname = "actual_wait";
-    /*
-    const char *fname = "remove_pages_test2";
-    const char *fname = "fork_wait_bomb";
-    const char *fname = "fork_exit_bomb";
-    */
-
-    thread_t *first_thread = setup_task(fname);
-    set_cur_run_thread(first_thread);
-    set_esp0(first_thread->kern_sp);
-    kern_to_user(first_thread->cur_sp, first_thread->ip);
+    init_thread = setup_task("user_init");
+    set_cur_run_thread(init_thread);
+    set_esp0(init_thread->kern_sp);
+    kern_to_user(init_thread->cur_sp, init_thread->ip);
 
     while (1) {
         MAGIC_BREAK;

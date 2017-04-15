@@ -25,11 +25,10 @@ int kern_fork(void) {
     task_t *old_task = old_thread->task;
     thread_t *cur_thr = NULL;
 
-
-    if (get_list_size(old_task->live_thread_list) != 1) {
-        return ERROR_FORK_TASK_MORE_THAN_ONE_THREAD;
-    }
-
+    mutex_lock(&(old_task->thread_list_mutex));
+    int live_threads = get_list_size(old_task->live_thread_list);
+    mutex_unlock(&(old_task->thread_list_mutex));
+    if (live_threads > 1) return ERROR_FORK_TASK_MORE_THAN_ONE_THREAD;
 
     task_t *new_task = task_init();
     if (new_task == NULL) {
@@ -63,7 +62,9 @@ int kern_fork(void) {
     new_thread->status = FORKED;
     add_node_to_head(new_task->live_thread_list, TCB_TO_LIST_NODE(new_thread));
 
+    mutex_lock(&(old_task->child_task_list_mutex));
     add_node_to_head(old_task->child_task_list, TASK_TO_LIST_NODE(new_task));
+    mutex_unlock(&(old_task->child_task_list_mutex));
     asm_set_exec_context(old_thread->kern_sp,
                          new_thread->kern_sp,
                          &(new_thread->cur_sp),

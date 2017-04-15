@@ -8,6 +8,7 @@
 #include <string.h>
 #include <simics.h>
 #include <page.h>
+#include <asm.h>            /* disable_interrupts enable_interrupts */
 #include <x86/cr.h>
 
 #include "vm.h"
@@ -17,6 +18,9 @@
 #include "scheduler.h"
 #include "tcb_hashtab.h"
 #include "return_type.h"
+
+thread_t *idle_thread;
+thread_t *init_thread;
 
 extern uint32_t *kern_page_dir;
 extern int num_free_frames;
@@ -81,22 +85,27 @@ task_t *task_init() {
     return task;
 }
 
-// assumes no active children
-void task_destroy(task_t *task) {
+void task_clear(task_t *task) {
+    /*
+     * a task's resources are always freed together, so we just use the page
+     * directory pointer as a flag for whether the task has been cleared
+     */
     if (task->page_dir != NULL) {
         page_dir_clear(task->page_dir);
         sfree(task->page_dir, PAGE_SIZE);
-    }
+        task->page_dir = NULL;
 
-    if (task->maps != NULL) {
         maps_destroy(task->maps);
+        reap_threads(task);
+
+        task_lists_destroy(task);
+        task_mutexes_destroy(task);
     }
+}
 
-    reap_threads(task);
-
-    task_lists_destroy(task);
-    task_mutexes_destroy(task);
-
+// assumes no active children
+void task_destroy(task_t *task) {
+    task_clear(task);
     free(TASK_TO_LIST_NODE(task));
 }
 
@@ -174,6 +183,14 @@ int task_mutexes_init(task_t *task) {
         return -1;
     }
 
+    ret = mutex_init(&(task->vanish_mutex));
+    if (ret < 0) {
+        mutex_destroy(&(task->thread_list_mutex));
+        mutex_destroy(&(task->child_task_list_mutex));
+        mutex_destroy(&(task->wait_mutex));
+        return -1;
+    }
+
     return SUCCESS;
 }
 
@@ -181,11 +198,16 @@ void task_mutexes_destroy(task_t *task) {
     mutex_destroy(&(task->thread_list_mutex));
     mutex_destroy(&(task->child_task_list_mutex));
     mutex_destroy(&(task->wait_mutex));
+    mutex_destroy(&(task->vanish_mutex));
 }
 
 // leaves task pointer and status to be set outside
 thread_t *thread_init() {
-    sche_node_t *sche_node = allocator_alloc(sche_allocator);
+    // sche_node_t *sche_node = allocator_alloc(sche_allocator);
+    int size = sizeof(sche_node_t) + sizeof(tcb_tb_node_t) +
+               sizeof(thread_node_t) + sizeof(thread_t);
+    sche_node_t *sche_node = malloc(size);
+
     if (sche_node == NULL) {
         // TODO error handling
         lprintf("f4");
@@ -195,22 +217,33 @@ thread_t *thread_init() {
     thread_t *thread = SCHE_NODE_TO_TCB(sche_node);
     thread->tid = gen_thread_id();
 
-    void *kern_stack = malloc(KERN_STACK_SIZE);
+    // TODO CURRENT
+    // void *kern_stack = malloc(KERN_STACK_SIZE);
+    void *kern_stack = smemalign(KERN_STACK_SIZE, KERN_STACK_SIZE);
     if (kern_stack == NULL) {
         lprintf("f5");
-        allocator_free(sche_node);
+        // allocator_free(sche_node);
+        free(sche_node);
         return NULL;
     }
     thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
     thread->cur_sp = USER_STACK_START;
+
     tcb_hashtab_put(thread);
     return thread;
 }
 
 void thread_destroy(thread_t *thread) {
     void *kern_stack = (void *)(thread->kern_sp - KERN_STACK_SIZE);
-    free(kern_stack);
-    allocator_free(TCB_TO_SCHE_NODE(thread));
+
+    // TODO CURRENT
+    // free(kern_stack);
+    sfree(kern_stack, KERN_STACK_SIZE);
+
+    tcb_hashtab_rmv(thread);
+
+    // allocator_free(TCB_TO_SCHE_NODE(thread));
+    free(TCB_TO_SCHE_NODE(thread));
 }
 
 int validate_user_mem(uint32_t addr, uint32_t len, int perms) {
@@ -245,58 +278,101 @@ int validate_user_mem(uint32_t addr, uint32_t len, int perms) {
 // returns 0 if string is in valid memory but does not terminate in max_len
 // returns length including null terminator otherwise
 int validate_user_string(uint32_t addr, int max_len) {
-    /*
     thread_t *thread = get_cur_tcb();
     task_t *task = thread->task;
-    */
+
+    uint32_t low = addr;
+    if (max_len <= 0) return -1;
+    int len = 0;
+
+    while (len < max_len) {
+        map_t *map = maps_find(task->maps, low, low);
+        if (map == NULL) return -1;
+        if (!(MAP_USER & map->perms)) return -1;
+
+        uint32_t coverage = map->high - low + 1;
+        char *check = (char *)low;
+        int i;
+        for (i = 0; i < coverage; i++) {
+            len++;
+            if (len > max_len)
+                return 0;
+            else if (*check == '\0')
+                return len;
+            check++;
+        }
+
+        low += coverage;
+    }
 
     return 0;
 }
 
 // assumes cr3 is already set
 int load_program(simple_elf_t *header, map_list_t *maps) {
+    int ret;
     uint32_t high;
 
     lprintf("text");
-    load_elf_section(header->e_fname, header->e_txtstart, header->e_txtlen,
-                     header->e_txtoff, PTE_USER | PTE_PRESENT);
+    ret = load_elf_section(header->e_fname,
+                           header->e_txtstart,
+                           header->e_txtlen,
+                           header->e_txtoff,
+                           PTE_USER | PTE_PRESENT);
+    if (ret < 0) return -1;
     if (header->e_txtlen > 0) {
         high = header->e_txtstart + (header->e_txtlen - 1);
         maps_insert(maps, header->e_txtstart, high, MAP_USER);
     }
 
     lprintf("dat");
-    load_elf_section(header->e_fname, header->e_datstart, header->e_datlen,
-                     header->e_datoff, PTE_USER | PTE_WRITE | PTE_PRESENT);
+    ret = load_elf_section(header->e_fname,
+                           header->e_datstart,
+                           header->e_datlen,
+                           header->e_datoff,
+                           PTE_USER | PTE_WRITE | PTE_PRESENT);
+    if (ret < 0) return -1;
     if (header->e_datlen > 0) {
         high = header->e_datstart + (header->e_datlen - 1);
         maps_insert(maps, header->e_datstart, high, MAP_USER | MAP_WRITE);
     }
 
     lprintf("rodat");
-    load_elf_section(header->e_fname, header->e_rodatstart, header->e_rodatlen,
-                     header->e_rodatoff, PTE_USER | PTE_PRESENT);
+    ret = load_elf_section(header->e_fname,
+                           header->e_rodatstart,
+                           header->e_rodatlen,
+                           header->e_rodatoff,
+                           PTE_USER | PTE_PRESENT);
+    if (ret < 0) return -1;
     if (header->e_rodatlen > 0) {
         high = header->e_rodatstart + (header->e_rodatlen - 1);
         maps_insert(maps, header->e_rodatstart, high, MAP_USER);
     }
 
     lprintf("bss");
-    load_elf_section(header->e_fname, header->e_bssstart, header->e_bsslen,
-                     -1, PTE_USER | PTE_WRITE | PTE_PRESENT);
+    ret = load_elf_section(header->e_fname,
+                           header->e_bssstart,
+                           header->e_bsslen,
+                           -1,
+                           PTE_USER | PTE_WRITE | PTE_PRESENT);
+    if (ret < 0) return -1;
     if (header->e_bsslen > 0) {
         high = header->e_bssstart + (header->e_bsslen - 1);
         maps_insert(maps, header->e_bssstart, high, MAP_USER | MAP_WRITE);
     }
 
     lprintf("stack");
-    load_elf_section(header->e_fname, USER_STACK_LOW, USER_STACK_SIZE,
-                     -1, PTE_USER | PTE_WRITE | PTE_PRESENT);
+    ret = load_elf_section(header->e_fname,
+                           USER_STACK_LOW,
+                           USER_STACK_SIZE,
+                           -1,
+                           PTE_USER | PTE_WRITE | PTE_PRESENT);
+    if (ret < 0) return -1;
     high = USER_STACK_LOW + (USER_STACK_SIZE - 1);
     maps_insert(maps, USER_STACK_LOW, high, MAP_USER | MAP_WRITE);
 
     // test maps
-    maps_print(maps);
+    // maps_print(maps);
 
     return 0;
 }
@@ -329,4 +405,80 @@ int load_elf_section(const char *fname, unsigned long start, unsigned long len,
     }
 
     return 0;
+}
+
+// sends orphaned children to the init task
+void orphan_children(task_t *task) {
+    task_t *init_task = init_thread->task;
+
+    mutex_lock(&(task->child_task_list_mutex));
+    node_t *child_node = (node_t *)get_first_node(task->child_task_list);
+    mutex_unlock(&(task->child_task_list_mutex));
+
+    while (child_node != NULL) {
+        task_t *child = LIST_NODE_TO_TASK(child_node);
+        mutex_lock(&(child->vanish_mutex));
+
+        mutex_lock(&(child->thread_list_mutex));
+        int live_threads = get_list_size(child->live_thread_list);
+        mutex_unlock(&(child->thread_list_mutex));
+        /* 
+         * live_threads can only be 0 if the task vanished on its own in the
+         * time between when we (a) found it in the child task list and (b)
+         * locked its vanish mutex. it only unlocked the vanish mutex after
+         * moving itself to the zombie task list, so we can orphan it later.
+         */
+        mutex_lock(&(task->child_task_list_mutex));
+        if (live_threads > 0) {
+            remove_node(task->child_task_list, child_node);
+
+            child->parent_task = init_task;
+            mutex_lock(&(init_task->child_task_list_mutex));
+            add_node_to_tail(init_task->child_task_list, child_node);
+            mutex_unlock(&(init_task->child_task_list_mutex));
+        }
+        mutex_unlock(&(child->vanish_mutex));
+
+        child_node = get_first_node(task->child_task_list);
+        mutex_unlock(&(task->child_task_list_mutex));
+    }
+}
+
+// sends orphaned zombies to the init task
+void orphan_zombies(task_t *task) {
+    task_t *init_task = init_thread->task;
+    node_t *zombie_node;
+
+    /* 
+     * we don't need to lock here as there will be no waiters (we are the last
+     * alive) and no vanishing children (orphan_children was called first).
+     */
+    while (get_list_size(task->zombie_task_list) > 0) {
+        zombie_node = pop_first_node(task->zombie_task_list);
+        mutex_lock(&(init_task->wait_mutex));
+
+        if (get_list_size(init_task->waiting_thread_list) > 0) {
+            node_t *node = pop_first_node(init_task->waiting_thread_list);
+            mutex_unlock(&(init_task->wait_mutex));
+
+            wait_node_t *waiter = (wait_node_t *)node;
+            waiter->zombie = LIST_NODE_TO_TASK(zombie_node);
+
+            // disable interrupts to protect the scheduler
+            disable_interrupts();
+            waiter->thread->status = RUNNABLE;
+            sche_push_back(waiter->thread);
+            enable_interrupts();
+        } else {
+            node_t *last_node = get_last_node(init_task->zombie_task_list);
+            if (last_node != NULL) {
+                // we can free the previous zombie's vm and thread resources
+                task_t *prev_zombie = LIST_NODE_TO_TASK(last_node);
+                task_clear(prev_zombie);
+            }
+
+            add_node_to_tail(init_task->zombie_task_list, zombie_node);
+            mutex_unlock(&(init_task->wait_mutex));
+        }
+    }
 }

@@ -7,6 +7,8 @@ asm_set_exec_context:
     movl %esp, %ebx         /* %ebx = old %esp */
     addl $4, %ebx
     pusha
+    movl 16(%ebx), %eax
+    pushl %eax
     movl %esp, %eax
     movl 4(%ebx), %ecx      /* %ecx = old_kern_sp */
     movl 8(%ebx), %edx      /* %edx = new_kern_sp */
@@ -20,7 +22,7 @@ asm_set_exec_context:
     call memcpy             /* memcpy(new_thread_sp, old_thread_sp, len) */
     addl $12, %esp          /* restore %esp */
     call get_eip
-    movl 16(%ebx), %edx     /* %edx = &(new_thread->ip) */ 
+    popl %edx               /* %edx = &(new_thread->ip) */
     movl %eax, (%edx)       /* new_thread->ip = %eip */
     popa
     popl %ebx

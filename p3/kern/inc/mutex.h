@@ -24,4 +24,6 @@ void mutex_lock(mutex_t *mp);
 
 void mutex_unlock(mutex_t *mp);
 
+void cli_mutex_unlock(mutex_t *mp);
+
 #endif

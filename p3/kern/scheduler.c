@@ -16,7 +16,7 @@
                            SCHE_NODE_TO_TCB(cur_sche_node)->tid)
 #define NUM_CHUNK_SCHEDULER 64
 
-thread_t *idle_thread;
+extern thread_t *idle_thread;
 
 extern unsigned int num_ticks;
 
@@ -31,8 +31,9 @@ int scheduler_init() {
               sizeof(sche_node_t) + sizeof(tcb_tb_node_t) +
               sizeof(thread_node_t) + sizeof(thread_t),
               NUM_CHUNK_SCHEDULER);
-    if (ret != SUCCESS)
-        return ret;
+    if (ret != SUCCESS) return ret;
+
+    // TODO destroy allocator
     sche_list.active_list = list_init();
     if (sche_list.active_list == NULL) return -1;
 
@@ -126,7 +127,6 @@ void sche_yield(int status) {
         }
     }
 
-    // TODO is it possible the thread initially had interrupts disabled?
     enable_interrupts();
 }
 

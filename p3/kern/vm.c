@@ -51,10 +51,12 @@ void vm_init() {
         }
     }
 
+    /*
     // we need to populate the last entry of the page directory
     // the last page table here will be used for accessing physical addresses
     kern_page_dir[RW_PHYS_PD_INDEX] = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE);
     kern_page_dir[RW_PHYS_PD_INDEX] |= flags;
+    */
 
     set_cr3((uint32_t)kern_page_dir);
     set_cr0(get_cr0() | CR0_PG);

@@ -46,22 +46,12 @@ thread_t *tcb_hashtab_get(int tid) {
     return NULL;
 }
 
-int tcb_hashtab_rmv(int tid) {
-    int idx = tid % HASH_LEN;
+void tcb_hashtab_rmv(thread_t *tcb) {
+    int idx = tcb->tid % HASH_LEN;
     list_t *obj_list = tcb_hashtab.tcb_list[idx];
     mutex_t *obj_mutex = &(tcb_hashtab.mutex[idx]);
 
     mutex_lock(obj_mutex);
-    tcb_tb_node_t *node_rover = get_first_node(obj_list);
-    while (node_rover != NULL) {
-        thread_t *thr_rover = TABLE_NODE_TO_TCB(node_rover);
-        if (thr_rover->tid == tid) {
-            delete_node(obj_list, node_rover);
-            mutex_unlock(obj_mutex);
-            return 0;
-        }
-        node_rover = get_next_node(obj_list, node_rover);
-    }
+    remove_node(obj_list, TCB_TO_TABLE_NODE(tcb));
     mutex_unlock(obj_mutex);
-    return -1;
 }

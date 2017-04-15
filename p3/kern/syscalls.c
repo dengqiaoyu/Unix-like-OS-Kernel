@@ -26,6 +26,8 @@
 
 extern unsigned int num_ticks;
 
+extern thread_t *init_thread;
+
 extern allocator_t *sche_allocator;
 
 extern uint32_t *kern_page_dir;
@@ -39,8 +41,11 @@ int kern_exec(void) {
 
     thread_t *thread = get_cur_tcb();
     task_t *task = thread->task;
-    if (get_list_size(task->live_thread_list) != 1)
-        return -1;
+
+    mutex_lock(&(task->thread_list_mutex));
+    int live_threads = get_list_size(task->live_thread_list);
+    mutex_unlock(&(task->thread_list_mutex));
+    if (live_threads > 1) return -1;
 
     char **temp = argvec;
     int argc = 0;
@@ -49,10 +54,11 @@ int kern_exec(void) {
     int len;
 
     ret = validate_user_mem((uint32_t)temp, sizeof(char *), MAP_USER);
-    if (ret < 0) return -1;
+    if (temp && ret < 0) return -1;
 
-    while (*temp) {
-        len = validate_user_string((uint32_t)temp, 128);
+    while (temp && *temp) {
+        char *arg = *temp;
+        len = validate_user_string((uint32_t)arg, 128);
         if (len <= 0) return -1;
         total_len += len;
         if (total_len > 128) return -1;
@@ -66,7 +72,7 @@ int kern_exec(void) {
     }
 
     ret = validate_user_string((uint32_t)execname, 64);
-    if (ret < 0) return -1;
+    if (ret <= 0) return -1;
     char namebuf[64];
     sprintf(namebuf, "%s", execname);
 
@@ -94,12 +100,13 @@ int kern_exec(void) {
 
     maps_clear(task->maps);
     maps_insert(task->maps, 0, PAGE_SIZE * NUM_KERN_PAGES - 1, 0);
-    maps_insert(task->maps, RW_PHYS_VA, RW_PHYS_VA + (PAGE_SIZE - 1), 0);
+    maps_insert(task->maps, RW_PHYS_VA, RW_PHYS_VA + PAGE_SIZE - 1, 0);
 
     page_dir_clear(task->page_dir);
     set_cr3((uint32_t)task->page_dir);
 
-    load_program(&elf_header, task->maps);
+    ret = load_program(&elf_header, task->maps);
+    if (ret < 0) return -1;
 
     // need macros here badly
     // 5 because ret addr and 4 args
@@ -222,10 +229,7 @@ int kern_wait(void) {
     if (status_ptr != NULL) {
         int perms = MAP_USER | MAP_WRITE;
         int ret = validate_user_mem((uint32_t)status_ptr, sizeof(int), perms);
-        if (ret < 0) {
-            MAGIC_BREAK;
-            return -1;
-        }
+        if (ret < 0) return -1;
     }
 
     task_t *zombie;
@@ -253,7 +257,7 @@ int kern_wait(void) {
         // this unlock goes after disable_interrupts
         // otherwise, a child could turn into a zombie before blocking
         // then we might incorrectly block forever
-        mutex_unlock(&(task->wait_mutex));
+        cli_mutex_unlock(&(task->wait_mutex));
         add_node_to_tail(task->waiting_thread_list, &(wait_node.node));
         sche_yield(BLOCKED_WAIT);
 
@@ -266,6 +270,82 @@ int kern_wait(void) {
 
     task_destroy(zombie);
     return ret;
+}
+
+void kern_vanish(void) {
+    thread_t *thread = get_cur_tcb();
+    task_t *task = thread->task;
+
+    mutex_lock(&(task->vanish_mutex));
+    task_t *parent = task->parent_task;
+
+    mutex_lock(&(task->thread_list_mutex));
+    remove_node(task->live_thread_list, TCB_TO_LIST_NODE(thread));
+    int live_threads = get_list_size(task->live_thread_list);
+    add_node_to_tail(task->zombie_thread_list, TCB_TO_LIST_NODE(thread));
+    // TODO try to free previous zombie stack
+    if (live_threads > 0) {
+        /* 
+         * need to disable interrupts here, before unlocking the thread list
+         * mutex. otherwise, another thread might be switched to and vanish,
+         * finding that it is the last thread to vanish. then the task could
+         * be given to a waiting thread and destroyed, and with it our stack...
+         */
+        disable_interrupts();
+        cli_mutex_unlock(&(task->thread_list_mutex));
+        cli_mutex_unlock(&(task->vanish_mutex));
+        sche_yield(ZOMBIE);
+    }
+    else {
+        mutex_unlock(&(task->thread_list_mutex));
+
+        orphan_children(task);
+        orphan_zombies(task);
+
+        if (parent == NULL) lprintf("init or idle task vanished?");
+        mutex_lock(&(parent->wait_mutex));
+
+        mutex_lock(&(parent->child_task_list_mutex));
+        // assumes we are in the parent's child task list
+        remove_node(parent->child_task_list, TASK_TO_LIST_NODE(task));
+        mutex_unlock(&(parent->child_task_list_mutex));
+
+        if (get_list_size(parent->waiting_thread_list) > 0) {
+            node_t *node = pop_first_node(parent->waiting_thread_list);
+            mutex_unlock(&(parent->wait_mutex));
+
+            wait_node_t *waiter = (wait_node_t *)node;
+            waiter->zombie = task;
+
+            // must disable interrupts here
+            // otherwise, the waiting thread might free us before we yield
+            disable_interrupts();
+            waiter->thread->status = RUNNABLE;
+            sche_push_back(waiter->thread);
+
+            cli_mutex_unlock(&(task->vanish_mutex));
+            sche_yield(ZOMBIE);
+        } else {
+            node_t *last_node = get_last_node(parent->zombie_task_list);
+            if (last_node != NULL) {
+                // we can free the previous zombie's vm and thread resources
+                task_t *prev_zombie = LIST_NODE_TO_TASK(last_node);
+                task_clear(prev_zombie);
+            }
+
+            // must disable interrupts here
+            // otherwise, a waiting thread might free us before we yield
+            disable_interrupts();
+            add_node_to_tail(parent->zombie_task_list, TASK_TO_LIST_NODE(task));
+            cli_mutex_unlock(&(parent->wait_mutex));
+
+            cli_mutex_unlock(&(task->vanish_mutex));
+            sche_yield(ZOMBIE);
+        }
+    }
+
+    // TODO error handling
+    lprintf("returned from end of vanish");
 }
 
 int kern_yield(void) {
@@ -328,62 +408,6 @@ void kern_set_status(void) {
     task->status = status;
 }
 
-void kern_vanish(void) {
-    thread_t *thread = get_cur_tcb();
-    task_t *task = thread->task;
-    task_t *parent = task->parent_task;
-
-    mutex_lock(&(task->thread_list_mutex));
-    remove_node(task->live_thread_list, TCB_TO_LIST_NODE(thread));
-    int live_threads = get_list_size(task->live_thread_list);
-    add_node_to_head(task->zombie_thread_list, TCB_TO_LIST_NODE(thread));
-    mutex_unlock(&(task->thread_list_mutex));
-
-    if (live_threads == 0 && parent != NULL) {
-        mutex_lock(&(parent->wait_mutex));
-
-        mutex_lock(&(parent->child_task_list_mutex));
-        remove_node(parent->child_task_list, TASK_TO_LIST_NODE(task));
-        mutex_unlock(&(parent->child_task_list_mutex));
-
-        if (get_list_size(parent->waiting_thread_list) > 0) {
-            wait_node_t *waiter;
-            waiter = (wait_node_t *)pop_first_node(parent->waiting_thread_list);
-            mutex_unlock(&(parent->wait_mutex));
-            waiter->zombie = task;
-
-            // must disable interrupts here
-            // otherwise, the waiting thread might free us before we yield
-            disable_interrupts();
-            waiter->thread->status = RUNNABLE;
-            sche_push_back(waiter->thread);
-        } else {
-            node_t *last_node = get_last_node(parent->zombie_task_list);
-            if (last_node != NULL) {
-                task_t *prev_zombie = LIST_NODE_TO_TASK(last_node);
-
-                // we can free the previous zombie's vm and thread resources
-                page_dir_clear(prev_zombie->page_dir);
-                sfree(prev_zombie->page_dir, PAGE_SIZE);
-                prev_zombie->page_dir = NULL;
-
-                maps_destroy(prev_zombie->maps);
-                prev_zombie->maps = NULL;
-
-                reap_threads(LIST_NODE_TO_TASK(prev_zombie));
-            }
-
-            add_node_to_tail(parent->zombie_task_list, TASK_TO_LIST_NODE(task));
-            mutex_unlock(&(parent->wait_mutex));
-        }
-    }
-
-    sche_yield(ZOMBIE);
-
-    lprintf("returned from end of vanish");
-    while (1) continue;
-}
-
 unsigned int kern_get_ticks(void) {
     return num_ticks;
 }
@@ -408,6 +432,9 @@ int kern_sleep(void) {
 }
 
 int kern_print(void) {
+    // TODO BUG
+    return 0;
+
     uint32_t *esi = (uint32_t *)get_esi();
     int len = (int)(*esi);
     char *buf = (char *)(*(esi + 1));

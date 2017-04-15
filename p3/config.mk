@@ -145,4 +145,4 @@ KERNEL_OBJS = console.o kernel.o loader.o malloc_wrappers.o\
 # kernel in, or else your tweaked version will run and the test harness
 # won't.
 #
-STUDENTREQPROGS =
+STUDENTREQPROGS = user_init

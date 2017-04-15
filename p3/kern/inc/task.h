@@ -13,7 +13,7 @@
 #include "mutex.h"
 #include "maps.h"
 
-#define KERN_STACK_SIZE 0x400
+#define KERN_STACK_SIZE 0x800
 
 #define USER_STACK_LOW 0xFFB00000
 #define USER_STACK_SIZE 0x4000
@@ -38,13 +38,15 @@ typedef struct task {
     list_t *zombie_thread_list;
     mutex_t thread_list_mutex;
 
-    struct task *parent_task;
     list_t *child_task_list;
     mutex_t child_task_list_mutex;
 
     list_t *zombie_task_list;
     list_t *waiting_thread_list;
+
     mutex_t wait_mutex;
+    mutex_t vanish_mutex;
+    struct task *parent_task;
 } task_t;
 
 typedef struct thread {
@@ -87,6 +89,8 @@ int gen_thread_id();
 
 task_t *task_init();
 
+void task_clear(task_t *task);
+
 void task_destroy(task_t *task);
 
 void reap_threads(task_t *task);
@@ -111,5 +115,9 @@ int load_program(simple_elf_t *header, map_list_t *maps);
 
 int load_elf_section(const char *fname, unsigned long start, unsigned long len,
                      long offset, int pte_flags);
+
+void orphan_children(task_t *task);
+
+void orphan_zombies(task_t *task);
 
 #endif

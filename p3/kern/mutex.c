@@ -58,3 +58,14 @@ void mutex_unlock(mutex_t *mp) {
 
     enable_interrupts();
 }
+
+void cli_mutex_unlock(mutex_t *mp) {
+    sche_node_t *new_sche_node = pop_first_node(mp->blocked_list);
+    if (new_sche_node == NULL) {
+        mp->lock = 0;
+    } else {
+        thread_t *new_thread = SCHE_NODE_TO_TCB(new_sche_node);
+        new_thread->status = RUNNABLE;
+        sche_push_back(new_thread);
+    }
+}

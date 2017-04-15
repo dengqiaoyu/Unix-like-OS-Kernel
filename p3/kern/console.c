@@ -49,8 +49,7 @@ static void scroll_down()
  *
  *  @return void
  **/
-static void new_line()
-{
+static void new_line() {
     if (cursor_row == CONSOLE_HEIGHT - 1) scroll_down();
     else cursor_row++;
     cursor_col = 0;
@@ -66,16 +65,15 @@ static void new_line()
  *
  *  @return void
  **/
-static void update_cursor()
-{
+static void update_cursor() {
     int cursor_pos = cursor_row * CONSOLE_WIDTH + cursor_col;
     if (cursor_hidden) {
         cursor_pos += CONSOLE_HEIGHT * CONSOLE_WIDTH;
     }
     else {
-        int addr = CONSOLE_MEM_BASE;
-        addr += 2 * (cursor_row * CONSOLE_WIDTH + cursor_col);
-        *(char *)(addr+1) = (char)console_color;
+        char *addr = (char *)CONSOLE_MEM_BASE;
+        addr += 2 * cursor_pos;
+        *(addr+1) = (char)console_color;
     }
 
     outb(CRTC_IDX_REG, CRTC_CURSOR_LSB_IDX);
@@ -84,8 +82,7 @@ static void update_cursor()
     outb(CRTC_DATA_REG, cursor_pos >> 8);
 }
 
-int putbyte( char ch )
-{
+int putbyte( char ch ) {
     if (ch == '\r') cursor_col = 0;
     else if (ch == '\n') new_line();
     else if (ch == '\b') {
@@ -104,33 +101,25 @@ int putbyte( char ch )
     return (int)ch;
 }
 
-    void 
-putbytes( const char *s, int len )
-{
+void putbytes( const char *s, int len ) {
     if (s == 0 || len <= 0) return;
     int i;
     for (i = 0; i < len; i++) putbyte(s[i]);
 }
 
-    int
-set_term_color( int color )
-{
+int set_term_color( int color ) {
     if (color & ~0xff) return -1;
     console_color = color;
     update_cursor();
     return 0;
 }
 
-    void
-get_term_color( int *color )
-{
+void get_term_color( int *color ) {
     if (!color) return;
     *color = console_color;
 }
 
-    int
-set_cursor( int row, int col )
-{
+int set_cursor( int row, int col ) {
     if (row < 0 || row >= CONSOLE_HEIGHT) return -1;
     if (col < 0 || col >= CONSOLE_WIDTH) return -1;
     cursor_row = row;
@@ -139,46 +128,44 @@ set_cursor( int row, int col )
     return 0;
 }
 
-    void
-get_cursor( int *row, int *col )
-{
+void get_cursor( int *row, int *col ) {
     if (!row || !col) return;
     *row = cursor_row;
     *col = cursor_col;
 }
 
-    void
-hide_cursor()
-{
+void hide_cursor() {
     cursor_hidden = 1;
     update_cursor();
 }
 
-    void
-show_cursor()
-{
+void show_cursor() {
     cursor_hidden = 0;
     update_cursor();
 }
 
-    void 
-clear_console()
-{
-    int row, col;
-    int addr = CONSOLE_MEM_BASE;
-    for (row = 0; row < CONSOLE_HEIGHT; row++) {
-        for (col = 0; col < CONSOLE_WIDTH; col++) {
-            *(char *)addr = ' ';
-            *(char *)(addr+1) = (char)console_color;
-            addr += 2;
-        }
+void clear_console() {
+    char *base = (char *)CONSOLE_MEM_BASE;
+    char *addr = base;
+    
+    // clear first line
+    int col;
+    for (col = 0; col < CONSOLE_WIDTH; col++) {
+        *(addr++) = ' ';
+        *(addr++) = (char)console_color;
     }
+
+    // now we can just copy the first line repeatedly
+    int row;
+    for (row = 0; row < CONSOLE_HEIGHT - 1; row++) {
+        memcpy(addr, base, 2 * CONSOLE_WIDTH);
+        addr += 2 * CONSOLE_WIDTH;
+    }
+
     set_cursor(0, 0);
 }
 
-    void
-draw_char( int row, int col, int ch, int color )
-{
+void draw_char( int row, int col, int ch, int color ) {
     if (row < 0 || row >= CONSOLE_HEIGHT) return;
     if (col < 0 || col >= CONSOLE_WIDTH) return;
     if (!isprint(ch)) return;
@@ -190,13 +177,12 @@ draw_char( int row, int col, int ch, int color )
     *(char *)(addr+1) = (char)color;
 }
 
-    char
-get_char( int row, int col )
-{
+char get_char( int row, int col ) {
     if (row < 0 || row >= CONSOLE_HEIGHT) return 0;
     if (col < 0 || col >= CONSOLE_WIDTH) return 0;
     int addr = CONSOLE_MEM_BASE;
     addr += 2 * (row * CONSOLE_WIDTH + col);
     return *(char *)addr;
 }
+
 

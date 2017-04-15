@@ -13,8 +13,8 @@ typedef struct tcb_hashtab {
 } tcb_hashtab_t;
 
 int tcb_hashtab_init();
-void tcb_hashtab_put(thread_t *node);
+void tcb_hashtab_put(thread_t *tcb);
 thread_t *tcb_hashtab_get(int tid);
-int tcb_hashtab_rmv(int tid);
+void tcb_hashtab_rmv(thread_t *tcb);
 
 #endif /* _TCB_HASHTAB_H_ */
