@@ -12,17 +12,13 @@
 #include <x86/cr.h>
 
 #include "vm.h"
-#include "maps.h"
+#include "utils/maps.h"
 #include "task.h"
-#include "allocator.h"
 #include "scheduler.h"
-#include "tcb_hashtab.h"
-#include "return_type.h"
+#include "utils/tcb_hashtab.h"
 
 thread_t *idle_thread;
 thread_t *init_thread;
-
-extern allocator_t *sche_allocator;
 
 static int thread_id_counter;
 static mutex_t thread_id_counter_mutex;
@@ -42,7 +38,7 @@ int gen_thread_id() {
 
 task_t *task_init() {
     task_node_t *task_node = malloc(sizeof(task_node_t) + sizeof(task_t));
-    // TODO put in allocator here
+
     if (task_node == NULL) {
         lprintf("f6");
         return NULL;
@@ -149,7 +145,7 @@ int task_lists_init(task_t *task) {
         return -1;
     }
 
-    return SUCCESS;
+    return 0;
 }
 
 void task_lists_destroy(task_t *task) {
@@ -189,7 +185,7 @@ int task_mutexes_init(task_t *task) {
         return -1;
     }
 
-    return SUCCESS;
+    return 0;
 }
 
 void task_mutexes_destroy(task_t *task) {
@@ -201,7 +197,6 @@ void task_mutexes_destroy(task_t *task) {
 
 // leaves task pointer and status to be set outside
 thread_t *thread_init() {
-    // sche_node_t *sche_node = allocator_alloc(sche_allocator);
     int size = sizeof(sche_node_t) + sizeof(tcb_tb_node_t) +
                sizeof(thread_node_t) + sizeof(thread_t);
     sche_node_t *sche_node = malloc(size);

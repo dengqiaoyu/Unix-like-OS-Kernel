@@ -8,8 +8,6 @@
 #ifndef __LIST_H__
 #define __LIST_H__
 
-#include "return_type.h"
-
 typedef struct node {
     struct node *prev;
     struct node *next;

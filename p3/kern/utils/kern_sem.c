@@ -1,7 +1,6 @@
 #include <stdlib.h>
-#include <mutex.h>
 #include <assert.h>
-#include "kern_sem.h"
+#include "utils/kern_sem.h"
 
 int kern_sem_init(kern_sem_t *sem, int count) {
     assert(sem != NULL);

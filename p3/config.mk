@@ -105,14 +105,17 @@ AUTOSTACK_OBJS = autostack.o
 #
 # Kernel object files you provide in from kern/
 #
-KERNEL_OBJS = console.o kernel.o loader.o malloc_wrappers.o\
-			  asm_kern_to_user.o handlers.o task.o vm.o asm_exceptions.o\
-			  asm_interrupts.o timer_driver.o keyboard_driver.o\
-			  mutex.o maps.o allocator.o list.o\
-			  asm_page_inval.o\
-			  scheduler.o asm_context_switch.o\
-			  tcb_hashtab.o\
-			  utils/kern_cond.o utils/kern_sem.o\
+KERNEL_OBJS = console.o kernel.o handlers.o task.o vm.o scheduler.o\
+			  asm_kern_to_user.o asm_exceptions.o asm_page_inval.o\
+			  asm_context_switch.o\
+			  \
+			  drivers/timer_driver.o drivers/keyboard_driver.o\
+			  drivers/asm_interrupts.o\
+			  \
+			  utils/kern_cond.o utils/kern_sem.o utils/list.o utils/loader.o\
+			  utils/malloc_wrappers.o utils/maps.o utils/mutex.o\
+			  utils/tcb_hashtab.o\
+			  \
 			  syscalls/asm_life_cycle.o syscalls/asm_syscalls.o\
 			  syscalls/life_cycle.o syscalls/thread_management.o\
 			  syscalls/memory_management.o syscalls/console_io.o

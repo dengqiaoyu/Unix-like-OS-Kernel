@@ -17,7 +17,7 @@
 #include <simics.h>             /* lprintf() */
 
 /* user defined include */
-#include "keyboard_driver.h"
+#include "drivers/keyboard_driver.h"
 #include "scheduler.h"
 
 

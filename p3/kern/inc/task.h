@@ -9,9 +9,9 @@
 #include <stdint.h>
 #include <elf_410.h>
 
-#include "list.h"
-#include "mutex.h"
-#include "maps.h"
+#include "utils/list.h"
+#include "utils/mutex.h"
+#include "utils/maps.h"
 
 #define KERN_STACK_SIZE 0x800
 

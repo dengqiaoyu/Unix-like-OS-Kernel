@@ -13,7 +13,7 @@
 #include <simics.h>
 #include "scheduler.h"
 #include "task.h"
-#include "list.h"       /* header file of this code */
+#include "utils/list.h"       /* header file of this code */
 
 /**
  * Initailize the list.

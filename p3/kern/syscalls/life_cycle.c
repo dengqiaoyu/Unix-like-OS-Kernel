@@ -9,7 +9,7 @@
 
 /* user define includes */
 #include "syscalls/syscalls.h"
-#include "mutex.h"
+#include "utils/mutex.h"
 #include "task.h"                /* task thread declaration and interface */
 #include "scheduler.h"           /* scheduler declaration and interface */
 #include "vm.h"                  /* virtual memory management */
@@ -32,12 +32,12 @@ int kern_fork(void) {
     mutex_lock(&(old_task->thread_list_mutex));
     int live_threads = get_list_size(old_task->live_thread_list);
     mutex_unlock(&(old_task->thread_list_mutex));
-    if (live_threads > 1) return ERROR_FORK_TASK_MORE_THAN_ONE_THREAD;
+    if (live_threads > 1) return -1;
 
     task_t *new_task = task_init();
     if (new_task == NULL) {
         lprintf("f1");
-        return ERROR_FORK_MALLOC_TASK_FAILED;
+        return -1;
     }
     new_task->parent_task = old_task;
 
@@ -45,7 +45,7 @@ int kern_fork(void) {
     if (ret != 0) {
         // TODO destroy task
         lprintf("f2");
-        return ERROR_FORK_COPY_PAGE_FAILED;
+        return -1;
     }
 
     ret = maps_copy(old_task->maps, new_task->maps);

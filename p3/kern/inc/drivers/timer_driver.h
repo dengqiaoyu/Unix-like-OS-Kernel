@@ -1,5 +1,5 @@
 /**
- * @file timer_driver.h
+ * @file drivers/timer_driver.h
  * @brief A header file contains function declarations of timer_driver.c
  * @author Qioayu Deng
  * @andrew_id qdeng

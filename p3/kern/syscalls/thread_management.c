@@ -4,8 +4,8 @@
 #include "syscalls/syscalls.h"
 #include "task.h"                /* task thread declaration and interface */
 #include "scheduler.h"           /* scheduler declaration and interface */
-#include "tcb_hashtab.h"         /* insert and find tcb by tid */
-#include "timer_driver.h"        /* get_timer_ticks */
+#include "utils/tcb_hashtab.h"         /* insert and find tcb by tid */
+#include "drivers/timer_driver.h"        /* get_timer_ticks */
 
 
 int kern_gettid(void) {

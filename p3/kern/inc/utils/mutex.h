@@ -9,7 +9,7 @@
 #ifndef _MUTEX_H_
 #define _MUTEX_H_
 
-#include "list.h"
+#include "utils/list.h"
 
 typedef struct mutex {
     int lock;

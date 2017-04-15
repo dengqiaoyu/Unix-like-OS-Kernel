@@ -1,8 +1,8 @@
 #ifndef _KERN_COND_H_
 #define _KERN_COND_H_
 
-#include <mutex.h>
-#include "list.h"
+#include "utils/mutex.h"
+#include "utils/list.h"
 #include "task.h"
 
 typedef list_t kcond_wlist_t;

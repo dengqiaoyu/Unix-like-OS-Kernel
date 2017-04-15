@@ -1,9 +1,8 @@
 #ifndef __H_SCHEDULER__
 #define __H_SCHEDULER__
 
-#include <mutex.h>
-
-#include "list.h"
+#include "utils/mutex.h"
+#include "utils/list.h"
 #include "task.h"
 
 #define SCHE_NODE_TO_TABLE_NODE(sche_node)\

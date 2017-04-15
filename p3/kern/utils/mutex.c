@@ -12,8 +12,8 @@
 #include <x86/eflags.h>
 
 #include "scheduler.h"
-#include "mutex.h"
-#include "list.h"
+#include "utils/mutex.h"
+#include "utils/list.h"
 
 /* assembly helpers
 int mutex_lock_asm(mutex_t *mp);

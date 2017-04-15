@@ -1,9 +1,10 @@
 #ifndef _TCB_HASHTAB_H_
 #define _TCB_HASHTAB_H_
 
-#include <mutex.h>
+#include "utils/mutex.h"
+#include "utils/list.h"
 #include "task.h"
-#include "list.h"
+
 
 #define HASH_LEN 8
 

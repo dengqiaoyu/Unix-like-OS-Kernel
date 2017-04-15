@@ -1,12 +1,11 @@
 #include <stdlib.h>
-#include <mutex.h>
 #include <assert.h>
 #include <asm.h>        /* disable_interrupts, enable_interrupts */
 
-#include "kern_cond.h"
-#include "list.h"
+#include "utils/kern_cond.h"
+#include "utils/list.h"
 #include "scheduler.h"
-#include "tcb_hashtab.h"
+#include "utils/tcb_hashtab.h"
 
 int kcond_make_runnable(int tid);
 

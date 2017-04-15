@@ -1,5 +1,4 @@
 #include <stdio.h>      /* NULL */
-#include <mutex.h>      /* mutex */
 #include <asm.h>        /* disable_interrupts enable_interrupts */
 #include <x86/cr.h>
 #include <simics.h>     /* lprintf */
@@ -7,32 +6,17 @@
 
 #include "scheduler.h"
 #include "task.h"       /* thread_t */
-#include "allocator.h"
 #include "asm_kern_to_user.h" /* kern_to_user */
 #include "asm_context_switch.h"
-#include "timer_driver.h" /* get_num_ticks */
-
-// DEBUG
-#define print_line lprintf("line %d, tid: %d", __LINE__,\
-                           SCHE_NODE_TO_TCB(cur_sche_node)->tid)
-#define NUM_CHUNK_SCHEDULER 64
+#include "drivers/timer_driver.h" /* get_num_ticks */
+#include "utils/mutex.h"
 
 extern thread_t *idle_thread;
 
-allocator_t *sche_allocator;
 static sche_node_t *cur_sche_node;
 static schedule_t sche_list;
 
 int scheduler_init() {
-    int ret = SUCCESS;
-    ret = allocator_init(
-              &sche_allocator,
-              sizeof(sche_node_t) + sizeof(tcb_tb_node_t) +
-              sizeof(thread_node_t) + sizeof(thread_t),
-              NUM_CHUNK_SCHEDULER);
-    if (ret != SUCCESS) return ret;
-
-    // TODO destroy allocator
     sche_list.active_list = list_init();
     if (sche_list.active_list == NULL) return -1;
 
@@ -42,7 +26,7 @@ int scheduler_init() {
         return -1;
     }
 
-    return ret;
+    return 0;
 }
 
 void set_cur_run_thread(thread_t *tcb_ptr) {
@@ -52,9 +36,6 @@ void set_cur_run_thread(thread_t *tcb_ptr) {
 
 void sche_yield(int status) {
     disable_interrupts();
-    // TODO where should this happen?
-    // outb(INT_ACK_CURRENT, INT_CTL_PORT);
-
     sche_node_t *new_sche_node;
     sleep_node_t *sleeper;
     sleeper = (sleep_node_t *)get_first_node(sche_list.sleeping_list);

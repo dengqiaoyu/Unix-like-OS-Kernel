@@ -1,4 +1,4 @@
-/** @file maps_internal.h
+/** @file utils/maps_internal.h
  *  @author Newton Xie (ncx)
  *  @bug No known bugs.
  */

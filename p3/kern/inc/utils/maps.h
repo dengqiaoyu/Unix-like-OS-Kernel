@@ -1,4 +1,4 @@
-/** @file maps.h
+/** @file utils/maps.h
  *  @author Newton Xie (ncx)
  *  @bug No known bugs.
  */

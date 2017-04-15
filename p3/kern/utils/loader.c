@@ -3,9 +3,9 @@
  * @name loader.c
  *
  * Functions for the loading
- * of user programs from binary 
+ * of user programs from binary
  * files should be written in
- * this file. The function 
+ * this file. The function
  * elf_load_helper() is provided
  * for your use.
  */
@@ -16,11 +16,11 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <exec2obj.h>
-#include <loader.h>
+#include <utils/loader.h>
 #include <elf_410.h>
 
 
-/* --- Local function prototypes --- */ 
+/* --- Local function prototypes --- */
 
 
 /**
@@ -33,8 +33,7 @@
  *
  * @return returns the number of bytes copied on succes; -1 on failure
  */
-int getbytes( const char *filename, int offset, int size, char *buf )
-{
+int getbytes( const char *filename, int offset, int size, char *buf ) {
     int i, j;
     for (i = 0; i < MAX_NUM_APP_ENTRIES; i++) {
         const exec2obj_userapp_TOC_entry *entry = &exec2obj_userapp_TOC[i];

@@ -30,9 +30,8 @@
 #include "task.h"
 #include "asm_kern_to_user.h"
 #include "scheduler.h"
-#include "tcb_hashtab.h"
-#include "return_type.h"
-#include "keyboard_driver.h"
+#include "utils/tcb_hashtab.h"
+#include "drivers/keyboard_driver.h"
 
 // will need to find a better way to do this eventually
 extern mutex_t malloc_mutex;

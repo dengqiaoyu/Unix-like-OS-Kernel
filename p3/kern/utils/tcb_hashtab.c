@@ -2,8 +2,8 @@
 #include <simics.h>
 #include "scheduler.h"   /* tcb_tb_node_t */
 #include "task.h"
-#include "tcb_hashtab.h"
-#include "list.h"
+#include "utils/tcb_hashtab.h"
+#include "utils/list.h"
 
 tcb_hashtab_t tcb_hashtab;
 
@@ -13,7 +13,7 @@ int tcb_hashtab_init() {
         tcb_hashtab.tcb_list[i] = list_init();
         mutex_init(&(tcb_hashtab.mutex[i]));
     }
-    return SUCCESS;
+    return 0;
 }
 
 void tcb_hashtab_put(thread_t *tcb) {

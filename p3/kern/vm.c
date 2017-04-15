@@ -15,8 +15,7 @@
 
 #include "vm.h"
 #include "vm_internal.h"
-#include "return_type.h"
-#include "mutex.h"
+#include "utils/mutex.h"
 #include "asm_page_inval.h"
 
 //######## DEBUG
@@ -182,7 +181,7 @@ int page_dir_clear(uint32_t *page_dir) {
         sfree(page_tab, PAGE_SIZE);
     }
 
-    return SUCCESS;
+    return 0;
 }
 
 int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
@@ -215,7 +214,7 @@ int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
         }
     }
 
-    return SUCCESS;
+    return 0;
 }
 
 // maps RW_PHYS_VA to physical address addr

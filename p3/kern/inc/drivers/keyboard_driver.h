@@ -1,6 +1,6 @@
 /**
- * @file keyboard_driver.h
- * @brief A header file contains function declarations of keyboard_driver.h
+ * @file drivers/keyboard_driver.h
+ * @brief A header file contains function declarations of drivers/keyboard_driver.h
  * @author Qioayu Deng
  * @andrew_id qdeng
  * @bug No known bugs.
@@ -9,9 +9,9 @@
 #ifndef H_KEYBOARD_DRIVER
 #define H_KEYBOARD_DRIVER
 
-#include <mutex.h>
-#include "kern_cond.h"
-#include "kern_sem.h"
+#include "utils/mutex.h"
+#include "utils/kern_cond.h"
+#include "utils/kern_sem.h"
 
 #define KB_BUF_LEN 256
 

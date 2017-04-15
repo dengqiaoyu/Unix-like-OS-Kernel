@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <simics.h>
 #include <assert.h>
-#include "maps.h"
-#include "maps_internal.h"
+#include "utils/maps.h"
+#include "utils/maps_internal.h"
 
 #define MAP_LOW(node) (node->map.low)
 #define MAP_HIGH(node) (node->map.high)
@@ -103,8 +103,7 @@ map_node_t *tree_find(map_node_t *tree, uint32_t low, uint32_t high) {
 
     if (high < MAP_LOW(tree)) {
         return tree_find(tree->left, low, high);
-    }
-    else if (MAP_HIGH(tree) < low) {
+    } else if (MAP_HIGH(tree) < low) {
         return tree_find(tree->right, low, high);
     }
 
@@ -114,12 +113,11 @@ map_node_t *tree_find(map_node_t *tree, uint32_t low, uint32_t high) {
 // assumes no overlaps
 map_node_t *tree_insert(map_node_t *tree, map_node_t *node) {
     if (tree == NULL) return node;
-    
+
     if (MAP_LOW(node) < MAP_LOW(tree)) {
         assert(MAP_HIGH(node) < MAP_LOW(tree));
         tree->left = tree_insert(tree->left, node);
-    }
-    else {
+    } else {
         assert(MAP_HIGH(tree) < MAP_LOW(node));
         tree->right = tree_insert(tree->right, node);
     }
@@ -150,27 +148,22 @@ map_node_t *tree_insert(map_node_t *tree, map_node_t *node) {
 map_node_t *tree_delete(map_node_t *tree, uint32_t low) {
     if (MAP_LOW(tree) < low) {
         tree->right = tree_delete(tree->right, low);
-    }
-    else if (low < MAP_LOW(tree)) {
+    } else if (low < MAP_LOW(tree)) {
         tree->left = tree_delete(tree->left, low);
-    }
-    else {
+    } else {
         map_node_t *temp;
         if (tree->left == NULL && tree->right == NULL) {
             free(tree);
             return NULL;
-        }
-        else if (tree->left == NULL) {
+        } else if (tree->left == NULL) {
             temp = tree->right;
             free(tree);
             return temp;
-        }
-        else if (tree->right == NULL) {
+        } else if (tree->right == NULL) {
             temp = tree->left;
             free(tree);
             return temp;
-        }
-        else {
+        } else {
             copy_node(smallest_node(tree->right), tree);
             tree->right = tree_delete(tree->right, MAP_LOW(tree));
         }
@@ -216,7 +209,7 @@ map_node_t *tree_copy(map_node_t *tree) {
         free(copy);
         return NULL;
     }
-    
+
     copy->right = tree_copy(tree->right);
     if (copy->right == NULL && tree->right != NULL) {
         tree_destroy(copy->left);
@@ -231,7 +224,7 @@ void tree_print(map_node_t *node) {
     if (node == NULL) return;
     tree_print(node->left);
     lprintf("low: %x high: %x perms: %x height: %d",
-            (unsigned int)MAP_LOW(node), 
+            (unsigned int)MAP_LOW(node),
             (unsigned int)MAP_HIGH(node),
             (unsigned int)MAP_PERMS(node),
             node->height);

@@ -17,7 +17,7 @@
 #include <simics.h>             /* lprintf() */
 
 /* user defined includes */
-#include "inc/timer_driver.h"
+#include "inc/drivers/timer_driver.h"
 #include "scheduler.h"
 
 static int num_ticks;

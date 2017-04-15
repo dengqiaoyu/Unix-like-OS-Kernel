@@ -18,15 +18,14 @@
 #include "handlers.h"
 #include "vm.h"
 #include "task.h"
-#include "syscalls.h"
 #include "syscalls/asm_syscalls.h"
 #include "asm_exceptions.h"
-#include "asm_interrupts.h"
-#include "timer_driver.h"
-#include "keyboard_driver.h"
-#include "return_type.h"            /* RETURN_IF_ERROR, ERROR_TYPE */
+#include "drivers/asm_interrupts.h"
+#include "drivers/timer_driver.h"
+#include "drivers/keyboard_driver.h"
 #include "asm_page_inval.h"
 #include "scheduler.h"              /* sche_yield */
+
 
 void timer_callback(unsigned int num_ticks);
 
@@ -56,14 +55,14 @@ int handler_init() {
     exception_init();
     syscall_init();
     device_init();
-    return SUCCESS;
+    return 0;
 }
 
 int exception_init() {
     int kern_cs = SEGSEL_KERNEL_CS;
     int flag = FLAG_TRAP_GATE | FLAG_PL_KERNEL;
     idt_install(IDT_PF, asm_pf_handler, kern_cs, flag);
-    return SUCCESS;
+    return 0;
 }
 
 int syscall_init() {
@@ -90,7 +89,7 @@ int syscall_init() {
     idt_install(SET_STATUS_INT,     (void *)asm_set_status,     kern_cs, flag);
     idt_install(VANISH_INT,         (void *)asm_vanish,         kern_cs, flag);
     // idt_install(SWEXN_INT,       (void *)asm_swexn,          kern_cs, flag);
-    return SUCCESS;
+    return 0;
 }
 
 int device_init() {
@@ -99,7 +98,7 @@ int device_init() {
     timer_init(timer_callback);
     idt_install(TIMER_IDT_ENTRY, (void *)asm_timer_handler,    kern_cs, flag);
     idt_install(KEY_IDT_ENTRY,   (void *)asm_keyboard_handler, kern_cs, flag);
-    return SUCCESS;
+    return 0;
 }
 
 void idt_install(int idt_idx,

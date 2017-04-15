@@ -5,11 +5,11 @@
 #include <console.h>
 
 #include "syscalls/syscalls.h"
-#include "keyboard_driver.h"
+#include "drivers/keyboard_driver.h"
 #include "vm.h"
-#include "mutex.h"
-#include "kern_cond.h"
-#include "kern_sem.h"
+#include "utils/mutex.h"
+#include "utils/kern_cond.h"
+#include "utils/kern_sem.h"
 
 extern keyboard_buffer_t kb_buf;
 

@@ -1,6 +1,7 @@
 /** @file asm_interrupt.S
  *
  */
+#include <x86/seg.h>
 
 .globl asm_keyboard_handler
 asm_keyboard_handler:
