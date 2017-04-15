@@ -85,10 +85,10 @@ THREAD_OBJS = malloc.o panic.o
 # Object files for your syscall wrappers
 ###########################################################################
 SYSCALL_OBJS = exec.o gettid.o fork.o new_pages.o wait.o vanish.o\
-			   set_status.o get_ticks.o sleep.o print.o set_term_color.o\
-			   get_cursor_pos.o set_cursor_pos.o remove_pages.o\
-			   deschedule.o make_runnable.o yield.o readline.o\
-			   syscall.o halt.o
+	       set_status.o get_ticks.o sleep.o print.o set_term_color.o\
+	       get_cursor_pos.o set_cursor_pos.o remove_pages.o\
+	       deschedule.o make_runnable.o yield.o readline.o\
+	       syscall.o halt.o
 
 ###########################################################################
 # Object files for your automatic stack handling
@@ -151,4 +151,4 @@ KERNEL_OBJS = console.o kernel.o handlers.o task.o vm.o scheduler.o\
 # kernel in, or else your tweaked version will run and the test harness
 # won't.
 #
-STUDENTREQPROGS =
+STUDENTREQPROGS = user_init

@@ -88,7 +88,7 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
 
     idle_thread = setup_task("idle");
 
-    init_thread = setup_task("my_fork_test");
+    init_thread = setup_task("user_init");
     set_cur_run_thread(init_thread);
     set_esp0(init_thread->kern_sp);
     kern_to_user(init_thread->cur_sp, init_thread->ip);
