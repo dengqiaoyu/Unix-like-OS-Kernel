@@ -35,6 +35,10 @@ int maps_copy(map_list_t *from, map_list_t *to) {
     return 0;
 }
 
+void undo_maps_copy(map_list_t *maps) {
+    maps_clear(maps);
+}
+
 void maps_print(map_list_t *maps) {
     tree_print(maps->root);
 }

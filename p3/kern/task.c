@@ -80,6 +80,15 @@ task_t *task_init() {
     return task;
 }
 
+void undo_task_init(task_t *task) {
+    free(task->maps);
+    task_mutexes_destroy(task);
+    task_lists_destroy(task);
+    sfree(task->page_dir, PAGE_SIZE);
+    task_node_t *task_node = TASK_TO_LIST_NODE(task);
+    free(task_node);
+}
+
 void task_clear(task_t *task) {
     /*
      * a task's resources are always freed together, so we just use the page

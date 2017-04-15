@@ -43,22 +43,25 @@ int kern_fork(void) {
 
     ret = page_dir_copy(new_task->page_dir, old_task->page_dir);
     if (ret != 0) {
-        // TODO destroy task
-        lprintf("f2");
+        lprintf("page_dir_copy() failed in kern_fork at line %d", __LINE__);
+        undo_task_init(new_task);
         return -1;
     }
 
     ret = maps_copy(old_task->maps, new_task->maps);
     if (ret != 0) {
-        lprintf("fa");
+        lprintf("maps_copy() failed in kern_fork at line %d", __LINE__);
+        undo_page_dir_copy(new_task->page_dir);
+        undo_task_init(new_task);
         return -1;
     }
 
     thread_t *new_thread = thread_init();
     if (new_thread == NULL) {
-        // TODO destroy task
-        // TODO unmaps new page directory
-        lprintf("f3");
+        lprintf("thread_init() failed in kern_fork at line %d", __LINE__);
+        undo_maps_copy(old_task->maps);
+        undo_page_dir_copy(new_task->page_dir);
+        undo_task_init(new_task);
         return -1;
     }
     new_task->task_id = new_thread->tid;
@@ -82,7 +85,9 @@ int kern_fork(void) {
     if (cur_thr->tid != old_tid) {
         return 0;
     } else {
+        disable_interrupts();
         sche_push_back(new_thread);
+        enable_interrupts();
         return new_thread->tid;
     }
 }

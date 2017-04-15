@@ -89,6 +89,8 @@ int gen_thread_id();
 
 task_t *task_init();
 
+void undo_task_init(task_t *task);
+
 void task_clear(task_t *task);
 
 void task_destroy(task_t *task);

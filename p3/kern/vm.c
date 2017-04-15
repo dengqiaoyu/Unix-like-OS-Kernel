@@ -186,6 +186,7 @@ int page_dir_clear(uint32_t *page_dir) {
 
 int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
     int i, j;
+    int if_fail = 0;
     for (i = NUM_KERN_TABLES; i < NUM_PD_ENTRIES; i++) {
         uint32_t old_pde = old_page_dir[i];
         if ((old_pde & PDE_PRESENT) == 0) continue;
@@ -193,6 +194,10 @@ int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
         uint32_t *old_page_tab = ENTRY_TO_ADDR(old_pde);
 
         uint32_t *new_page_tab = smemalign(PAGE_SIZE, PAGE_SIZE);
+        if (new_page_tab == NULL) {
+            if_fail = 1;
+            break;
+        }
         memset(new_page_tab, 0, PAGE_SIZE);
         new_page_dir[i] = (uint32_t)new_page_tab | new_pde_flag;
 
@@ -202,7 +207,10 @@ int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
 
             // don't mess with the RW_PHYS reserved page
             if (i == RW_PHYS_PD_INDEX && j == RW_PHYS_PT_INDEX) continue;
-
+            if (dec_num_free_frames(1) < 0) {
+                if_fail = 1;
+                break;
+            }
             uint32_t new_physical_frame = get_frame();
 
             int new_pte_flag = old_pte & PAGE_FLAG_MASK;
@@ -212,9 +220,17 @@ int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
             write_physical(new_physical_frame, (void *)virtual_addr, PAGE_SIZE);
             new_page_tab[j] = new_pte;
         }
+        if (if_fail) break;
     }
-
+    if (if_fail) {
+        page_dir_clear(new_page_dir);
+        return -1;
+    }
     return 0;
+}
+
+void undo_page_dir_copy(uint32_t *page_dir) {
+    page_dir_clear(page_dir);
 }
 
 // maps RW_PHYS_VA to physical address addr
