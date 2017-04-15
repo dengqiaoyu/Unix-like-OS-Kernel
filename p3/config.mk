@@ -85,10 +85,10 @@ THREAD_OBJS = malloc.o panic.o
 # Object files for your syscall wrappers
 ###########################################################################
 SYSCALL_OBJS = exec.o gettid.o fork.o new_pages.o wait.o vanish.o\
-			   set_status.o get_ticks.o sleep.o print.o set_term_color.o\
-			   get_cursor_pos.o set_cursor_pos.o remove_pages.o\
-			   deschedule.o make_runnable.o yield.o readline.o\
-			   syscall.o halt.o
+	       set_status.o get_ticks.o sleep.o print.o set_term_color.o\
+	       get_cursor_pos.o set_cursor_pos.o remove_pages.o\
+	       deschedule.o make_runnable.o yield.o readline.o\
+	       syscall.o halt.o
 
 ###########################################################################
 # Object files for your automatic stack handling
@@ -106,16 +106,16 @@ AUTOSTACK_OBJS = autostack.o
 # Kernel object files you provide in from kern/
 #
 KERNEL_OBJS = console.o kernel.o loader.o malloc_wrappers.o\
-			  asm_kern_to_user.o handlers.o task.o vm.o asm_exceptions.o\
-			  asm_interrupts.o timer_driver.o keyboard_driver.o\
-			  mutex.o maps.o allocator.o list.o\
-			  asm_page_inval.o\
-			  scheduler.o asm_context_switch.o\
-			  tcb_hashtab.o\
-			  utils/kern_cond.o utils/kern_sem.o\
-			  syscalls/asm_life_cycle.o syscalls/asm_syscalls.o\
-			  syscalls/life_cycle.o syscalls/thread_management.o\
-			  syscalls/memory_management.o syscalls/console_io.o
+	      asm_kern_to_user.o handlers.o task.o vm.o asm_exceptions.o\
+	      asm_interrupts.o timer_driver.o keyboard_driver.o\
+	      mutex.o maps.o allocator.o list.o\
+	      asm_page_inval.o\
+	      scheduler.o asm_context_switch.o\
+	      tcb_hashtab.o\
+	      utils/kern_cond.o utils/kern_sem.o\
+	      syscalls/asm_life_cycle.o syscalls/asm_syscalls.o\
+	      syscalls/life_cycle.o syscalls/thread_management.o\
+	      syscalls/memory_management.o syscalls/console_io.o
 
 ###########################################################################
 # WARNING: Do not put **test** programs into the REQPROGS variables.  Your
@@ -148,4 +148,4 @@ KERNEL_OBJS = console.o kernel.o loader.o malloc_wrappers.o\
 # kernel in, or else your tweaked version will run and the test harness
 # won't.
 #
-STUDENTREQPROGS =
+STUDENTREQPROGS = user_init
