@@ -22,8 +22,6 @@
 thread_t *idle_thread;
 thread_t *init_thread;
 
-extern uint32_t *kern_page_dir;
-extern int num_free_frames;
 extern allocator_t *sche_allocator;
 
 static int thread_id_counter;
@@ -422,7 +420,7 @@ void orphan_children(task_t *task) {
         mutex_lock(&(child->thread_list_mutex));
         int live_threads = get_list_size(child->live_thread_list);
         mutex_unlock(&(child->thread_list_mutex));
-        /* 
+        /*
          * live_threads can only be 0 if the task vanished on its own in the
          * time between when we (a) found it in the child task list and (b)
          * locked its vanish mutex. it only unlocked the vanish mutex after
@@ -449,7 +447,7 @@ void orphan_zombies(task_t *task) {
     task_t *init_task = init_thread->task;
     node_t *zombie_node;
 
-    /* 
+    /*
      * we don't need to lock here as there will be no waiters (we are the last
      * alive) and no vanishing children (orphan_children was called first).
      */

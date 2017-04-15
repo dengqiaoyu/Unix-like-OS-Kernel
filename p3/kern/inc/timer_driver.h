@@ -21,16 +21,6 @@
  */
 void timer_init(void (*tickback)(unsigned int));
 
-/**
- * @brief Callback function that is called by the handler.
- * @param numTicks the number of TIMER_RATE that is triggered.
- */
-void timer_callback(unsigned int numTicks);
-
-/**
- * @brief get current time.
- * @return current time.
- */
-int get_seconds();
+int get_timer_ticks();
 
 #endif

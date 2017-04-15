@@ -5,6 +5,8 @@
 #ifndef _ASM_SYSCALLS_H_
 #define _ASM_SYSCALLS_H_
 
+#include <stdlib.h>
+
 void asm_fork(void);
 
 void asm_exec(void);
@@ -46,5 +48,9 @@ void asm_set_status(void);
 void asm_vanish(void);
 
 // software exception handler
+
+
+/* syscall helper function */
+uint32_t asm_get_esi();
 
 #endif

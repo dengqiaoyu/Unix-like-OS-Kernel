@@ -8,8 +8,9 @@
 #include "scheduler.h"
 #include "task.h"       /* thread_t */
 #include "allocator.h"
-#include "asm_switch.h" /* kern_to_user */
+#include "asm_kern_to_user.h" /* kern_to_user */
 #include "asm_context_switch.h"
+#include "timer_driver.h" /* get_num_ticks */
 
 // DEBUG
 #define print_line lprintf("line %d, tid: %d", __LINE__,\
@@ -17,8 +18,6 @@
 #define NUM_CHUNK_SCHEDULER 64
 
 extern thread_t *idle_thread;
-
-extern unsigned int num_ticks;
 
 allocator_t *sche_allocator;
 static sche_node_t *cur_sche_node;
@@ -59,7 +58,7 @@ void sche_yield(int status) {
     sche_node_t *new_sche_node;
     sleep_node_t *sleeper;
     sleeper = (sleep_node_t *)get_first_node(sche_list.sleeping_list);
-    if (sleeper != NULL && sleeper->wakeup_ticks <= num_ticks) {
+    if (sleeper != NULL && sleeper->wakeup_ticks <= get_timer_ticks()) {
         pop_first_node(sche_list.sleeping_list);
         sleeper->thread->status = RUNNABLE;
         new_sche_node = TCB_TO_SCHE_NODE(sleeper->thread);

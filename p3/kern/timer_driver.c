@@ -20,10 +20,8 @@
 #include "inc/timer_driver.h"
 #include "scheduler.h"
 
-int num_ticks;
-static int seconds = 0;
-int cnt_seconds_flag = 0; /* control whether to count seconds */
-void (*callback_func)(); /* to store the address of callback function */
+static int num_ticks;
+static void (*callback_func)(); /* to store the address of callback function */
 
 /**
  * @brief Initialize timer.
@@ -51,23 +49,6 @@ void timer_handler() {
     // outb(INT_ACK_CURRENT, INT_CTL_PORT);
 }
 
-/**
- * @brief Callback function that is called by the handler.
- * @param num_ticks the number of 10 ms that is triggered.
- */
-void timer_callback(unsigned int num_ticks) {
-    if (cnt_seconds_flag && (num_ticks % 100 == 0)) {
-        // lprintf("time: %d", seconds);
-        seconds++;
-    }
-    outb(INT_ACK_CURRENT, INT_CTL_PORT);
-    sche_yield(RUNNABLE);
-}
-
-/**
- * @brief get current time.
- * @return current time.
- */
-int get_seconds() {
-    return seconds;
+int get_timer_ticks() {
+    return num_ticks;
 }
