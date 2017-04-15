@@ -36,7 +36,7 @@ int kern_fork(void) {
 
     task_t *new_task = task_init();
     if (new_task == NULL) {
-        lprintf("f1");
+        lprintf("task_init() failed in kern_fork at line %d", __LINE__);
         return -1;
     }
     new_task->parent_task = old_task;

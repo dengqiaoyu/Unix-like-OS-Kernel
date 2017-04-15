@@ -40,38 +40,39 @@ task_t *task_init() {
     task_node_t *task_node = malloc(sizeof(task_node_t) + sizeof(task_t));
 
     if (task_node == NULL) {
-        lprintf("f6");
+        lprintf("malloc() failed in task_init at line %d", __LINE__);
         return NULL;
     }
     task_t *task = LIST_NODE_TO_TASK(task_node);
 
     task->page_dir = page_dir_init();
     if (task->page_dir == NULL) {
-        lprintf("f7");
+        lprintf("page_dir_init() failed in task_init at line %d", __LINE__);
         free(task_node);
         return NULL;
     }
 
     if (task_lists_init(task) < 0) {
-        lprintf("f8");
+        lprintf("task_lists_init() failed in task_init at line %d", __LINE__);
         sfree(task->page_dir, PAGE_SIZE);
         free(task_node);
         return NULL;
     }
 
     if (task_mutexes_init(task) < 0) {
-        lprintf("f9");
-        sfree(task->page_dir, PAGE_SIZE);
+        lprintf("task_mutexes_init() failed in task_init at line %d", __LINE__);
         task_lists_destroy(task);
+        sfree(task->page_dir, PAGE_SIZE);
         free(task_node);
         return NULL;
     }
 
     task->maps = maps_init();
     if (task->maps == NULL) {
-        sfree(task->page_dir, PAGE_SIZE);
-        task_lists_destroy(task);
+        lprintf("maps_init() failed in task_init at line %d", __LINE__);
         task_mutexes_destroy(task);
+        task_lists_destroy(task);
+        sfree(task->page_dir, PAGE_SIZE);
         free(task_node);
         return NULL;
     }
