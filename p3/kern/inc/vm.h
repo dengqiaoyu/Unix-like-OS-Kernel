@@ -51,4 +51,8 @@ int page_dir_clear(uint32_t *page_dir);
 
 int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir);
 
+uint32_t *get_kern_page_dir(void);
+
+uint32_t get_zfod_frame(void);
+
 #endif

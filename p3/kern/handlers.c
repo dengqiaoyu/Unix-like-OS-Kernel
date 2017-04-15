@@ -13,29 +13,30 @@
 #include <syscall_int.h>
 #include <x86/timer_defines.h>  /* TIMER_IDT_ENTRY */
 #include <keyhelp.h>            /* KEY_IDT_ENTRY */
+#include <interrupt_defines.h>  /* INT_ACK_CURRENT, INT_CTL_PORT */
 
 #include "handlers.h"
 #include "vm.h"
 #include "task.h"
 #include "syscalls.h"
-#include "asm_syscalls.h"
+#include "syscalls/asm_syscalls.h"
 #include "asm_exceptions.h"
 #include "asm_interrupts.h"
 #include "timer_driver.h"
 #include "keyboard_driver.h"
 #include "return_type.h"            /* RETURN_IF_ERROR, ERROR_TYPE */
 #include "asm_page_inval.h"
+#include "scheduler.h"              /* sche_yield */
 
-extern uint32_t *kern_page_dir;
-extern uint32_t zfod_frame;
+void timer_callback(unsigned int num_ticks);
 
 void pf_handler() {
     uint32_t pf_addr = get_cr2();
     uint32_t pte = get_pte(pf_addr);
 
     // TODO handle other cases
-    if ((pte & PAGE_ALIGN_MASK) == zfod_frame) {
-        page_inval((void *)pf_addr);
+    if ((pte & PAGE_ALIGN_MASK) == get_zfod_frame()) {
+        asm_page_inval((void *)pf_addr);
         uint32_t frame_addr = get_frame();
         set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
     } else if (!(pte & PTE_PRESENT)) {
@@ -114,4 +115,13 @@ void idt_install(int idt_idx,
 void roll_over() {
     lprintf("feeLs bad man\n");
     while (1) continue;
+}
+
+/**
+ * @brief Callback function that is called by the handler.
+ * @param num_ticks the number of 10 ms that is triggered.
+ */
+void timer_callback(unsigned int num_ticks) {
+    outb(INT_ACK_CURRENT, INT_CTL_PORT);
+    sche_yield(RUNNABLE);
 }

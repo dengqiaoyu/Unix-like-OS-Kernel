@@ -35,14 +35,14 @@ UPDATE_METHOD = afs
 # directory.
 #
 410TESTS = loader_test1 loader_test2 ck1 merchant peon knife new_pages\
-	       exec_basic exec_basic_helper fork_test1 fork_wait getpid_test1\
-	   	   wait_getpid fork_exit_bomb fork_wait_bomb sleep_test1 actual_wait\
-	       exec_nonexist print_basic remove_pages_test1 remove_pages_test2\
-	       yield_desc_mkrun deschedule_hang readline_basic halt_test\
-	       \
-	       halt_test stack_test1 mem_eat_test wild_test1\
-	       fork_bomb make_crash mem_permissions minclone_mem register_test\
-	       cho cho2 cho_variant\
+		   exec_basic exec_basic_helper fork_test1 fork_wait getpid_test1\
+		   wait_getpid fork_exit_bomb fork_wait_bomb sleep_test1 actual_wait\
+		   exec_nonexist print_basic remove_pages_test1 remove_pages_test2\
+		   yield_desc_mkrun deschedule_hang readline_basic halt_test\
+		   \
+		   stack_test1 mem_eat_test wild_test1\
+		   fork_bomb make_crash mem_permissions minclone_mem register_test\
+		   cho cho2 cho_variant\
 
 ###########################################################################
 # Test programs you have written which you wish to run
@@ -86,9 +86,9 @@ THREAD_OBJS = malloc.o panic.o
 ###########################################################################
 SYSCALL_OBJS = exec.o gettid.o fork.o new_pages.o wait.o vanish.o\
 			   set_status.o get_ticks.o sleep.o print.o set_term_color.o\
-	      	   get_cursor_pos.o set_cursor_pos.o remove_pages.o\
-	           deschedule.o make_runnable.o yield.o readline.o\
-	           syscall.o halt.o
+			   get_cursor_pos.o set_cursor_pos.o remove_pages.o\
+			   deschedule.o make_runnable.o yield.o readline.o\
+			   syscall.o halt.o
 
 ###########################################################################
 # Object files for your automatic stack handling
@@ -106,14 +106,16 @@ AUTOSTACK_OBJS = autostack.o
 # Kernel object files you provide in from kern/
 #
 KERNEL_OBJS = console.o kernel.o loader.o malloc_wrappers.o\
-          	  asm_switch.o handlers.o task.o vm.o asm_exceptions.o\
-          	  asm_interrupts.o timer_driver.o keyboard_driver.o\
-          	  mutex.o maps.o allocator.o list.o syscalls.o\
-          	  asm_page_inval.o asm_syscalls.o asm_registers.o\
-          	  scheduler.o asm_context_switch.o\
-          	  asm_set_exec_context.o\
-          	  tcb_hashtab.o\
-          	  utils/kern_cond.o utils/kern_sem.o
+			  asm_kern_to_user.o handlers.o task.o vm.o asm_exceptions.o\
+			  asm_interrupts.o timer_driver.o keyboard_driver.o\
+			  mutex.o maps.o allocator.o list.o\
+			  asm_page_inval.o\
+			  scheduler.o asm_context_switch.o\
+			  tcb_hashtab.o\
+			  utils/kern_cond.o utils/kern_sem.o\
+			  syscalls/asm_life_cycle.o syscalls/asm_syscalls.o\
+			  syscalls/life_cycle.o syscalls/thread_management.o\
+			  syscalls/memory_management.o syscalls/console_io.o
 
 ###########################################################################
 # WARNING: Do not put **test** programs into the REQPROGS variables.  Your
@@ -146,4 +148,4 @@ KERNEL_OBJS = console.o kernel.o loader.o malloc_wrappers.o\
 # kernel in, or else your tweaked version will run and the test harness
 # won't.
 #
-STUDENTREQPROGS = user_init
+STUDENTREQPROGS =

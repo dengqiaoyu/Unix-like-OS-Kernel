@@ -22,8 +22,8 @@
 //######## DEBUG
 #define print_line lprintf("line %d", __LINE__)
 
-uint32_t *kern_page_dir;
-uint32_t zfod_frame;
+static uint32_t *kern_page_dir;
+static uint32_t zfod_frame;
 
 static int num_free_frames;
 static mutex_t num_free_frames_mutex;
@@ -125,7 +125,7 @@ uint32_t get_frame() {
 
 void free_frame(uint32_t frame) {
     access_physical(frame);
-    
+
     mutex_lock(&first_free_frame_mutex);
     *((uint32_t *)RW_PHYS_VA) = first_free_frame;
     first_free_frame = frame;
@@ -220,7 +220,7 @@ int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
 
 // maps RW_PHYS_VA to physical address addr
 void access_physical(uint32_t addr) {
-    page_inval((void *)RW_PHYS_VA);
+    asm_page_inval((void *)RW_PHYS_VA);
     uint32_t entry = addr & PAGE_ALIGN_MASK;
     set_pte(RW_PHYS_VA, entry, PTE_WRITE | PTE_PRESENT);
 }
@@ -247,4 +247,12 @@ void write_physical(uint32_t phys_dest, void *virtual_src, uint32_t n) {
 
     uint32_t virtual_dest = RW_PHYS_VA + page_offset;
     memcpy((void *)virtual_dest, virtual_src, len);
+}
+
+uint32_t *get_kern_page_dir(void) {
+    return kern_page_dir;
+}
+
+uint32_t get_zfod_frame(void) {
+    return zfod_frame;
 }

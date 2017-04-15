@@ -81,3 +81,9 @@ WRAP_SYSCALL(asm_vanish, kern_vanish)
 
 # .global asm_swexn
 # WRAP_SYSCALL(asm_swexn, kern_swexn)
+
+/* syscall helper function for getting arguments */
+.global asm_get_esi
+asm_get_esi:
+    movl    %esi, %eax
+    ret
