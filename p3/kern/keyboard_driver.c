@@ -12,7 +12,7 @@
 /* x86 includes */
 #include <asm.h>                /* disable_interrupts(), enable_interrupts() */
 #include <interrupt_defines.h>  /* INT_ACK_CURRENT, INT_CTL_PORT */
-
+#include <console.h>
 /* debug include */
 #include <simics.h>             /* lprintf() */
 
@@ -20,62 +20,95 @@
 #include "keyboard_driver.h"
 #include "scheduler.h"
 
-static uint8_t buf[KB_BUF_LEN] = {0};
-/* the position where the last character can be read */
-static int buf_ending = 0;
-/* the position where the last character has been read */
-static int buf_cursor = 0;
+
+
+/* internal function */
+int _process_keypress(uint8_t keypress);
 
 // static int temp_ctx_cnter = 0;
 
 /* functions definition */
+
+keyboard_buffer_t kb_buf;
+
+int kb_buf_init() {
+    kb_buf.buf_start = 0;
+    kb_buf.buf_ending = 0;
+    kb_buf.newline_cnt = 0;
+    kb_buf.is_waiting = 0;
+    lprintf("before mutex_init");
+    mutex_init(&kb_buf.mutex);
+    lprintf("pass mutex_init");
+    kern_cond_init(&kb_buf.cond);
+    kern_sem_init(&kb_buf.readline_sem, 1);
+    return 0;
+}
+
 /**
  * @brief Read from keyboard port and put it into a buffer for further handling.
  */
 void add_to_kb_buf(void) {
-    // temp_ctx_cnter++;
-    // lprintf("temp_ctx_cnter: %d\n", temp_ctx_cnter);
-    // if (temp_ctx_cnter % 2 == 0) {
-    //     outb(INT_ACK_CURRENT, INT_CTL_PORT);
-    //     return;
-    // }
-    // uint8_t temp_code = inb(KEYBOARD_PORT);
-    int new_buf_ending = (buf_ending + 1) % KB_BUF_LEN;
-    if (new_buf_ending == buf_cursor)
+    // lprintf("entering keyboard");
+    uint8_t keypress = inb(KEYBOARD_PORT);
+    char ch = _process_keypress(keypress);
+    if (ch == -1) {
+        outb(INT_ACK_CURRENT, INT_CTL_PORT);
         return;
-    buf[buf_ending] = inb(KEYBOARD_PORT);
-    buf_ending = new_buf_ending;
-    // char ch = readchar();
-    // lprintf("keyboard pressed, %d\n", temp_code);
-    // if (ch == 'a') {
-    //     outb(INT_ACK_CURRENT, INT_CTL_PORT);
-    //     sche_yield();
-    // }
+    }
+    int new_buf_ending = 0;
+    int if_newline = 0;
+    switch (ch) {
+    case '\b':
+        if (kb_buf.buf_start == kb_buf.buf_ending) {
+            outb(INT_ACK_CURRENT, INT_CTL_PORT);
+            return;
+        }
+        new_buf_ending = (kb_buf.buf_ending - 1) % KB_BUF_LEN;
+        kb_buf.buf_ending = new_buf_ending;
+        break;
+    case '\n':
+        if_newline = 1;
+        new_buf_ending = (kb_buf.buf_ending + 1) % KB_BUF_LEN;
+        if (new_buf_ending == kb_buf.buf_start) {
+            new_buf_ending = (kb_buf.buf_ending - 1) % KB_BUF_LEN;
+            kb_buf.buf[new_buf_ending] = ch;
+        } else {
+            kb_buf.buf[kb_buf.buf_ending] = ch;
+            kb_buf.buf_ending = new_buf_ending;
+        }
+        // lprintf("%c get into buffer", ch);
+        break;
+    default:
+        new_buf_ending = (kb_buf.buf_ending + 1) % KB_BUF_LEN;
+        if (new_buf_ending == kb_buf.buf_start) break;
+        kb_buf.buf[kb_buf.buf_ending] = ch;
+        kb_buf.buf_ending = new_buf_ending;
+        // lprintf("%c get into buffer", ch);
+        break;
+    }
+    /* DEBUG use */
+    // int i = 0;
+    // lprintf("#######Buffer Content#######");
+    // for (i = kb_buf.buf_start; i < kb_buf.buf_ending; i++)
+    //     lprintf("%c", kb_buf.buf[i]);
+    // lprintf("#######Buffer Content#######");
+    /* DEBUG use */
     outb(INT_ACK_CURRENT, INT_CTL_PORT);
+
+    mutex_lock(&kb_buf.mutex);
+    if (kb_buf.is_waiting) {
+        putbyte(ch);
+    }
+    if (if_newline) {
+        kb_buf.newline_cnt++;
+        kern_cond_signal(&kb_buf.cond);
+    }
+    mutex_unlock(&kb_buf.mutex);
 }
 
-/**
- * @brief Read from the buffer. If it is a character that can be printed, return
- *        it.
- * @return  the integer value of character.
- */
-int readchar(void) {
-    uint8_t keypress = 0;
-    /* TODO Cannot decide whether to use disable_interrupts to avoid the race
-     *      condition if one is only writing and the other one is only reading.
-     *      I think there is no need for disable all the interrupt.
-     */
-    // disable_interrupts();
-    if (buf_cursor == buf_ending) {
-        return -1;
-    }
-    // enable_interrupts();
-
-    keypress = buf[buf_cursor];
-    buf_cursor = (buf_cursor + 1) % KB_BUF_LEN;
+int _process_keypress(uint8_t keypress) {
     kh_type augchar = process_scancode(keypress);
     if (KH_HASDATA(augchar) && !KH_ISMAKE(augchar))
         return KH_GETCHAR(augchar);
-
     return -1;
 }

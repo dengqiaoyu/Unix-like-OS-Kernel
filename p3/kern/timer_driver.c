@@ -60,7 +60,7 @@ void timer_callback(unsigned int num_ticks) {
         // lprintf("time: %d", seconds);
         seconds++;
     }
-    // outb(INT_ACK_CURRENT, INT_CTL_PORT);
+    outb(INT_ACK_CURRENT, INT_CTL_PORT);
     sche_yield(RUNNABLE);
 }
 

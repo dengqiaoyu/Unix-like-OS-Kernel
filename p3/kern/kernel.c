@@ -32,6 +32,7 @@
 #include "scheduler.h"
 #include "tcb_hashtab.h"
 #include "return_type.h"
+#include "keyboard_driver.h"
 
 // will need to find a better way to do this eventually
 extern mutex_t malloc_mutex;
@@ -52,7 +53,7 @@ thread_t *setup_task(const char *fname) {
     // TODO can we macro these better?
     maps_insert(task->maps, 0, PAGE_SIZE * NUM_KERN_PAGES - 1, 0);
     maps_insert(task->maps, RW_PHYS_VA, RW_PHYS_VA + (PAGE_SIZE - 1), 0);
-    
+
     simple_elf_t elf_header;
     elf_load_helper(&elf_header, fname);
     thread->ip = elf_header.e_entry;
@@ -83,6 +84,7 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
 
     // TODO find a better way to init mutexes
     mutex_init(&malloc_mutex);
+    kb_buf_init();
     tcb_hashtab_init();
 
     idle_thread = setup_task("idle");

@@ -22,7 +22,7 @@ void kern_sem_destroy(kern_sem_t *sem) {
     sem->is_active = 0;
 }
 
-void sem_wait(kern_sem_t *sem) {
+void kern_sem_wait(kern_sem_t *sem) {
     assert(sem != NULL);
     assert(sem->is_active == 1);
     mutex_lock(&sem->mutex);
@@ -33,7 +33,7 @@ void sem_wait(kern_sem_t *sem) {
     mutex_unlock(&sem->mutex);
 }
 
-void sem_signal(kern_sem_t *sem) {
+void kern_sem_signal(kern_sem_t *sem) {
     assert(sem != NULL);
     assert(sem->is_active == 1);
     mutex_lock(&sem->mutex);

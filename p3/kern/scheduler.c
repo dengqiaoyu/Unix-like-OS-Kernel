@@ -53,9 +53,8 @@ void set_cur_run_thread(thread_t *tcb_ptr) {
 
 void sche_yield(int status) {
     disable_interrupts();
-
     // TODO where should this happen?
-    outb(INT_ACK_CURRENT, INT_CTL_PORT);
+    // outb(INT_ACK_CURRENT, INT_CTL_PORT);
 
     sche_node_t *new_sche_node;
     sleep_node_t *sleeper;
@@ -64,8 +63,7 @@ void sche_yield(int status) {
         pop_first_node(sche_list.sleeping_list);
         sleeper->thread->status = RUNNABLE;
         new_sche_node = TCB_TO_SCHE_NODE(sleeper->thread);
-    }
-    else {
+    } else {
         new_sche_node = pop_first_node(sche_list.active_list);
     }
 
@@ -88,15 +86,13 @@ void sche_yield(int status) {
 
             asm_switch_to_runnable(&cur_tcb_ptr->cur_sp,
                                    new_tcb_ptr->cur_sp);
-        }
-        else if (new_tcb_ptr->status == INITIALIZED) {
+        } else if (new_tcb_ptr->status == INITIALIZED) {
             set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
             new_tcb_ptr->status = RUNNABLE;
 
             asm_switch_to_initialized(&cur_tcb_ptr->cur_sp,
                                       new_tcb_ptr->cur_sp, new_tcb_ptr->ip);
-        }
-        else if (new_tcb_ptr->status == FORKED) {
+        } else if (new_tcb_ptr->status == FORKED) {
             set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
             new_tcb_ptr->status = RUNNABLE;
 
@@ -104,8 +100,7 @@ void sche_yield(int status) {
                                  new_tcb_ptr->cur_sp,
                                  new_tcb_ptr->ip);
         }
-    }
-    else if (status != RUNNABLE) {
+    } else if (status != RUNNABLE) {
         cur_sche_node = TCB_TO_SCHE_NODE(idle_thread);
         set_esp0(idle_thread->kern_sp);
 
@@ -116,12 +111,10 @@ void sche_yield(int status) {
         if (old_status == INITIALIZED) {
             asm_switch_to_initialized(&cur_tcb_ptr->cur_sp,
                                       idle_thread->cur_sp, idle_thread->ip);
-        }
-        else if (old_status == RUNNABLE) {
+        } else if (old_status == RUNNABLE) {
             asm_switch_to_runnable(&cur_tcb_ptr->cur_sp,
                                    idle_thread->cur_sp);
-        }
-        else {
+        } else {
             lprintf("how did i get here?");
             while (1) continue;
         }
@@ -154,8 +147,7 @@ void tranquilize(sleep_node_t *sleep_node) {
         if (temp->wakeup_ticks <= sleep_node->wakeup_ticks) {
             next = get_next_node(sche_list.sleeping_list, (node_t *)temp);
             temp = (sleep_node_t *)next;
-        }
-        else {
+        } else {
             break;
         }
     }
