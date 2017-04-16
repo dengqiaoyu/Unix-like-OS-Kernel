@@ -4,7 +4,7 @@
 
 int main() {
     int pid, exitstatus;
-    char test[] = "my_fork_test";
+    char test[] = "my_make_crash";
     /*
     char test[] = "actual_wait";
     char test[] = "wild_test1";
@@ -23,8 +23,8 @@ int main() {
 
         while (pid != wait(&exitstatus));
 
-        printf("Shell exited with status %d; starting it back up...",
-               exitstatus);
+        lprintf("Shell exited with status %d; starting it back up...",
+                exitstatus);
         MAGIC_BREAK;
     }
 }

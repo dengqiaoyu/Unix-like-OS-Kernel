@@ -15,6 +15,7 @@
 DEF_TEST_NAME ("make_crash:");
 
 int main(int argc, char **argv) {
+    // int i, tid;
     int i, tid, status;
     int parentTID = gettid ();
     char *name = "make_crash_helper";
@@ -26,12 +27,14 @@ int main(int argc, char **argv) {
 
     REPORT_MISC("This test brought to you by Group 35 (Fall 03) - rsa & kcaffrey\n");
     REPORT_MISC("Starting forks");
-
+    lprintf("Hi, I am thread %d", gettid());
     for (i = 0; i < 7; i++) {
         if ((tid = fork()) == 0) {
             sprintf(buf, "   Starting sleep I am %d", gettid());
             REPORT_MISC(buf);
             sleep(100);
+        } else {
+            lprintf("thread %d complete fork thread %d", gettid(), tid);
         }
     }
 

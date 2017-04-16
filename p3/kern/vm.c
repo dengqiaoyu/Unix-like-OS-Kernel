@@ -207,6 +207,7 @@ int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
 
             // don't mess with the RW_PHYS reserved page
             if (i == RW_PHYS_PD_INDEX && j == RW_PHYS_PT_INDEX) continue;
+            // TODO before we get_frame, do we need to decrement num?
             if (dec_num_free_frames(1) < 0) {
                 if_fail = 1;
                 break;

@@ -39,7 +39,7 @@ void pf_handler() {
         uint32_t frame_addr = get_frame();
         set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
     } else if (!(pte & PTE_PRESENT)) {
-        lprintf("alarming...");
+        lprintf("alarming..., pf_addr: %p", (void *)pf_addr);
         MAGIC_BREAK;
         uint32_t frame_addr = get_frame();
         set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);

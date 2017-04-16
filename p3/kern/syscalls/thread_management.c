@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <asm.h>                 /* disable_interrupts(), enable_interrupts() */
+#include <simics.h>
 
 #include "syscalls/syscalls.h"
 #include "task.h"                /* task thread declaration and interface */
@@ -76,6 +77,8 @@ int kern_sleep(void) {
     sleep_node.thread = get_cur_tcb();
     sleep_node.wakeup_ticks = wakeup_ticks;
 
+    lprintf("I am thread %d in kern_sleep", get_cur_tcb()->tid);
+    lprintf("addr of sleep_node: %p", &sleep_node);
     disable_interrupts();
     tranquilize(&sleep_node);
     sche_yield(SLEEPING);

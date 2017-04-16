@@ -50,7 +50,8 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the user/progs
 # directory.
 #
-STUDENTTESTS = my_fork_test my_maker_deschedule my_cond_sem_test my_readline
+STUDENTTESTS = my_fork_test my_maker_deschedule my_cond_sem_test my_readline\
+			   my_make_crash
 
 ###########################################################################
 # Data files provided by course staff to build into the RAM disk

@@ -212,8 +212,7 @@ thread_t *thread_init() {
     sche_node_t *sche_node = malloc(size);
 
     if (sche_node == NULL) {
-        // TODO error handling
-        lprintf("f4");
+        lprintf("malloc() failed in thread_init at line %d", __LINE__);
         return NULL;
     }
 
@@ -224,8 +223,7 @@ thread_t *thread_init() {
     // void *kern_stack = malloc(KERN_STACK_SIZE);
     void *kern_stack = smemalign(KERN_STACK_SIZE, KERN_STACK_SIZE);
     if (kern_stack == NULL) {
-        lprintf("f5");
-        // allocator_free(sche_node);
+        lprintf("smemalign() failed in thread_init at line %d", __LINE__);
         free(sche_node);
         return NULL;
     }
