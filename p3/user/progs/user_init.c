@@ -4,7 +4,7 @@
 
 int main() {
     int pid, exitstatus;
-    char test[] = "my_make_crash";
+    char test[] = "new_pages";
     /*
     char test[] = "actual_wait";
     char test[] = "wild_test1";
@@ -13,6 +13,7 @@ int main() {
     char test[] = "fork_exit_bomb";
     char test[] = "fork_wait_bomb";
     char test[] = "actual_wait";
+    char test[] = "make_crash";
     */
     char * args[] = {test, 0};
 

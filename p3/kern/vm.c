@@ -184,6 +184,7 @@ int page_dir_clear(uint32_t *page_dir) {
         }
 
         page_dir[i] = 0;
+        memset(page_tab, 0, PAGE_SIZE);
         sfree(page_tab, PAGE_SIZE);
     }
 

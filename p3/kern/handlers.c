@@ -19,6 +19,7 @@
 #include "vm.h"
 #include "task.h"
 #include "syscalls/asm_syscalls.h"
+#include "syscalls/syscalls.h"      /* kern_vanish */
 #include "asm_exceptions.h"
 #include "drivers/asm_interrupts.h"
 #include "drivers/timer_driver.h"
@@ -34,18 +35,25 @@ void pf_handler() {
     uint32_t pte = get_pte(pf_addr);
 
     // TODO handle other cases
+    // if ((pte & PAGE_ALIGN_MASK) == get_zfod_frame()) {
+    //     asm_page_inval((void *)pf_addr);
+    //     uint32_t frame_addr = get_frame();
+    //     set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
+    // } else if (!(pte & PTE_PRESENT)) {
+    //     MAGIC_BREAK;
+    //     uint32_t frame_addr = get_frame();
+    //     set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
+    // } else {
+    //     kern_vanish();
+    //     roll_over();
+    // }
+
     if ((pte & PAGE_ALIGN_MASK) == get_zfod_frame()) {
         asm_page_inval((void *)pf_addr);
         uint32_t frame_addr = get_frame();
         set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
-    } else if (!(pte & PTE_PRESENT)) {
-        lprintf("alarming..., pf_addr: %p", (void *)pf_addr);
-        MAGIC_BREAK;
-        uint32_t frame_addr = get_frame();
-        set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
     } else {
-        lprintf("%x\n", (unsigned int)pf_addr);
-        roll_over();
+        kern_vanish();
     }
 
     return;

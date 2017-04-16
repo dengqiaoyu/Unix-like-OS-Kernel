@@ -4,7 +4,7 @@
 #include <page.h>                /* PAGE_SIZE */
 #include <cr.h>                  /* set_crX */
 #include <asm.h>                 /* disable_interrupts(), enable_interrupts() */
-
+#include <console.h>             /* clear_console */
 #include <simics.h>              /* lprintf and debug */
 
 /* user define includes */
@@ -312,7 +312,6 @@ void kern_vanish(void) {
             sche_yield(ZOMBIE);
         }
     }
-
     // TODO error handling
     lprintf("returned from end of vanish");
 }
@@ -369,6 +368,7 @@ int kern_wait(void) {
 }
 
 void kern_halt(void) {
+    clear_console();
     disable_interrupts();
     printf("Shutdown, Goodbye World!\n");
     sim_halt();
