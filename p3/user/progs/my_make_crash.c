@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
 
     REPORT_MISC("This test brought to you by Group 35 (Fall 03) - rsa & kcaffrey\n");
     REPORT_MISC("Starting forks");
-    for (i = 0; i < 0; i++) {
+    for (i = 0; i < 7; i++) {
         if ((tid = fork()) == 0) {
             sprintf(buf, "   Starting sleep I am %d", gettid());
             REPORT_MISC(buf);

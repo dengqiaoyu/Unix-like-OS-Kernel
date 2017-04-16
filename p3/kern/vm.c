@@ -30,6 +30,8 @@ static mutex_t num_free_frames_mutex;
 static uint32_t first_free_frame;
 static mutex_t first_free_frame_mutex;
 
+void printf_phy_frame(int i, int j, uint32_t *page_dir);
+
 void vm_init() {
     kern_page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);
     memset(kern_page_dir, 0, PAGE_SIZE);
@@ -100,8 +102,9 @@ void set_pte(uint32_t addr, uint32_t frame_addr, int flags) {
     int pt_index = PT_INDEX(addr);
 
     if (!(page_dir[pd_index] & PTE_PRESENT)) {
-        page_dir[pd_index] = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE);
-        page_dir[pd_index] |= PTE_USER | PTE_WRITE | PTE_PRESENT;
+        uint32_t mem = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE);
+        memset((void *)mem, 0, PAGE_SIZE);
+        page_dir[pd_index] = mem | PTE_USER | PTE_WRITE | PTE_PRESENT;
     }
 
     uint32_t *page_tab = ENTRY_TO_ADDR(page_dir[pd_index]);
@@ -171,7 +174,6 @@ int page_dir_clear(uint32_t *page_dir) {
 
             // don't mess with the RW_PHYS reserved page
             if (i == RW_PHYS_PD_INDEX && j == RW_PHYS_PT_INDEX) continue;
-
             page_tab[j] = 0;
             uint32_t frame = pte & PAGE_ALIGN_MASK;
             free_frame(frame);
@@ -213,11 +215,12 @@ int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
                 break;
             }
             uint32_t new_physical_frame = get_frame();
+            uint32_t virtual_addr = ((uint32_t)i << 22) | ((uint32_t)j << 12);
 
             int new_pte_flag = old_pte & PAGE_FLAG_MASK;
             uint32_t new_pte = new_physical_frame | new_pte_flag;
 
-            uint32_t virtual_addr = ((uint32_t)i << 22) | ((uint32_t)j << 12);
+
             write_physical(new_physical_frame, (void *)virtual_addr, PAGE_SIZE);
             new_page_tab[j] = new_pte;
         }

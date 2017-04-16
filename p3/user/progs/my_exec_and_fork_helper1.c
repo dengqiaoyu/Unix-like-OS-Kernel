@@ -3,6 +3,5 @@
 #include <syscall.h>
 
 int main() {
-    lprintf("Hellp I am thread %d in helper", gettid());
-    return 0;
+    lprintf("Hellp I am thread %d from helper1", gettid());
 }

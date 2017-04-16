@@ -394,7 +394,6 @@ int load_elf_section(const char *fname, unsigned long start, unsigned long len,
             if (dec_num_free_frames(1) < 0) {
                 return -1;
             }
-
             uint32_t frame_addr = get_frame();
             set_pte(addr, frame_addr, pte_flags);
         }
