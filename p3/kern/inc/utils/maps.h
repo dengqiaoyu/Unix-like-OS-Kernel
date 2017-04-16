@@ -28,6 +28,8 @@ void maps_clear(map_list_t *maps);
 
 int maps_copy(map_list_t *from, map_list_t *to);
 
+void undo_maps_copy(map_list_t *maps);
+
 void maps_print(map_list_t *maps);
 
 void maps_insert(map_list_t *maps, uint32_t low, uint32_t high, int perms);
