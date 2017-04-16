@@ -39,9 +39,10 @@ UPDATE_METHOD = afs
 		   wait_getpid fork_exit_bomb fork_wait_bomb sleep_test1 actual_wait\
 		   exec_nonexist print_basic remove_pages_test1 remove_pages_test2\
 		   yield_desc_mkrun deschedule_hang readline_basic halt_test\
+		   make_crash_helper make_crash\
 		   \
-		   make_crash_helper stack_test1 mem_eat_test wild_test1\
-		   fork_bomb make_crash mem_permissions minclone_mem register_test\
+		   stack_test1 mem_eat_test wild_test1\
+		   fork_bomb mem_permissions minclone_mem register_test\
 		   cho cho2 cho_variant\
 
 ###########################################################################
@@ -107,19 +108,19 @@ AUTOSTACK_OBJS = autostack.o
 # Kernel object files you provide in from kern/
 #
 KERNEL_OBJS = console.o kernel.o handlers.o task.o vm.o scheduler.o\
-			  asm_kern_to_user.o asm_exceptions.o asm_page_inval.o\
-			  asm_context_switch.o\
-			  \
-			  drivers/timer_driver.o drivers/keyboard_driver.o\
-			  drivers/asm_interrupts.o\
-			  \
-			  utils/kern_cond.o utils/kern_sem.o utils/list.o utils/loader.o\
-			  utils/malloc_wrappers.o utils/maps.o utils/mutex.o\
-			  utils/tcb_hashtab.o\
-			  \
-			  syscalls/asm_life_cycle.o syscalls/asm_syscalls.o\
-			  syscalls/life_cycle.o syscalls/thread_management.o\
-			  syscalls/memory_management.o syscalls/console_io.o
+	      asm_kern_to_user.o asm_exceptions.o asm_page_inval.o\
+	      asm_context_switch.o\
+	      \
+	      drivers/timer_driver.o drivers/keyboard_driver.o\
+	      drivers/asm_interrupts.o\
+	      \
+	      utils/kern_cond.o utils/kern_sem.o utils/list.o utils/loader.o\
+	      utils/malloc_wrappers.o utils/maps.o utils/mutex.o\
+	      utils/tcb_hashtab.o\
+	      \
+	      syscalls/asm_life_cycle.o syscalls/asm_syscalls.o\
+	      syscalls/life_cycle.o syscalls/thread_management.o\
+	      syscalls/memory_management.o syscalls/console_io.o
 
 ###########################################################################
 # WARNING: Do not put **test** programs into the REQPROGS variables.  Your

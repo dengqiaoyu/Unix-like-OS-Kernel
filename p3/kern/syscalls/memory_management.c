@@ -78,7 +78,7 @@ int kern_remove_pages(void) {
     for (addr = map->low; addr < map->high; addr += PAGE_SIZE) {
         frame = get_pte(addr) & PAGE_ALIGN_MASK;
         assert(frame != 0);
-        if (frame != asm_get_esi()) free_frame(frame);
+        if (frame != get_zfod_frame()) free_frame(frame);
         asm_page_inval((void *)addr);
         set_pte(addr, 0, 0);
     }
