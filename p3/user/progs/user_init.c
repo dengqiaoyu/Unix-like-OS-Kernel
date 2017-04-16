@@ -4,7 +4,7 @@
 
 int main() {
     int pid, exitstatus;
-    char test[] = "my_make_crash";
+    char test[] = "my_exec_and_fork";
     /*
     char test[] = "actual_wait";
     char test[] = "wild_test1";

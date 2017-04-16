@@ -40,7 +40,7 @@ UPDATE_METHOD = afs
 		   exec_nonexist print_basic remove_pages_test1 remove_pages_test2\
 		   yield_desc_mkrun deschedule_hang readline_basic halt_test\
 		   \
-		   stack_test1 mem_eat_test wild_test1\
+		   make_crash_helper stack_test1 mem_eat_test wild_test1\
 		   fork_bomb make_crash mem_permissions minclone_mem register_test\
 		   cho cho2 cho_variant\
 
@@ -51,7 +51,7 @@ UPDATE_METHOD = afs
 # directory.
 #
 STUDENTTESTS = my_fork_test my_maker_deschedule my_cond_sem_test my_readline\
-			   my_make_crash
+			   my_make_crash my_exec_and_fork my_exec_and_fork_helper
 
 ###########################################################################
 # Data files provided by course staff to build into the RAM disk

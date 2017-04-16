@@ -40,21 +40,14 @@ void sche_yield(int status) {
     sleep_node_t *sleeper;
     sleeper = (sleep_node_t *)get_first_node(sche_list.sleeping_list);
     if (sleeper != NULL && sleeper->wakeup_ticks <= get_timer_ticks()) {
-        lprintf("sleeper->wakeup_ticks: %d", sleeper->wakeup_ticks);
-        int debug_list_size = get_list_size(sche_list.sleeping_list);
-        lprintf("list size: %d in sche_yield", debug_list_size);
         pop_first_node(sche_list.sleeping_list);
         sleeper->thread->status = RUNNABLE;
         new_sche_node = TCB_TO_SCHE_NODE(sleeper->thread);
-        lprintf("line %d sche_yield", __LINE__);
-        lprintf("%p", sleeper);
     } else {
         new_sche_node = pop_first_node(sche_list.active_list);
     }
 
     thread_t *cur_tcb_ptr = SCHE_NODE_TO_TCB(cur_sche_node);
-    int temp_tid4 = cur_tcb_ptr->tid;
-    if (temp_tid4 == 4) lprintf("I am thread 4, I am going to switch");
     cur_tcb_ptr->status = status;
 
     if (new_sche_node != NULL) {
@@ -66,30 +59,19 @@ void sche_yield(int status) {
         set_esp0(new_tcb_ptr->kern_sp);
 
         if (new_tcb_ptr->status == RUNNABLE) {
-            if (temp_tid4 == 4) lprintf("I am thread 4 in line %d", __LINE__);
             int original_task_id = cur_tcb_ptr->task->task_id;
-            if (temp_tid4 == 4) lprintf("I am thread 4, original_task_id: %d",
-                                            original_task_id);
-            if (temp_tid4 == 4) lprintf("I am thread 4, new tid: %d",
-                                            new_tcb_ptr->tid);
             int new_task_id = new_tcb_ptr->task->task_id;
-            if (temp_tid4 == 4) lprintf("I am thread 4, original_task_id: %d",
-                                            new_task_id);
-            if (temp_tid4 == 4) lprintf("I am thread 4 in line %d", __LINE__);
             if (new_task_id != original_task_id)
                 set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
-            if (temp_tid4 == 4) lprintf("I am thread 4 in line %d", __LINE__);
             asm_switch_to_runnable(&cur_tcb_ptr->cur_sp,
                                    new_tcb_ptr->cur_sp);
         } else if (new_tcb_ptr->status == INITIALIZED) {
-            if (temp_tid4 == 4) lprintf("I am thread 4 in line %d", __LINE__);
             set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
             new_tcb_ptr->status = RUNNABLE;
 
             asm_switch_to_initialized(&cur_tcb_ptr->cur_sp,
                                       new_tcb_ptr->cur_sp, new_tcb_ptr->ip);
         } else if (new_tcb_ptr->status == FORKED) {
-            if (temp_tid4 == 4) lprintf("I am thread 4 in line %d", __LINE__);
             set_cr3((uint32_t)new_tcb_ptr->task->page_dir);
             new_tcb_ptr->status = RUNNABLE;
 
@@ -97,7 +79,6 @@ void sche_yield(int status) {
                                  new_tcb_ptr->cur_sp,
                                  new_tcb_ptr->ip);
         }
-        if (temp_tid4 == 4) lprintf("I am thread 4 in line %d", __LINE__);
     } else if (status != RUNNABLE) {
         cur_sche_node = TCB_TO_SCHE_NODE(idle_thread);
         set_esp0(idle_thread->kern_sp);
@@ -149,19 +130,9 @@ void tranquilize(sleep_node_t *sleep_node) {
             break;
         }
     }
-    lprintf("I am thread %d", get_cur_tcb()->tid);
-    lprintf("sleep list size: %d", get_list_size(sche_list.sleeping_list));
 
-    if (temp == NULL) {
+    if (temp == NULL)
         add_node_to_tail(sche_list.sleeping_list, (node_t *)sleep_node);
-        if (get_cur_tcb()->tid == 4)
-            lprintf("!!!!!!thread 4 ticks: %d", sleep_node->wakeup_ticks);
-        lprintf("############");
-    } else {
-        lprintf("temp->thread->tid: %d", temp->thread->tid);
-        lprintf("my wake up ticks: %d", sleep_node->wakeup_ticks);
+    else
         insert_before(sche_list.sleeping_list, (node_t *)temp, (node_t *)sleep_node);
-        lprintf("@@@@@@@@@@@@");
-    }
-    lprintf("sleep list size: %d", get_list_size(sche_list.sleeping_list));
 }

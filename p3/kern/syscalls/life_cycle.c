@@ -244,7 +244,6 @@ void kern_set_status(void) {
 
 void kern_vanish(void) {
     thread_t *thread = get_cur_tcb();
-    lprintf("I am thread %d, I am going to vanish", thread->tid);
     task_t *task = thread->task;
 
     mutex_lock(&(task->vanish_mutex));
@@ -255,7 +254,6 @@ void kern_vanish(void) {
     int live_threads = get_list_size(task->live_thread_list);
     add_node_to_tail(task->zombie_thread_list, TCB_TO_LIST_NODE(thread));
     // TODO try to free previous zombie stack
-    lprintf("I am thread %d in line %d", thread->tid, __LINE__);
     if (live_threads > 0) {
         /*
          * need to disable interrupts here, before unlocking the thread list
@@ -268,13 +266,11 @@ void kern_vanish(void) {
         cli_mutex_unlock(&(task->vanish_mutex));
         sche_yield(ZOMBIE);
     } else {
-        lprintf("I am thread %d in line %d", thread->tid, __LINE__);
         mutex_unlock(&(task->thread_list_mutex));
 
         orphan_children(task);
         orphan_zombies(task);
 
-        lprintf("I am thread %d in line %d", thread->tid, __LINE__);
         if (parent == NULL) lprintf("init or idle task vanished?");
         mutex_lock(&(parent->wait_mutex));
 
@@ -284,7 +280,6 @@ void kern_vanish(void) {
         mutex_unlock(&(parent->child_task_list_mutex));
 
         if (get_list_size(parent->waiting_thread_list) > 0) {
-            lprintf("I am thread %d in line %d", thread->tid, __LINE__);
             node_t *node = pop_first_node(parent->waiting_thread_list);
             mutex_unlock(&(parent->wait_mutex));
 
@@ -295,15 +290,11 @@ void kern_vanish(void) {
             // otherwise, the waiting thread might free us before we yield
             disable_interrupts();
             waiter->thread->status = RUNNABLE;
-            lprintf("wake thread %d up", waiter->thread->tid);
             sche_push_back(waiter->thread);
 
             cli_mutex_unlock(&(task->vanish_mutex));
-            lprintf("I am thread %d in line %d", thread->tid, __LINE__);
             sche_yield(ZOMBIE);
-            lprintf("I am thread %d in line %d", thread->tid, __LINE__);
         } else {
-            lprintf("I am thread %d in line %d", thread->tid, __LINE__);
             node_t *last_node = get_last_node(parent->zombie_task_list);
             if (last_node != NULL) {
                 // we can free the previous zombie's vm and thread resources
@@ -319,7 +310,6 @@ void kern_vanish(void) {
 
             cli_mutex_unlock(&(task->vanish_mutex));
             sche_yield(ZOMBIE);
-            lprintf("I am thread %d in line %d", thread->tid, __LINE__);
         }
     }
 
@@ -366,9 +356,7 @@ int kern_wait(void) {
         // then we might incorrectly block forever
         cli_mutex_unlock(&(task->wait_mutex));
         add_node_to_tail(task->waiting_thread_list, &(wait_node.node));
-        lprintf("I am thread %d,  I am going to blocked wait", thread->tid);
         sche_yield(BLOCKED_WAIT);
-        lprintf("I am thread %d,  I am back", thread->tid);
         if (wait_node.zombie == NULL) return -1;
         else zombie = wait_node.zombie;
     }
