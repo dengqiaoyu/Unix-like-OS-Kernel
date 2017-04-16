@@ -13,7 +13,7 @@
 #include "utils/mutex.h"
 #include "utils/maps.h"
 
-#define KERN_STACK_SIZE 0x800
+#define KERN_STACK_SIZE 0x1000
 
 #define USER_STACK_LOW 0xFFB00000
 #define USER_STACK_SIZE 0x4000

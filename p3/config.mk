@@ -50,7 +50,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the user/progs
 # directory.
 #
-STUDENTTESTS = my_fork_test my_maker_deschedule my_cond_sem_test my_readline
+STUDENTTESTS = my_fork_test my_maker_deschedule my_cond_sem_test my_readline\
 
 ###########################################################################
 # Data files provided by course staff to build into the RAM disk
@@ -106,19 +106,19 @@ AUTOSTACK_OBJS = autostack.o
 # Kernel object files you provide in from kern/
 #
 KERNEL_OBJS = console.o kernel.o handlers.o task.o vm.o scheduler.o\
-			  asm_kern_to_user.o asm_exceptions.o asm_page_inval.o\
-			  asm_context_switch.o\
-			  \
-			  drivers/timer_driver.o drivers/keyboard_driver.o\
-			  drivers/asm_interrupts.o\
-			  \
-			  utils/kern_cond.o utils/kern_sem.o utils/list.o utils/loader.o\
-			  utils/malloc_wrappers.o utils/maps.o utils/mutex.o\
-			  utils/tcb_hashtab.o\
-			  \
-			  syscalls/asm_life_cycle.o syscalls/asm_syscalls.o\
-			  syscalls/life_cycle.o syscalls/thread_management.o\
-			  syscalls/memory_management.o syscalls/console_io.o
+	      asm_kern_to_user.o asm_exceptions.o asm_page_inval.o\
+	      asm_context_switch.o\
+	      \
+	      drivers/timer_driver.o drivers/keyboard_driver.o\
+	      drivers/asm_interrupts.o\
+	      \
+	      utils/kern_cond.o utils/kern_sem.o utils/list.o utils/loader.o\
+	      utils/malloc_wrappers.o utils/maps.o utils/mutex.o\
+	      utils/tcb_hashtab.o\
+	      \
+	      syscalls/asm_life_cycle.o syscalls/asm_syscalls.o\
+	      syscalls/life_cycle.o syscalls/thread_management.o\
+	      syscalls/memory_management.o syscalls/console_io.o
 
 ###########################################################################
 # WARNING: Do not put **test** programs into the REQPROGS variables.  Your

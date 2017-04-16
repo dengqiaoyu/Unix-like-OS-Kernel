@@ -32,6 +32,8 @@ static mutex_t first_free_frame_mutex;
 
 void vm_init() {
     kern_page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);
+    // TODO int return for error handling
+    if (kern_page_dir == NULL) return;
     memset(kern_page_dir, 0, PAGE_SIZE);
 
     uint32_t frame = 0;
@@ -41,6 +43,10 @@ void vm_init() {
     int i, j;
     for (i = 0; i < NUM_KERN_TABLES; i++) {
         page_tab_addr = smemalign(PAGE_SIZE, PAGE_SIZE);
+
+        // TODO clear page table
+        if (page_tab_addr == NULL) return;
+
         memset(page_tab_addr, 0, PAGE_SIZE);
         kern_page_dir[i] = (uint32_t)page_tab_addr | flags;
 
@@ -49,13 +55,6 @@ void vm_init() {
             frame += PAGE_SIZE;
         }
     }
-
-    /*
-    // we need to populate the last entry of the page directory
-    // the last page table here will be used for accessing physical addresses
-    kern_page_dir[RW_PHYS_PD_INDEX] = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE);
-    kern_page_dir[RW_PHYS_PD_INDEX] |= flags;
-    */
 
     set_cr3((uint32_t)kern_page_dir);
     set_cr0(get_cr0() | CR0_PG);
@@ -100,7 +99,11 @@ void set_pte(uint32_t addr, uint32_t frame_addr, int flags) {
     int pt_index = PT_INDEX(addr);
 
     if (!(page_dir[pd_index] & PTE_PRESENT)) {
-        page_dir[pd_index] = (uint32_t)smemalign(PAGE_SIZE, PAGE_SIZE);
+        void *ret = smemalign(PAGE_SIZE, PAGE_SIZE);
+        // TODO error!!!
+        if (ret == NULL) return;
+        memset(ret, 0, PAGE_SIZE);
+        page_dir[pd_index] = (uint32_t)ret;
         page_dir[pd_index] |= PTE_USER | PTE_WRITE | PTE_PRESENT;
     }
 
@@ -116,16 +119,18 @@ uint32_t get_frame() {
 
     access_physical(frame);
     first_free_frame = *((uint32_t *)RW_PHYS_VA);
-    mutex_unlock(&first_free_frame_mutex);
+    // TODO
 
     memset((void *)RW_PHYS_VA, 0, PAGE_SIZE);
+    mutex_unlock(&first_free_frame_mutex);
     return frame;
 }
 
 void free_frame(uint32_t frame) {
+    mutex_lock(&first_free_frame_mutex);
     access_physical(frame);
 
-    mutex_lock(&first_free_frame_mutex);
+    // TODO mutex locking
     *((uint32_t *)RW_PHYS_VA) = first_free_frame;
     first_free_frame = frame;
     mutex_unlock(&first_free_frame_mutex);
@@ -174,7 +179,7 @@ int page_dir_clear(uint32_t *page_dir) {
 
             page_tab[j] = 0;
             uint32_t frame = pte & PAGE_ALIGN_MASK;
-            free_frame(frame);
+            if (frame != zfod_frame) free_frame(frame);
         }
 
         page_dir[i] = 0;
@@ -193,12 +198,20 @@ int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
         uint32_t *old_page_tab = ENTRY_TO_ADDR(old_pde);
 
         uint32_t *new_page_tab = smemalign(PAGE_SIZE, PAGE_SIZE);
+        // TODO need to clear new page dir
+        if (new_page_tab == NULL) return -1;
         memset(new_page_tab, 0, PAGE_SIZE);
         new_page_dir[i] = (uint32_t)new_page_tab | new_pde_flag;
 
         for (j = 0; j < NUM_PT_ENTRIES; j++) {
             uint32_t old_pte = old_page_tab[j];
             if ((old_pte & PTE_PRESENT) == 0) continue;
+
+            uint32_t frame = old_pte & PAGE_ALIGN_MASK;
+            if (frame == zfod_frame) {
+                new_page_tab[j] = old_pte;
+                continue;
+            }
 
             // don't mess with the RW_PHYS reserved page
             if (i == RW_PHYS_PD_INDEX && j == RW_PHYS_PT_INDEX) continue;
@@ -208,6 +221,7 @@ int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
             int new_pte_flag = old_pte & PAGE_FLAG_MASK;
             uint32_t new_pte = new_physical_frame | new_pte_flag;
 
+            // TODO macro these
             uint32_t virtual_addr = ((uint32_t)i << 22) | ((uint32_t)j << 12);
             write_physical(new_physical_frame, (void *)virtual_addr, PAGE_SIZE);
             new_page_tab[j] = new_pte;
@@ -225,6 +239,9 @@ void access_physical(uint32_t addr) {
 }
 
 void read_physical(void *virtual_dest, uint32_t phys_src, uint32_t n) {
+    // TODO
+    mutex_lock(&first_free_frame_mutex);
+
     access_physical(phys_src);
     uint32_t page_offset = phys_src & ~PAGE_ALIGN_MASK;
 
@@ -234,9 +251,14 @@ void read_physical(void *virtual_dest, uint32_t phys_src, uint32_t n) {
 
     uint32_t virtual_src = RW_PHYS_VA + page_offset;
     memcpy(virtual_dest, (void *)virtual_src, len);
+
+    mutex_unlock(&first_free_frame_mutex);
 }
 
 void write_physical(uint32_t phys_dest, void *virtual_src, uint32_t n) {
+    // TODO
+    mutex_lock(&first_free_frame_mutex);
+
     access_physical(phys_dest);
     uint32_t page_offset = (uint32_t)virtual_src & ~PAGE_ALIGN_MASK;
 
@@ -246,6 +268,8 @@ void write_physical(uint32_t phys_dest, void *virtual_src, uint32_t n) {
 
     uint32_t virtual_dest = RW_PHYS_VA + page_offset;
     memcpy((void *)virtual_dest, virtual_src, len);
+
+    mutex_unlock(&first_free_frame_mutex);
 }
 
 uint32_t *get_kern_page_dir(void) {
