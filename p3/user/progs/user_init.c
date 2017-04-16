@@ -4,10 +4,8 @@
 
 int main() {
     int pid, exitstatus;
-    char test[] = "my_exec_and_fork";
-    /*
-    char test[] = "my_fork_test";
     char test[] = "actual_wait";
+    /*
     char test[] = "wild_test1";
     char test[] = "remove_pages_test2";
     char test[] = "cho";
