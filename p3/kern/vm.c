@@ -15,7 +15,7 @@
 
 #include "vm.h"
 #include "vm_internal.h"
-#include "utils/mutex.h"
+#include "utils/kern_mutex.h"
 #include "asm_page_inval.h"
 
 //######## DEBUG
@@ -25,10 +25,10 @@ static uint32_t *kern_page_dir;
 static uint32_t zfod_frame;
 
 static int num_free_frames;
-static mutex_t num_free_frames_mutex;
+static kern_mutex_t num_free_frames_mutex;
 
 static uint32_t first_free_frame;
-static mutex_t first_free_frame_mutex;
+static kern_mutex_t first_free_frame_mutex;
 
 void printf_phy_frame(int i, int j, uint32_t *page_dir);
 
@@ -63,7 +63,7 @@ void vm_init() {
     set_cr4(get_cr4() | CR4_PGE);
 
     int machine_frames = machine_phys_frames();
-    mutex_init(&first_free_frame_mutex);
+    kern_mutex_init(&first_free_frame_mutex);
     first_free_frame = frame;
     num_free_frames = machine_frames - NUM_KERN_PAGES - 1;
 
@@ -115,7 +115,7 @@ void set_pte(uint32_t addr, uint32_t frame_addr, int flags) {
 
 uint32_t get_frame() {
     // TODO make sure never called unless have free frames
-    mutex_lock(&first_free_frame_mutex);
+    kern_mutex_lock(&first_free_frame_mutex);
     uint32_t frame = first_free_frame;
     assert(frame != 0);
 
@@ -124,33 +124,33 @@ uint32_t get_frame() {
     // TODO
 
     memset((void *)RW_PHYS_VA, 0, PAGE_SIZE);
-    mutex_unlock(&first_free_frame_mutex);
+    kern_mutex_unlock(&first_free_frame_mutex);
     return frame;
 }
 
 void free_frame(uint32_t frame) {
-    mutex_lock(&first_free_frame_mutex);
+    kern_mutex_lock(&first_free_frame_mutex);
     access_physical(frame);
 
     // TODO mutex locking
     *((uint32_t *)RW_PHYS_VA) = first_free_frame;
     first_free_frame = frame;
-    mutex_unlock(&first_free_frame_mutex);
+    kern_mutex_unlock(&first_free_frame_mutex);
 }
 
 int dec_num_free_frames(int n) {
     int ret = 0;
-    mutex_lock(&num_free_frames_mutex);
+    kern_mutex_lock(&num_free_frames_mutex);
     if (num_free_frames < n) ret = -1;
     else num_free_frames -= n;
-    mutex_unlock(&num_free_frames_mutex);
+    kern_mutex_unlock(&num_free_frames_mutex);
     return ret;
 }
 
 void inc_num_free_frames(int n) {
-    mutex_lock(&num_free_frames_mutex);
+    kern_mutex_lock(&num_free_frames_mutex);
     num_free_frames += n;
-    mutex_unlock(&num_free_frames_mutex);
+    kern_mutex_unlock(&num_free_frames_mutex);
 }
 
 uint32_t *page_dir_init() {
@@ -255,7 +255,7 @@ void access_physical(uint32_t addr) {
 
 void read_physical(void *virtual_dest, uint32_t phys_src, uint32_t n) {
     // TODO
-    mutex_lock(&first_free_frame_mutex);
+    kern_mutex_lock(&first_free_frame_mutex);
 
     access_physical(phys_src);
     uint32_t page_offset = phys_src & ~PAGE_ALIGN_MASK;
@@ -267,12 +267,12 @@ void read_physical(void *virtual_dest, uint32_t phys_src, uint32_t n) {
     uint32_t virtual_src = RW_PHYS_VA + page_offset;
     memcpy(virtual_dest, (void *)virtual_src, len);
 
-    mutex_unlock(&first_free_frame_mutex);
+    kern_mutex_unlock(&first_free_frame_mutex);
 }
 
 void write_physical(uint32_t phys_dest, void *virtual_src, uint32_t n) {
     // TODO
-    mutex_lock(&first_free_frame_mutex);
+    kern_mutex_lock(&first_free_frame_mutex);
 
     access_physical(phys_dest);
     uint32_t page_offset = (uint32_t)virtual_src & ~PAGE_ALIGN_MASK;
@@ -284,7 +284,7 @@ void write_physical(uint32_t phys_dest, void *virtual_src, uint32_t n) {
     uint32_t virtual_dest = RW_PHYS_VA + page_offset;
     memcpy((void *)virtual_dest, virtual_src, len);
 
-    mutex_unlock(&first_free_frame_mutex);
+    kern_mutex_unlock(&first_free_frame_mutex);
 }
 
 uint32_t *get_kern_page_dir(void) {

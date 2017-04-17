@@ -52,8 +52,6 @@ void remove_node(list_t *list, node_t *node);
  */
 void delete_node(list_t *list, node_t *node);
 
-void unlink_node(list_t *list, node_t *node);
-
 /**
  * Get the first node's in the list(not the head node)
  * @param  list the pointer to the list

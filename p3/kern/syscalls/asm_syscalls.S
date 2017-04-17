@@ -1,22 +1,36 @@
 /** asm_syscalls.S
  *
  */
+#include <x86/seg.h>
 
 #define WRAP_SYSCALL(wrapper_name, syscall) ;\
 wrapper_name: ;\
-    push    %ebx ;\
-    push    %ecx ;\
-    push    %edx ;\
-    push    %esi ;\
-    push    %edi ;\
-    push    %ebp ;\
+    pushl    %ebx ;\
+    pushl    %ecx ;\
+    pushl    %edx ;\
+    pushl    %esi ;\
+    pushl    %edi ;\
+    pushl    %ebp ;\
+    pushl   %ds ;\
+    pushl   %es ;\
+    pushl   %fs ;\
+    pushl   %gs ;\
+    movl    $SEGSEL_USER_DS, %eax ;\
+    movl    %eax, %ds ;\
+    movl    %eax, %es ;\
+    movl    %eax, %fs ;\
+    movl    %eax, %gs ;\
     call    syscall ;\
-    pop     %ebp ;\
-    pop     %edi ;\
-    pop     %esi ;\
-    pop     %edx ;\
-    pop     %ecx ;\
-    pop     %ebx ;\
+    popl    %gs ;\
+    popl    %fs ;\
+    popl    %es ;\
+    popl    %ds ;\
+    popl     %ebp ;\
+    popl     %edi ;\
+    popl     %esi ;\
+    popl     %edx ;\
+    popl     %ecx ;\
+    popl     %ebx ;\
     iret ;\
 
 .global asm_fork

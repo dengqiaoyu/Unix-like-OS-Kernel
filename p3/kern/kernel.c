@@ -34,7 +34,7 @@
 #include "drivers/keyboard_driver.h"
 
 // will need to find a better way to do this eventually
-extern mutex_t malloc_mutex;
+extern kern_mutex_t malloc_mutex;
 
 extern thread_t *idle_thread;
 extern thread_t *init_thread;
@@ -82,7 +82,7 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     id_counter_init();
 
     // TODO find a better way to init mutexes
-    mutex_init(&malloc_mutex);
+    kern_mutex_init(&malloc_mutex);
     kb_buf_init();
     tcb_hashtab_init();
 

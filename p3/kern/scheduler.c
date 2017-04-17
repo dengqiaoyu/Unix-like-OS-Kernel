@@ -9,7 +9,7 @@
 #include "asm_kern_to_user.h" /* kern_to_user */
 #include "asm_context_switch.h"
 #include "drivers/timer_driver.h" /* get_num_ticks */
-#include "utils/mutex.h"
+#include "utils/kern_mutex.h"
 
 extern thread_t *idle_thread;
 
@@ -113,6 +113,12 @@ void sche_push_back(thread_t *tcb_ptr) {
 
 void sche_push_front(thread_t *tcb_ptr) {
     sche_node_t *sche_node = TCB_TO_SCHE_NODE(tcb_ptr);
+    add_node_to_head(sche_list.active_list, sche_node);
+}
+
+void sche_move_front(thread_t *tcb_ptr) {
+    sche_node_t *sche_node = TCB_TO_SCHE_NODE(tcb_ptr);
+    remove_node(sche_list.active_list, sche_node);
     add_node_to_head(sche_list.active_list, sche_node);
 }
 

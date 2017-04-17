@@ -30,29 +30,22 @@
 
 void timer_callback(unsigned int num_ticks);
 
-void pf_handler() {
+void pf_handler(int error_code) {
     uint32_t pf_addr = get_cr2();
     uint32_t pte = get_pte(pf_addr);
-
-    // TODO handle other cases
-    // if ((pte & PAGE_ALIGN_MASK) == get_zfod_frame()) {
-    //     asm_page_inval((void *)pf_addr);
-    //     uint32_t frame_addr = get_frame();
-    //     set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
-    // } else if (!(pte & PTE_PRESENT)) {
-    //     MAGIC_BREAK;
-    //     uint32_t frame_addr = get_frame();
-    //     set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
-    // } else {
-    //     kern_vanish();
-    //     roll_over();
-    // }
+    lprintf("error_code: %d", error_code);
 
     if ((pte & PAGE_ALIGN_MASK) == get_zfod_frame()) {
         asm_page_inval((void *)pf_addr);
         uint32_t frame_addr = get_frame();
         set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
     } else {
+        thread_t *tcb_ptr = get_cur_tcb();
+        task_t *cur_task_ptr = tcb_ptr->task;
+        kern_mutex_lock(&(cur_task_ptr->thread_list_mutex));
+        int live_threads = get_list_size(cur_task_ptr->live_thread_list);
+        kern_mutex_unlock(&(cur_task_ptr->thread_list_mutex));
+        if (live_threads == 1) cur_task_ptr->status = -2;
         kern_vanish();
     }
 

@@ -1,7 +1,7 @@
 #ifndef _TCB_HASHTAB_H_
 #define _TCB_HASHTAB_H_
 
-#include "utils/mutex.h"
+#include "utils/kern_mutex.h"
 #include "utils/list.h"
 #include "task.h"
 
@@ -10,7 +10,7 @@
 
 typedef struct tcb_hashtab {
     list_t *tcb_list[HASH_LEN];
-    mutex_t mutex[HASH_LEN];
+    kern_mutex_t mutex[HASH_LEN];
 } tcb_hashtab_t;
 
 int tcb_hashtab_init();

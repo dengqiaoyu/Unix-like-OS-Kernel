@@ -116,7 +116,7 @@ KERNEL_OBJS = console.o kernel.o handlers.o task.o vm.o scheduler.o\
 	      drivers/asm_interrupts.o\
 	      \
 	      utils/kern_cond.o utils/kern_sem.o utils/list.o utils/loader.o\
-	      utils/malloc_wrappers.o utils/maps.o utils/mutex.o\
+	      utils/malloc_wrappers.o utils/maps.o utils/kern_mutex.o\
 	      utils/tcb_hashtab.o\
 	      \
 	      syscalls/asm_life_cycle.o syscalls/asm_syscalls.o\
