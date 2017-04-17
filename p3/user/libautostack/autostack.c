@@ -6,24 +6,24 @@
 
 static swexn_handler_t autostack_handler = autostack;
 static swexn_handler_t vanish_gracefully_handler = vanish_gracefully;
-static excepetion_stack_info_t global_excepetion_stack_info = {0};
-static char exeception_stack_bottom[EXECEPTION_STACK_SIZE + WORD_SIZE] = {0};
+// static excepetion_stack_info_t global_excepetion_stack_info = {0};
+// static char exeception_stack_bottom[EXECEPTION_STACK_SIZE + WORD_SIZE] = {0};
 
 void
 install_autostack(void *stack_high, void *stack_low) {
-    excepetion_stack_info_t *excepetion_stack_info =
-        &global_excepetion_stack_info;
-    excepetion_stack_info->exeception_stack_bottom = exeception_stack_bottom;
-    excepetion_stack_info->esp3 =
-        excepetion_stack_info->exeception_stack_bottom
-        + INITIAL_STACK_SIZE + WORD_SIZE - 1;
-    excepetion_stack_info->stack_low = stack_low;
-    excepetion_stack_info->stack_high = stack_high;
+    // excepetion_stack_info_t *excepetion_stack_info =
+    //     &global_excepetion_stack_info;
+    // excepetion_stack_info->exeception_stack_bottom = exeception_stack_bottom;
+    // excepetion_stack_info->esp3 =
+    //     excepetion_stack_info->exeception_stack_bottom
+    //     + INITIAL_STACK_SIZE + WORD_SIZE - 1;
+    // excepetion_stack_info->stack_low = stack_low;
+    // excepetion_stack_info->stack_high = stack_high;
 
-    swexn(excepetion_stack_info->esp3,
-          autostack_handler,
-          excepetion_stack_info,
-          NULL);
+    // swexn(excepetion_stack_info->esp3,
+    //       autostack_handler,
+    //       excepetion_stack_info,
+    //       NULL);
 }
 
 void autostack(void *arg, ureg_t *ureg) {
