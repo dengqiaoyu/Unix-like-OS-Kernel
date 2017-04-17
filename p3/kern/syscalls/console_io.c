@@ -7,11 +7,13 @@
 #include "syscalls/syscalls.h"
 #include "drivers/keyboard_driver.h"
 #include "vm.h"
-#include "utils/mutex.h"
+#include "utils/kern_mutex.h"
 #include "utils/kern_cond.h"
 #include "utils/kern_sem.h"
 
+
 extern keyboard_buffer_t kb_buf;
+kern_mutex_t print_mutex;
 
 int kern_readline(void) {
     uint32_t *esi = (uint32_t *)asm_get_esi();
@@ -23,7 +25,7 @@ int kern_readline(void) {
     if (ret < 0) return -1;
 
     kern_sem_wait(&kb_buf.readline_sem);
-    mutex_lock(&kb_buf.mutex);
+    kern_mutex_lock(&kb_buf.mutex);
     disable_interrupts();
     if (kb_buf.newline_cnt == 0) {
         int kb_buf_ending = kb_buf.buf_ending;
@@ -43,7 +45,7 @@ int kern_readline(void) {
         kb_buf.is_waiting = 0;
     }
     int kb_buf_ending = kb_buf.buf_ending;
-    mutex_unlock(&kb_buf.mutex);
+    kern_mutex_unlock(&kb_buf.mutex);
     int actual_len = 0;
     while (kb_buf.buf_start < kb_buf_ending) {
         int new_kb_buf_start = (kb_buf.buf_start + 1) % KB_BUF_LEN;
@@ -54,9 +56,9 @@ int kern_readline(void) {
         if (ch == '\n') {
             if (actual_len < len) buf[actual_len] = '\0';
             if (actual_len == len) buf[actual_len - 1] = '\0';
-            mutex_lock(&kb_buf.mutex);
+            kern_mutex_lock(&kb_buf.mutex);
             kb_buf.newline_cnt--;
-            mutex_unlock(&kb_buf.mutex);
+            kern_mutex_unlock(&kb_buf.mutex);
             break;
         }
         if (actual_len == len - 1) {
@@ -65,14 +67,10 @@ int kern_readline(void) {
         }
     }
     kern_sem_signal(&kb_buf.readline_sem);
-
-    return 0;
+    return actual_len;
 }
 
 int kern_print(void) {
-    // TODO DEBUG
-    return 0;
-
     uint32_t *esi = (uint32_t *)asm_get_esi();
     int len = (int)(*esi);
     char *buf = (char *)(*(esi + 1));
@@ -82,7 +80,9 @@ int kern_print(void) {
     int ret = validate_user_mem((uint32_t)buf, len, MAP_USER);
     if (ret < 0) return -1;
 
+    kern_mutex_lock(&print_mutex);
     putbytes(buf, len);
+    kern_mutex_unlock(&print_mutex);
     return 0;
 }
 

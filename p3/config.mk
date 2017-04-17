@@ -39,6 +39,7 @@ UPDATE_METHOD = afs
 	   wait_getpid fork_exit_bomb fork_wait_bomb sleep_test1 actual_wait\
 	   exec_nonexist print_basic remove_pages_test1 remove_pages_test2\
 	   yield_desc_mkrun deschedule_hang readline_basic halt_test\
+	   make_crash_helper make_crash\
 	   swexn_basic_test swexn_cookie_monster swexn_dispatch swexn_regs\
 	   swexn_stands_for_swextensible swexn_uninstall_test\
 	   \
@@ -53,6 +54,8 @@ UPDATE_METHOD = afs
 # directory.
 #
 STUDENTTESTS = my_fork_test my_maker_deschedule my_cond_sem_test my_readline\
+			   my_make_crash my_exec_and_fork my_exec_and_fork_helper\
+			   my_memory_permission my_print_test
 
 ###########################################################################
 # Data files provided by course staff to build into the RAM disk
@@ -116,7 +119,7 @@ KERNEL_OBJS = console.o kernel.o handlers.o task.o vm.o scheduler.o\
 	      drivers/asm_interrupts.o\
 	      \
 	      utils/kern_cond.o utils/kern_sem.o utils/list.o utils/loader.o\
-	      utils/malloc_wrappers.o utils/maps.o utils/mutex.o\
+	      utils/malloc_wrappers.o utils/maps.o utils/kern_mutex.o\
 	      utils/tcb_hashtab.o\
 	      \
 	      syscalls/asm_life_cycle.o syscalls/asm_syscalls.o\

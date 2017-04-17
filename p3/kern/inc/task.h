@@ -11,7 +11,7 @@
 #include <syscall.h>
 
 #include "utils/list.h"
-#include "utils/mutex.h"
+#include "utils/kern_mutex.h"
 #include "utils/maps.h"
 
 #define KERN_STACK_SIZE 0x1000
@@ -37,16 +37,16 @@ typedef struct task {
 
     list_t *live_thread_list;
     list_t *zombie_thread_list;
-    mutex_t thread_list_mutex;
+    kern_mutex_t thread_list_mutex;
 
     list_t *child_task_list;
-    mutex_t child_task_list_mutex;
+    kern_mutex_t child_task_list_mutex;
 
     list_t *zombie_task_list;
     list_t *waiting_thread_list;
 
-    mutex_t wait_mutex;
-    mutex_t vanish_mutex;
+    kern_mutex_t wait_mutex;
+    kern_mutex_t vanish_mutex;
     struct task *parent_task;
 } task_t;
 

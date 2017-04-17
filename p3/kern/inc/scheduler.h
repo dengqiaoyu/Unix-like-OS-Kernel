@@ -1,7 +1,7 @@
 #ifndef __H_SCHEDULER__
 #define __H_SCHEDULER__
 
-#include "utils/mutex.h"
+#include "utils/kern_mutex.h"
 #include "utils/list.h"
 #include "task.h"
 
@@ -37,6 +37,8 @@ thread_t *get_cur_tcb();
 void sche_push_back(thread_t *tcb_ptr);
 
 void sche_push_front(thread_t *tcb_ptr);
+
+void sche_move_front(thread_t *tcb_ptr);
 
 void tranquilize(sleep_node_t *sleep_node);
 

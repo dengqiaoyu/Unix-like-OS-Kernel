@@ -1,13 +1,13 @@
 #ifndef _KERN_SEM_H_
 #define _KERN_SEM_H_
 
-#include "utils/mutex.h"
+#include "utils/kern_mutex.h"
 #include "utils/kern_cond.h"
 
 typedef struct kern_sem {
     char is_active;
     int count;
-    mutex_t mutex;
+    kern_mutex_t mutex;
     kern_cond_t cond;
 } kern_sem_t;
 

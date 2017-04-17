@@ -1,6 +1,7 @@
 /** asm_syscalls.S
  *
  */
+#include <x86/seg.h>
 
 #include <x86/seg.h>
 

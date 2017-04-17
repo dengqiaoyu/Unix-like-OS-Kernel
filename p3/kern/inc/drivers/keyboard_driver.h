@@ -9,7 +9,7 @@
 #ifndef H_KEYBOARD_DRIVER
 #define H_KEYBOARD_DRIVER
 
-#include "utils/mutex.h"
+#include "utils/kern_mutex.h"
 #include "utils/kern_cond.h"
 #include "utils/kern_sem.h"
 
@@ -21,14 +21,14 @@ typedef struct keyboard_buffer {
     int buf_ending;
     int newline_cnt;
     int is_waiting;
-    mutex_t mutex;
+    kern_mutex_t mutex;
     kern_cond_t cond;
     kern_sem_t readline_sem;
 } keyboard_buffer_t;
 
 /* function declarations */
 
-int kb_buf_init();
+int keyboard_init();
 
 /**
  * @brief Read from keyboard port and put it into a buffer for further handling.

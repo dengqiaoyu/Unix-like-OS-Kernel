@@ -1,11 +1,7 @@
 /** @file kernel.c
  *  @brief An initial kernel.c
- *
- *  You should initialize things in kernel_main(),
- *  and then run stuff.
- *
- *  @author Harry Q. Bovik (hqbovik)
- *  @author Fred Hacker (fhacker)
+ *  @author Newton Xie (ncx)
+ *  @author Qiaoyu Deng (qdeng)
  *  @bug No known bugs.
  */
 
@@ -13,57 +9,38 @@
 
 /* libc includes. */
 #include <stdio.h>
-#include <simics.h>                 /* lprintf() */
-#include <console.h>
+#include <page.h>                       /* PAGE_SIZE */
+#include <simics.h>                     /* lprintf() */
+#include <console.h>                    /* clear_console */
 
 /* multiboot header file */
-#include <multiboot.h>              /* boot_info */
+#include <multiboot.h>                  /* boot_info */
 
 /* x86 specific includes */
-#include <x86/asm.h>                /* enable_interrupts() */
+#include <x86/asm.h>                    /* enable_interrupts() */
 #include <x86/cr.h>
 #include <x86/eflags.h>
 
-#include "handlers.h"
-#include "vm.h"
-#include "task.h"
-#include "asm_kern_to_user.h"
-#include "scheduler.h"
-#include "utils/tcb_hashtab.h"
-#include "drivers/keyboard_driver.h"
+#include "handlers.h"                   /* handler_init */
+#include "vm.h"                         /* vm_init */
+#include "task.h"                       /* task_init, thread_init */
+#include "asm_kern_to_user.h"           /* kern_to_user */
+#include "scheduler.h"                  /* scheduler_init */
+#include "utils/tcb_hashtab.h"          /* tcb_hashtab_init */
+#include "drivers/keyboard_driver.h"    /* keyboard_init */
 
 // will need to find a better way to do this eventually
-extern mutex_t malloc_mutex;
+extern kern_mutex_t malloc_mutex;
+extern kern_mutex_t print_mutex;
 
 extern thread_t *idle_thread;
 extern thread_t *init_thread;
 
-thread_t *setup_task(const char *fname) {
-    task_t *task = task_init();
-    thread_t *thread = thread_init();
-    thread->task = task;
-    add_node_to_head(task->live_thread_list, TCB_TO_LIST_NODE(thread));
-    thread->status = INITIALIZED;
+/* internal functions */
+void mutexes_init();
+void helper_init();
+thread_t *setup_task(const char *fname);
 
-    task->task_id = thread->tid;
-    task->parent_task = NULL;
-
-    // TODO can we macro these better?
-    maps_insert(task->maps, 0, PAGE_SIZE * NUM_KERN_PAGES - 1, 0);
-    maps_insert(task->maps, RW_PHYS_VA, RW_PHYS_VA + (PAGE_SIZE - 1), 0);
-
-    simple_elf_t elf_header;
-    elf_load_helper(&elf_header, fname);
-    thread->ip = elf_header.e_entry;
-
-    // register new task for simics symbolic debugging
-    sim_reg_process(task->page_dir, fname);
-
-    set_cr3((uint32_t)task->page_dir);
-    load_program(&elf_header, task->maps);
-
-    return thread;
-}
 
 /** @brief Kernel entrypoint.
  *
@@ -72,21 +49,26 @@ thread_t *setup_task(const char *fname) {
  * @return Does not return
  */
 int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
-    lprintf( "Hello from a brand new kernel!" );
+    /* clear the messy console after booting */
     clear_console();
 
+    /* install exception handler, device driver and all of syscalls */
     handler_init();
+    /* set up kernel page directory, and set up physical memory allocator */
     vm_init();
+    /* initialize basic mutexes that are need before kernel start running */
+    mutexes_init();
+    /* initialize scheduler's list */
     scheduler_init();
-    id_counter_init();
+    /* set up keyboard input buffer */
+    keyboard_init();
+    /* set up other essentials like tcb table, tid counter */
+    helper_init();
 
-    // TODO find a better way to init mutexes
-    mutex_init(&malloc_mutex);
-    kb_buf_init();
-    tcb_hashtab_init();
-
+    /* set up an idle task for thread to switch when there is no more thread */
     idle_thread = setup_task("idle");
 
+    /* step up the first real task running */
     init_thread = setup_task("user_init");
     set_cur_run_thread(init_thread);
     set_esp0(init_thread->kern_sp);
@@ -98,4 +80,55 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     }
 
     return 0;
+}
+
+/**
+ * Initialize malloc mutex making it thread safe, and print_mutex to prevent
+ * interleaving.
+ */
+void mutexes_init() {
+    kern_mutex_init(&malloc_mutex);
+    kern_mutex_init(&print_mutex);
+}
+
+/**
+ * helper function initialization
+ */
+void helper_init() {
+    /* initialize tcb hash table that is used to search tcb according tid */
+    tcb_hashtab_init();
+    /* initialize tid counter */
+    id_counter_init();
+}
+
+thread_t *setup_task(const char *fname) {
+    task_t *task = task_init();
+    thread_t *thread = thread_init();
+    thread->task = task;
+    /* add thread into task's living thread list */
+    add_node_to_head(task->live_thread_list, TCB_TO_LIST_NODE(thread));
+    thread->status = INITIALIZED;
+
+    task->task_id = thread->tid;
+    task->parent_task = NULL;
+
+    // TODO can we macro these better?
+    /* validate the memory map for the kernel memory, 16MB */
+    maps_insert(task->maps, 0, PAGE_SIZE * NUM_KERN_PAGES - 1, 0);
+    /* validate the memory map for last page used to access physical frames */
+    maps_insert(task->maps, RW_PHYS_VA, RW_PHYS_VA + (PAGE_SIZE - 1), 0);
+
+    /* load program from memory */
+    simple_elf_t elf_header;
+    elf_load_helper(&elf_header, fname);
+    thread->ip = elf_header.e_entry;
+
+    // register new task for simics symbolic debugging
+    sim_reg_process(task->page_dir, fname);
+
+    /* set page directory for loading program data */
+    set_cr3((uint32_t)task->page_dir);
+    load_program(&elf_header, task->maps);
+
+    return thread;
 }

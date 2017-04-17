@@ -31,14 +31,12 @@ int _process_keypress(uint8_t keypress);
 
 keyboard_buffer_t kb_buf;
 
-int kb_buf_init() {
+int keyboard_init() {
     kb_buf.buf_start = 0;
     kb_buf.buf_ending = 0;
     kb_buf.newline_cnt = 0;
     kb_buf.is_waiting = 0;
-    lprintf("before mutex_init");
-    mutex_init(&kb_buf.mutex);
-    lprintf("pass mutex_init");
+    kern_mutex_init(&kb_buf.mutex);
     kern_cond_init(&kb_buf.cond);
     kern_sem_init(&kb_buf.readline_sem, 1);
     return 0;
@@ -95,7 +93,7 @@ void add_to_kb_buf(void) {
     /* DEBUG use */
     outb(INT_ACK_CURRENT, INT_CTL_PORT);
 
-    mutex_lock(&kb_buf.mutex);
+    kern_mutex_lock(&kb_buf.mutex);
     if (kb_buf.is_waiting) {
         putbyte(ch);
     }
@@ -103,7 +101,7 @@ void add_to_kb_buf(void) {
         kb_buf.newline_cnt++;
         kern_cond_signal(&kb_buf.cond);
     }
-    mutex_unlock(&kb_buf.mutex);
+    kern_mutex_unlock(&kb_buf.mutex);
 }
 
 int _process_keypress(uint8_t keypress) {

@@ -19,19 +19,19 @@
 thread_t *idle_thread;
 thread_t *init_thread;
 
-static int thread_id_counter;
-static mutex_t thread_id_counter_mutex;
+static int thread_id_counter = 0;
+static kern_mutex_t thread_id_counter_mutex;
 
 int id_counter_init() {
     thread_id_counter = 0;
-    int ret = mutex_init(&thread_id_counter_mutex);
+    int ret = kern_mutex_init(&thread_id_counter_mutex);
     return ret;
 }
 
 int gen_thread_id() {
-    mutex_lock(&thread_id_counter_mutex);
+    kern_mutex_lock(&thread_id_counter_mutex);
     int tid = thread_id_counter++;
-    mutex_unlock(&thread_id_counter_mutex);
+    kern_mutex_unlock(&thread_id_counter_mutex);
     return tid;
 }
 
@@ -168,29 +168,29 @@ void task_lists_destroy(task_t *task) {
 int task_mutexes_init(task_t *task) {
     int ret;
 
-    ret = mutex_init(&(task->thread_list_mutex));
+    ret = kern_mutex_init(&(task->thread_list_mutex));
     if (ret < 0) {
         return -1;
     }
 
-    ret = mutex_init(&(task->child_task_list_mutex));
+    ret = kern_mutex_init(&(task->child_task_list_mutex));
     if (ret < 0) {
-        mutex_destroy(&(task->thread_list_mutex));
+        kern_mutex_destroy(&(task->thread_list_mutex));
         return -1;
     }
 
-    ret = mutex_init(&(task->wait_mutex));
+    ret = kern_mutex_init(&(task->wait_mutex));
     if (ret < 0) {
-        mutex_destroy(&(task->thread_list_mutex));
-        mutex_destroy(&(task->child_task_list_mutex));
+        kern_mutex_destroy(&(task->thread_list_mutex));
+        kern_mutex_destroy(&(task->child_task_list_mutex));
         return -1;
     }
 
-    ret = mutex_init(&(task->vanish_mutex));
+    ret = kern_mutex_init(&(task->vanish_mutex));
     if (ret < 0) {
-        mutex_destroy(&(task->thread_list_mutex));
-        mutex_destroy(&(task->child_task_list_mutex));
-        mutex_destroy(&(task->wait_mutex));
+        kern_mutex_destroy(&(task->thread_list_mutex));
+        kern_mutex_destroy(&(task->child_task_list_mutex));
+        kern_mutex_destroy(&(task->wait_mutex));
         return -1;
     }
 
@@ -198,10 +198,10 @@ int task_mutexes_init(task_t *task) {
 }
 
 void task_mutexes_destroy(task_t *task) {
-    mutex_destroy(&(task->thread_list_mutex));
-    mutex_destroy(&(task->child_task_list_mutex));
-    mutex_destroy(&(task->wait_mutex));
-    mutex_destroy(&(task->vanish_mutex));
+    kern_mutex_destroy(&(task->thread_list_mutex));
+    kern_mutex_destroy(&(task->child_task_list_mutex));
+    kern_mutex_destroy(&(task->wait_mutex));
+    kern_mutex_destroy(&(task->vanish_mutex));
 }
 
 // leaves task pointer and status to be set outside
@@ -211,8 +211,7 @@ thread_t *thread_init() {
     sche_node_t *sche_node = malloc(size);
 
     if (sche_node == NULL) {
-        // TODO error handling
-        lprintf("f4");
+        lprintf("malloc() failed in thread_init at line %d", __LINE__);
         return NULL;
     }
 
@@ -223,12 +222,12 @@ thread_t *thread_init() {
     // void *kern_stack = malloc(KERN_STACK_SIZE);
     void *kern_stack = smemalign(KERN_STACK_SIZE, KERN_STACK_SIZE);
     if (kern_stack == NULL) {
-        lprintf("f5");
-        // allocator_free(sche_node);
+        lprintf("smemalign() failed in thread_init at line %d", __LINE__);
         free(sche_node);
         return NULL;
     }
     thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
+    lprintf("kern_sp: %p", (void *)thread->kern_sp);
     thread->cur_sp = USER_STACK_START;
 
     tcb_hashtab_put(thread);
@@ -395,7 +394,6 @@ int load_elf_section(const char *fname, unsigned long start, unsigned long len,
             if (dec_num_free_frames(1) < 0) {
                 return -1;
             }
-
             uint32_t frame_addr = get_frame();
             set_pte(addr, frame_addr, pte_flags);
         }
@@ -413,36 +411,36 @@ int load_elf_section(const char *fname, unsigned long start, unsigned long len,
 void orphan_children(task_t *task) {
     task_t *init_task = init_thread->task;
 
-    mutex_lock(&(task->child_task_list_mutex));
+    kern_mutex_lock(&(task->child_task_list_mutex));
     node_t *child_node = (node_t *)get_first_node(task->child_task_list);
-    mutex_unlock(&(task->child_task_list_mutex));
+    kern_mutex_unlock(&(task->child_task_list_mutex));
 
     while (child_node != NULL) {
         task_t *child = LIST_NODE_TO_TASK(child_node);
-        mutex_lock(&(child->vanish_mutex));
+        kern_mutex_lock(&(child->vanish_mutex));
 
-        mutex_lock(&(child->thread_list_mutex));
+        kern_mutex_lock(&(child->thread_list_mutex));
         int live_threads = get_list_size(child->live_thread_list);
-        mutex_unlock(&(child->thread_list_mutex));
+        kern_mutex_unlock(&(child->thread_list_mutex));
         /*
          * live_threads can only be 0 if the task vanished on its own in the
          * time between when we (a) found it in the child task list and (b)
          * locked its vanish mutex. it only unlocked the vanish mutex after
          * moving itself to the zombie task list, so we can orphan it later.
          */
-        mutex_lock(&(task->child_task_list_mutex));
+        kern_mutex_lock(&(task->child_task_list_mutex));
         if (live_threads > 0) {
             remove_node(task->child_task_list, child_node);
 
             child->parent_task = init_task;
-            mutex_lock(&(init_task->child_task_list_mutex));
+            kern_mutex_lock(&(init_task->child_task_list_mutex));
             add_node_to_tail(init_task->child_task_list, child_node);
-            mutex_unlock(&(init_task->child_task_list_mutex));
+            kern_mutex_unlock(&(init_task->child_task_list_mutex));
         }
-        mutex_unlock(&(child->vanish_mutex));
+        kern_mutex_unlock(&(child->vanish_mutex));
 
         child_node = get_first_node(task->child_task_list);
-        mutex_unlock(&(task->child_task_list_mutex));
+        kern_mutex_unlock(&(task->child_task_list_mutex));
     }
 }
 
@@ -457,11 +455,11 @@ void orphan_zombies(task_t *task) {
      */
     while (get_list_size(task->zombie_task_list) > 0) {
         zombie_node = pop_first_node(task->zombie_task_list);
-        mutex_lock(&(init_task->wait_mutex));
+        kern_mutex_lock(&(init_task->wait_mutex));
 
         if (get_list_size(init_task->waiting_thread_list) > 0) {
             node_t *node = pop_first_node(init_task->waiting_thread_list);
-            mutex_unlock(&(init_task->wait_mutex));
+            kern_mutex_unlock(&(init_task->wait_mutex));
 
             wait_node_t *waiter = (wait_node_t *)node;
             waiter->zombie = LIST_NODE_TO_TASK(zombie_node);
@@ -480,7 +478,7 @@ void orphan_zombies(task_t *task) {
             }
 
             add_node_to_tail(init_task->zombie_task_list, zombie_node);
-            mutex_unlock(&(init_task->wait_mutex));
+            kern_mutex_unlock(&(init_task->wait_mutex));
         }
     }
 }

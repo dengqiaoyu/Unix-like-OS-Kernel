@@ -44,6 +44,13 @@ void exn_handler(int cause, int ec_flag) {
     thread_t *thread = get_cur_tcb();
 
     if (thread->swexn_handler == NULL) {
+        task_t *task = thread->task;
+
+        kern_mutex_lock(&(task->thread_list_mutex));
+        int live_threads = get_list_size(task->live_thread_list);
+        if (live_threads == 1) task->status = -2;
+        kern_mutex_unlock(&(task->thread_list_mutex));
+
         kern_vanish();
         // should never reach here
         return;
