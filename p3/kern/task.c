@@ -7,7 +7,6 @@
 #include <malloc.h>
 #include <string.h>
 #include <simics.h>
-#include <page.h>
 #include <asm.h>            /* disable_interrupts enable_interrupts */
 #include <x86/cr.h>
 
@@ -325,7 +324,7 @@ int load_program(simple_elf_t *header, map_list_t *maps) {
     if (ret < 0) return -1;
     if (header->e_txtlen > 0) {
         high = header->e_txtstart + (header->e_txtlen - 1);
-        maps_insert(maps, header->e_txtstart, high, MAP_USER);
+        maps_insert(maps, header->e_txtstart, high, MAP_USER | MAP_EXECUTE);
     }
 
     lprintf("dat");

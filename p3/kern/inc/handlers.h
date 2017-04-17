@@ -23,13 +23,9 @@ int pack_idt_high(void *offset, int dpl, int size);
 
 int pack_idt_low(int selector, void *offset);
 
-void pf_handler();
-
 void idt_install(int idt_idx,
                  void (*entry)(),
                  int selector,
                  int flag);
-
-void roll_over();
 
 #endif

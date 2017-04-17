@@ -13,7 +13,6 @@
 
 /* libc includes. */
 #include <stdio.h>
-#include <page.h>
 #include <simics.h>                 /* lprintf() */
 #include <console.h>
 

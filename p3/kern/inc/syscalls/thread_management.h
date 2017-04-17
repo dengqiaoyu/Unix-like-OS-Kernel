@@ -11,6 +11,6 @@ int kern_make_runnable(void);
 
 int kern_sleep(void);
 
-// int kern_swexn(void);
+int kern_swexn(void);
 
 #endif

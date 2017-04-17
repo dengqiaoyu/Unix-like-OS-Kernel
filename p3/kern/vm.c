@@ -7,11 +7,11 @@
 #include <malloc.h>
 #include <string.h>
 #include <simics.h>
-#include <page.h>
 #include <string.h>
 #include <common_kern.h>
 #include <x86/cr.h>
 #include <assert.h>
+#include <syscall.h>
 
 #include "vm.h"
 #include "vm_internal.h"

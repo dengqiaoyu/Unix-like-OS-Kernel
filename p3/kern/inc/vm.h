@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 
-#define PAGE_ALIGN_MASK (0xFFFFF000)
+#define PAGE_ALIGN_MASK (~(PAGE_SIZE - 1))
 #define PAGE_FLAG_MASK (~PAGE_ALIGN_MASK)
 
 #define PTE_PRESENT (0x1)

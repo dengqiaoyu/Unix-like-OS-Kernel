@@ -10,7 +10,8 @@
 
 #define MAP_USER 0x1
 #define MAP_WRITE 0x2
-#define MAP_REMOVE 0x4
+#define MAP_EXECUTE 0x4
+#define MAP_REMOVE 0x8
 
 typedef struct map {
     uint32_t low;

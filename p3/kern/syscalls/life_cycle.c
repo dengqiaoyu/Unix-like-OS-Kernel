@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <page.h>                /* PAGE_SIZE */
 #include <cr.h>                  /* set_crX */
 #include <asm.h>                 /* disable_interrupts(), enable_interrupts() */
 

@@ -7,7 +7,6 @@
 #include <simics.h>
 #include <x86/asm.h>
 #include <x86/seg.h>
-#include <x86/page.h>
 #include <x86/cr.h>
 #include <x86/idt.h>
 #include <syscall_int.h>
@@ -19,37 +18,14 @@
 #include "vm.h"
 #include "task.h"
 #include "syscalls/asm_syscalls.h"
-#include "asm_exceptions.h"
+#include "exceptions/asm_exceptions.h"
 #include "drivers/asm_interrupts.h"
 #include "drivers/timer_driver.h"
 #include "drivers/keyboard_driver.h"
 #include "asm_page_inval.h"
 #include "scheduler.h"              /* sche_yield */
 
-
 void timer_callback(unsigned int num_ticks);
-
-void pf_handler() {
-    uint32_t pf_addr = get_cr2();
-    uint32_t pte = get_pte(pf_addr);
-
-    // TODO handle other cases
-    if ((pte & PAGE_ALIGN_MASK) == get_zfod_frame()) {
-        asm_page_inval((void *)pf_addr);
-        uint32_t frame_addr = get_frame();
-        set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
-    } else if (!(pte & PTE_PRESENT)) {
-        lprintf("alarming...");
-        MAGIC_BREAK;
-        uint32_t frame_addr = get_frame();
-        set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
-    } else {
-        lprintf("%x\n", (unsigned int)pf_addr);
-        roll_over();
-    }
-
-    return;
-}
 
 int handler_init() {
     exception_init();
@@ -61,7 +37,8 @@ int handler_init() {
 int exception_init() {
     int kern_cs = SEGSEL_KERNEL_CS;
     int flag = FLAG_TRAP_GATE | FLAG_PL_KERNEL;
-    idt_install(IDT_PF, asm_pf_handler, kern_cs, flag);
+    idt_install(IDT_PF, asm_pagefault, kern_cs, flag);
+    idt_install(IDT_DE, asm_divide, kern_cs, flag);
     return 0;
 }
 
@@ -88,7 +65,7 @@ int syscall_init() {
     idt_install(HALT_INT,           (void *)asm_halt,           kern_cs, flag);
     idt_install(SET_STATUS_INT,     (void *)asm_set_status,     kern_cs, flag);
     idt_install(VANISH_INT,         (void *)asm_vanish,         kern_cs, flag);
-    // idt_install(SWEXN_INT,       (void *)asm_swexn,          kern_cs, flag);
+    idt_install(SWEXN_INT,          (void *)asm_swexn,          kern_cs, flag);
     return 0;
 }
 
@@ -109,11 +86,6 @@ void idt_install(int idt_idx,
     *idt_addr = ((uint32_t)entry & 0x0000ffff) | (selector << 16);
     *(idt_addr + 1) =
         ((uint32_t)entry & 0xffff0000) | ((flag | FLAG_PRESENT) << 8);
-}
-
-void roll_over() {
-    lprintf("feeLs bad man\n");
-    while (1) continue;
 }
 
 /**

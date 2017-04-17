@@ -4,14 +4,12 @@
 
 int main() {
     int pid, exitstatus;
-    char test[] = "actual_wait";
-    /*
-    char test[] = "wild_test1";
-    char test[] = "remove_pages_test2";
     char test[] = "cho";
+    /*
     char test[] = "fork_exit_bomb";
     char test[] = "fork_wait_bomb";
     char test[] = "actual_wait";
+    char test[] = "stack_test1";
     */
     char * args[] = {test, 0};
 

@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <page.h>                /* PAGE_SIZE */
 #include <assert.h>
 
 #include "syscalls/syscalls.h"
@@ -10,8 +9,8 @@
 
 int kern_new_pages(void) {
     uint32_t *esi = (uint32_t *)asm_get_esi();
-    uint32_t base = (uint32_t)(*esi);
-    uint32_t len = (uint32_t)(*(esi + 1));
+    uint32_t base = (*esi);
+    uint32_t len = (*(esi + 1));
 
     if (base & (~PAGE_ALIGN_MASK)) {
         return -1;

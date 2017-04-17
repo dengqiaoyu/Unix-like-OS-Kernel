@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <elf_410.h>
+#include <syscall.h>
 
 #include "utils/list.h"
 #include "utils/mutex.h"
@@ -57,6 +58,10 @@ typedef struct thread {
     uint32_t kern_sp;
     uint32_t cur_sp;
     uint32_t ip;
+
+    void *swexn_sp;
+    swexn_handler_t swexn_handler;
+    void *swexn_arg;
 } thread_t;
 
 // these probably go somewhere else
