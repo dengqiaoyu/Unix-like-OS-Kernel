@@ -31,7 +31,7 @@
 #define NUM_KERN_TABLES 4
 #define NUM_KERN_PAGES 4096
 
-void vm_init();
+int vm_init();
 
 uint32_t get_pte(uint32_t addr);
 

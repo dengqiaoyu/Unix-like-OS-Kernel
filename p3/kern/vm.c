@@ -1,53 +1,72 @@
 /** @file vm.c
+ *  @brief this file contains functions that are used to operate between virtual
+ *         memory and physical frames, and provides helpers to create, copy,
+ *         destroy, read and write memory.
+ *
  *  @author Newton Xie (ncx)
+ *  @author Qiaoyu Deng (qdeng)
  *  @bug No known bugs.
  */
 
+/* libc includes */
 #include <stdlib.h>
-#include <malloc.h>
-#include <string.h>
-#include <simics.h>
-#include <page.h>
-#include <string.h>
-#include <common_kern.h>
-#include <x86/cr.h>
+#include <malloc.h>             /* malloc */
+#include <string.h>             /* memset */
+#include <page.h>               /* PAGE_SIZE */
 #include <assert.h>
+
+/* x86 specific includes */
+#include <x86/cr.h>             /* set_cr3, set_cr4, set_esp0 */
+#include <common_kern.h>        /* machine_phys_frames */
+
+/* DEBUG */
+#include <simics.h>             /* lprintf */
 
 #include "vm.h"
 #include "vm_internal.h"
+#include "asm_page_inval.h"     /* asm_page_inval */
 #include "utils/kern_mutex.h"
-#include "asm_page_inval.h"
 
-//######## DEBUG
+/* DEBUG */
 #define print_line lprintf("line %d", __LINE__)
 
 static uint32_t *kern_page_dir;
+/**
+ * when new_page is called, all the newly allocated vm is point to this frame
+ * until a wrtie operation happen
+ */
 static uint32_t zfod_frame;
 
+/* physical frames allocator */
 static int num_free_frames;
 static kern_mutex_t num_free_frames_mutex;
 
 static uint32_t first_free_frame;
 static kern_mutex_t first_free_frame_mutex;
+/* physical frames allocator */
 
-void printf_phy_frame(int i, int j, uint32_t *page_dir);
 
-void vm_init() {
+/**
+ * Set up kernel virtual memory, set paging and create free physical frames list
+ * which is used to allocate new physical frames.
+ */
+int vm_init() {
     kern_page_dir = smemalign(PAGE_SIZE, PAGE_SIZE);
-    // TODO int return for error handling
-    if (kern_page_dir == NULL) return;
+    if (kern_page_dir == NULL) return -1;
     memset(kern_page_dir, 0, PAGE_SIZE);
 
     uint32_t frame = 0;
     int flags = PTE_WRITE | PTE_PRESENT;
 
+    /* 16MB kernel memory only needs 4(NUM_KERN_TABLES) page table  */
     uint32_t *page_tab_addr;
     int i, j;
     for (i = 0; i < NUM_KERN_TABLES; i++) {
         page_tab_addr = smemalign(PAGE_SIZE, PAGE_SIZE);
-
-        // TODO clear page table
-        if (page_tab_addr == NULL) return;
+        if (page_tab_addr == NULL) {
+            page_dir_clear(kern_page_dir);
+            return -1;
+        }
 
         memset(page_tab_addr, 0, PAGE_SIZE);
         kern_page_dir[i] = (uint32_t)page_tab_addr | flags;
@@ -80,6 +99,8 @@ void vm_init() {
         *((uint32_t *)RW_PHYS_VA) = frame + PAGE_SIZE;
         frame += PAGE_SIZE;
     }
+
+    return 0;
 }
 
 // assumes it's in cr3
@@ -141,6 +162,7 @@ void free_frame(uint32_t frame) {
 int dec_num_free_frames(int n) {
     int ret = 0;
     kern_mutex_lock(&num_free_frames_mutex);
+    lprintf("num_free_frames: %d", num_free_frames);
     if (num_free_frames < n) ret = -1;
     else num_free_frames -= n;
     kern_mutex_unlock(&num_free_frames_mutex);
@@ -149,6 +171,7 @@ int dec_num_free_frames(int n) {
 
 void inc_num_free_frames(int n) {
     kern_mutex_lock(&num_free_frames_mutex);
+    lprintf("return %d frames", n);
     num_free_frames += n;
     kern_mutex_unlock(&num_free_frames_mutex);
 }
@@ -180,11 +203,13 @@ int page_dir_clear(uint32_t *page_dir) {
             if (i == RW_PHYS_PD_INDEX && j == RW_PHYS_PT_INDEX) continue;
             page_tab[j] = 0;
             uint32_t frame = pte & PAGE_ALIGN_MASK;
-            if (frame != zfod_frame) free_frame(frame);
+            if (frame != zfod_frame) {
+                inc_num_free_frames(1);
+                free_frame(frame);
+            }
         }
 
         page_dir[i] = 0;
-        memset(page_tab, 0, PAGE_SIZE);
         sfree(page_tab, PAGE_SIZE);
     }
 
@@ -202,6 +227,7 @@ int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
 
         uint32_t *new_page_tab = smemalign(PAGE_SIZE, PAGE_SIZE);
         if (new_page_tab == NULL) {
+            lprintf("new_page_tab = smemalign fails at line %d", __LINE__);
             if_fail = 1;
             break;
         }
@@ -223,6 +249,7 @@ int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
             // TODO before we get_frame, do we need to decrement num?
             if (dec_num_free_frames(1) < 0) {
                 if_fail = 1;
+                lprintf("dec_num_free_frames fails at line %d", __LINE__);
                 break;
             }
             uint32_t new_physical_frame = get_frame();

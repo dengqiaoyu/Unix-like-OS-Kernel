@@ -33,13 +33,13 @@ void timer_callback(unsigned int num_ticks);
 void pf_handler(int error_code) {
     uint32_t pf_addr = get_cr2();
     uint32_t pte = get_pte(pf_addr);
-    lprintf("error_code: %d", error_code);
 
     if ((pte & PAGE_ALIGN_MASK) == get_zfod_frame()) {
         asm_page_inval((void *)pf_addr);
         uint32_t frame_addr = get_frame();
         set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
     } else {
+        lprintf("page fault: error_code: %d", error_code);
         thread_t *tcb_ptr = get_cur_tcb();
         task_t *cur_task_ptr = tcb_ptr->task;
         kern_mutex_lock(&(cur_task_ptr->thread_list_mutex));
