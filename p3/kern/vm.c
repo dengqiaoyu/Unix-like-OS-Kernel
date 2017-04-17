@@ -14,7 +14,6 @@
 #include <string.h>             /* memset */
 #include <page.h>               /* PAGE_SIZE */
 #include <assert.h>
-#include <syscall.h>
 
 /* x86 specific includes */
 #include <x86/cr.h>             /* set_cr3, set_cr4, set_esp0 */
@@ -163,7 +162,6 @@ void free_frame(uint32_t frame) {
 int dec_num_free_frames(int n) {
     int ret = 0;
     kern_mutex_lock(&num_free_frames_mutex);
-    lprintf("num_free_frames: %d", num_free_frames);
     if (num_free_frames < n) ret = -1;
     else num_free_frames -= n;
     kern_mutex_unlock(&num_free_frames_mutex);
@@ -172,7 +170,6 @@ int dec_num_free_frames(int n) {
 
 void inc_num_free_frames(int n) {
     kern_mutex_lock(&num_free_frames_mutex);
-    lprintf("return %d frames", n);
     num_free_frames += n;
     kern_mutex_unlock(&num_free_frames_mutex);
 }

@@ -389,7 +389,7 @@ int load_program(simple_elf_t *header, map_list_t *maps) {
     int ret;
     uint32_t high;
 
-    lprintf("text");
+    // lprintf("text");
     ret = load_elf_section(header->e_fname,
                            header->e_txtstart,
                            header->e_txtlen,
@@ -401,7 +401,7 @@ int load_program(simple_elf_t *header, map_list_t *maps) {
         maps_insert(maps, header->e_txtstart, high, MAP_USER | MAP_EXECUTE);
     }
 
-    lprintf("dat");
+    // lprintf("dat");
     ret = load_elf_section(header->e_fname,
                            header->e_datstart,
                            header->e_datlen,
@@ -413,7 +413,7 @@ int load_program(simple_elf_t *header, map_list_t *maps) {
         maps_insert(maps, header->e_datstart, high, MAP_USER | MAP_WRITE);
     }
 
-    lprintf("rodat");
+    // lprintf("rodat");
     ret = load_elf_section(header->e_fname,
                            header->e_rodatstart,
                            header->e_rodatlen,
@@ -425,7 +425,7 @@ int load_program(simple_elf_t *header, map_list_t *maps) {
         maps_insert(maps, header->e_rodatstart, high, MAP_USER);
     }
 
-    lprintf("bss");
+    // lprintf("bss");
     ret = load_elf_section(header->e_fname,
                            header->e_bssstart,
                            header->e_bsslen,
@@ -437,7 +437,7 @@ int load_program(simple_elf_t *header, map_list_t *maps) {
         maps_insert(maps, header->e_bssstart, high, MAP_USER | MAP_WRITE);
     }
 
-    lprintf("stack");
+    // lprintf("stack");
     ret = load_elf_section(header->e_fname,
                            USER_STACK_LOW,
                            USER_STACK_SIZE,
@@ -462,9 +462,9 @@ int load_program(simple_elf_t *header, map_list_t *maps) {
  */
 int load_elf_section(const char *fname, unsigned long start, unsigned long len,
                      long offset, int pte_flags) {
-    lprintf("%p", (void *)start);
-    lprintf("%p", (void *)len);
-    lprintf("%p", (void *)offset);
+    // lprintf("%p", (void *)start);
+    // lprintf("%p", (void *)len);
+    // lprintf("%p", (void *)offset);
 
     uint32_t low = (uint32_t)start & PAGE_ALIGN_MASK;
     uint32_t high = (uint32_t)(start + len);

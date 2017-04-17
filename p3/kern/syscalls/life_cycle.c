@@ -163,7 +163,7 @@ int kern_exec(void) {
     char namebuf[64];
     sprintf(namebuf, "%s", execname);
 
-    lprintf("I am thread %d, I am going to execute %s", thread->tid, namebuf );
+    // lprintf("I am thread %d, I am going to execute %s", thread->tid, namebuf );
     simple_elf_t elf_header;
     ret = elf_load_helper(&elf_header, namebuf);
     if (ret < 0) return -1;
