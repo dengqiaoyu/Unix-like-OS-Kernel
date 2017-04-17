@@ -5,5 +5,5 @@
 int main() {
     fork();
     printf("Hi, I am thread %d\n", gettid());
-    while (1) {}
+    return 1;
 }

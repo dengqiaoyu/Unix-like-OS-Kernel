@@ -11,6 +11,7 @@
 #include "utils/kern_cond.h"
 #include "utils/kern_sem.h"
 
+
 extern keyboard_buffer_t kb_buf;
 kern_mutex_t print_mutex;
 
@@ -66,8 +67,7 @@ int kern_readline(void) {
         }
     }
     kern_sem_signal(&kb_buf.readline_sem);
-
-    return 0;
+    return actual_len;
 }
 
 int kern_print(void) {
