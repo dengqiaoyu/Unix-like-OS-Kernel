@@ -44,24 +44,21 @@ int kern_fork(void) {
     ret = page_dir_copy(new_task->page_dir, old_task->page_dir);
     if (ret != 0) {
         lprintf("page_dir_copy() failed in kern_fork at line %d", __LINE__);
-        undo_task_init(new_task);
+        task_destroy(new_task);
         return -1;
     }
 
     ret = maps_copy(old_task->maps, new_task->maps);
     if (ret != 0) {
         lprintf("maps_copy() failed in kern_fork at line %d", __LINE__);
-        undo_page_dir_copy(new_task->page_dir);
-        undo_task_init(new_task);
+        task_destroy(new_task);
         return -1;
     }
 
     thread_t *new_thread = thread_init();
     if (new_thread == NULL) {
         lprintf("thread_init() failed in kern_fork at line %d", __LINE__);
-        undo_maps_copy(old_task->maps);
-        undo_page_dir_copy(new_task->page_dir);
-        undo_task_init(new_task);
+        task_destroy(new_task);
         return -1;
     }
     new_task->task_id = new_thread->tid;
@@ -200,7 +197,10 @@ int kern_exec(void) {
     set_cr3((uint32_t)task->page_dir);
 
     ret = load_program(&elf_header, task->maps);
-    if (ret < 0) return -1;
+    if (ret < 0) {
+        page_dir_clear(task->page_dir);
+        return -1;
+    }
 
     // need macros here badly
     // 5 because ret addr and 4 args
