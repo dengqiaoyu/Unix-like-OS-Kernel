@@ -10,11 +10,12 @@
 /* libc includes. */
 #include <stdlib.h>
 #include <malloc.h>
-#include <page.h>               /* PAGE_SIZE */
 #include <asm.h>                /* disable_interrupts enable_interrupts */
 
 /* DEBUG */
 #include <simics.h>
+#include <asm.h>            /* disable_interrupts enable_interrupts */
+#include <x86/cr.h>
 
 #include "task.h"
 #include "vm.h"                 /* predefines for virtual memory */
@@ -112,11 +113,11 @@ void task_clear(task_t *task) {
      * directory pointer as a flag for whether the task has been cleared
      */
     if (task->page_dir != NULL) {
-        page_dir_clear(task->page_dir);
+        // page_dir_clear(task->page_dir);
         sfree(task->page_dir, PAGE_SIZE);
         task->page_dir = NULL;
 
-        maps_destroy(task->maps);
+        // maps_destroy(task->maps);
         reap_threads(task);
 
         task_lists_destroy(task);
@@ -397,7 +398,7 @@ int load_program(simple_elf_t *header, map_list_t *maps) {
     if (ret < 0) return -1;
     if (header->e_txtlen > 0) {
         high = header->e_txtstart + (header->e_txtlen - 1);
-        maps_insert(maps, header->e_txtstart, high, MAP_USER);
+        maps_insert(maps, header->e_txtstart, high, MAP_USER | MAP_EXECUTE);
     }
 
     lprintf("dat");

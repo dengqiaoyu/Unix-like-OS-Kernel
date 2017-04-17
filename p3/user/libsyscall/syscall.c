@@ -23,22 +23,9 @@
 #include <syscall.h>
 #include <simics.h>
 
-int swexn(void *esp3, swexn_handler_t eip, void *arg, ureg_t *newureg) {
-    return -1;
-}
-
 int getchar(void) {
     return -1;
 }
-
-// int readline(int size, char *buf) {
-//     return -1;
-// }
-
-// void halt(void) {
-//     while (1)
-//         continue;
-// }
 
 int readfile(char *filename, char *buf, int count, int offset) {
     return -1;

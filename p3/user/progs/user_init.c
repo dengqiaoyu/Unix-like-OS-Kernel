@@ -6,15 +6,13 @@ int main() {
     int pid, exitstatus;
     char test[] = "shell";
     /*
-    char test[] = "actual_wait";
-    char test[] = "wild_test1";
-    char test[] = "remove_pages_test2";
     char test[] = "cho";
+    char test[] = "cho2";
+    char test[] = "cho_variant";
     char test[] = "fork_exit_bomb";
     char test[] = "fork_wait_bomb";
+    char test[] = "stack_test1";
     char test[] = "actual_wait";
-    char test[] = "make_crash";
-    char test[] = "mem_permissions";
     */
     char * args[] = {test, 0};
 

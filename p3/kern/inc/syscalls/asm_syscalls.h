@@ -47,8 +47,7 @@ void asm_set_status(void);
 
 void asm_vanish(void);
 
-// software exception handler
-
+void asm_swexn(void);
 
 /* syscall helper function */
 uint32_t asm_get_esi();

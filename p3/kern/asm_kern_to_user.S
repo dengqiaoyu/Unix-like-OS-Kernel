@@ -20,7 +20,6 @@ kern_to_user:
     
     popl    %eax
     or      $EFL_IF, %eax
-    or      $EFL_IOPL_RING3, %eax
     pushl   %eax
 
     pushl   $SEGSEL_USER_CS

@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <page.h>                /* PAGE_SIZE */
 #include <cr.h>                  /* set_crX */
 #include <asm.h>                 /* disable_interrupts(), enable_interrupts() */
 #include <console.h>             /* clear_console */
@@ -271,7 +270,8 @@ void kern_vanish(void) {
         orphan_children(task);
         orphan_zombies(task);
         page_dir_clear(task->page_dir);
-        maps_clear(task->maps);
+        // or maps_clear?
+        maps_destroy(task->maps);
 
         if (parent == NULL) lprintf("init or idle task vanished?");
         kern_mutex_lock(&(parent->wait_mutex));
@@ -314,8 +314,6 @@ void kern_vanish(void) {
             sche_yield(ZOMBIE);
         }
     }
-    // TODO error handling
-    lprintf("returned from end of vanish");
 }
 
 int kern_wait(void) {

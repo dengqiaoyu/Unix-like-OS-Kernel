@@ -9,7 +9,6 @@
 
 /* libc includes. */
 #include <stdio.h>
-#include <page.h>                       /* PAGE_SIZE */
 #include <simics.h>                     /* lprintf() */
 #include <console.h>                    /* clear_console */
 

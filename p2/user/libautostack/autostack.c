@@ -1,8 +1,3 @@
-/* If you want to use assembly language instead of C,
- * delete this autostack.c and provide an autostack.S
- * instead.
- */
-
 #include <malloc.h>
 #include <syscall.h>
 #include <stdio.h>

@@ -35,15 +35,17 @@ UPDATE_METHOD = afs
 # directory.
 #
 410TESTS = loader_test1 loader_test2 ck1 merchant peon knife new_pages\
-		   exec_basic exec_basic_helper fork_test1 fork_wait getpid_test1\
-		   wait_getpid fork_exit_bomb fork_wait_bomb sleep_test1 actual_wait\
-		   exec_nonexist print_basic remove_pages_test1 remove_pages_test2\
-		   yield_desc_mkrun deschedule_hang readline_basic halt_test\
-		   make_crash_helper make_crash\
-		   \
-		   stack_test1 mem_eat_test wild_test1\
-		   fork_bomb mem_permissions minclone_mem register_test\
-		   cho cho2 cho_variant\
+    	   exec_basic exec_basic_helper fork_test1 fork_wait getpid_test1\
+	   wait_getpid fork_exit_bomb fork_wait_bomb sleep_test1 actual_wait\
+	   exec_nonexist print_basic remove_pages_test1 remove_pages_test2\
+	   yield_desc_mkrun deschedule_hang readline_basic halt_test\
+	   make_crash_helper make_crash wild_test1\
+	   swexn_basic_test swexn_cookie_monster swexn_dispatch swexn_regs\
+	   swexn_stands_for_swextensible swexn_uninstall_test\
+	   \
+	   stack_test1 mem_eat_test\
+	   fork_bomb mem_permissions minclone_mem register_test\
+	   cho cho2 cho_variant\
 
 ###########################################################################
 # Test programs you have written which you wish to run
@@ -87,11 +89,12 @@ THREAD_OBJS = malloc.o panic.o
 ###########################################################################
 # Object files for your syscall wrappers
 ###########################################################################
-SYSCALL_OBJS = exec.o gettid.o fork.o new_pages.o wait.o vanish.o\
+SYSCALL_OBJS = syscall.o\
+	       exec.o gettid.o fork.o new_pages.o wait.o vanish.o\
 	       set_status.o get_ticks.o sleep.o print.o set_term_color.o\
 	       get_cursor_pos.o set_cursor_pos.o remove_pages.o\
 	       deschedule.o make_runnable.o yield.o readline.o\
-	       syscall.o halt.o
+	       swexn.o halt.o\
 
 ###########################################################################
 # Object files for your automatic stack handling
@@ -109,7 +112,7 @@ AUTOSTACK_OBJS = autostack.o
 # Kernel object files you provide in from kern/
 #
 KERNEL_OBJS = console.o kernel.o handlers.o task.o vm.o scheduler.o\
-	      asm_kern_to_user.o asm_exceptions.o asm_page_inval.o\
+	      asm_kern_to_user.o asm_page_inval.o\
 	      asm_context_switch.o\
 	      \
 	      drivers/timer_driver.o drivers/keyboard_driver.o\
@@ -121,7 +124,9 @@ KERNEL_OBJS = console.o kernel.o handlers.o task.o vm.o scheduler.o\
 	      \
 	      syscalls/asm_life_cycle.o syscalls/asm_syscalls.o\
 	      syscalls/life_cycle.o syscalls/thread_management.o\
-	      syscalls/memory_management.o syscalls/console_io.o
+	      syscalls/memory_management.o syscalls/console_io.o\
+	      \
+	      exceptions/asm_exceptions.o exceptions/exceptions.o\
 
 ###########################################################################
 # WARNING: Do not put **test** programs into the REQPROGS variables.  Your
@@ -154,4 +159,4 @@ KERNEL_OBJS = console.o kernel.o handlers.o task.o vm.o scheduler.o\
 # kernel in, or else your tweaked version will run and the test harness
 # won't.
 #
-STUDENTREQPROGS = user_init
+STUDENTREQPROGS = user_init my_cho
