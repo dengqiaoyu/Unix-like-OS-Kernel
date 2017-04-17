@@ -1,33 +1,51 @@
 /** @file task.c
+ *  @brief this file contains functions create task structures, create thread
+ *         structures and map user memory and load programs.
+ *
  *  @author Newton Xie (ncx)
+ *  @author Qiaoyu Deng (qdeng)
  *  @bug No known bugs.
  */
 
+/* libc includes. */
 #include <stdlib.h>
 #include <malloc.h>
-#include <string.h>
+#include <asm.h>                /* disable_interrupts enable_interrupts */
+
+/* DEBUG */
 #include <simics.h>
 #include <asm.h>            /* disable_interrupts enable_interrupts */
 #include <x86/cr.h>
 
-#include "vm.h"
-#include "utils/maps.h"
 #include "task.h"
-#include "scheduler.h"
+#include "vm.h"                 /* predefines for virtual memory */
+#include "scheduler.h"          /* schedule node */
+#include "utils/maps.h"         /* memory mapping */
 #include "utils/tcb_hashtab.h"
 
 thread_t *idle_thread;
+/* used when task is cleared, give all children to init */
 thread_t *init_thread;
 
+/* used to assign tid, never decrement */
 static int thread_id_counter = 0;
+/* protect tid counter */
 static kern_mutex_t thread_id_counter_mutex;
 
+/**
+ * Initialize tid counter and its mutex.
+ * @return 0 for success, -1 for failure
+ */
 int id_counter_init() {
     thread_id_counter = 0;
     int ret = kern_mutex_init(&thread_id_counter_mutex);
     return ret;
 }
 
+/**
+ * Get the next tid that can be assigned to thread.
+ * @return tid
+ */
 int gen_thread_id() {
     kern_mutex_lock(&thread_id_counter_mutex);
     int tid = thread_id_counter++;
@@ -35,6 +53,12 @@ int gen_thread_id() {
     return tid;
 }
 
+/**
+ * Initializes task control block, allocates page directory, lists that used for
+ * vanish, wait, and initializes mutex to protect those lists, and create memory
+ * map to indicate which memory region is valid for user to access.
+ * @return task control block pointer
+ */
 task_t *task_init() {
     task_node_t *task_node = malloc(sizeof(task_node_t) + sizeof(task_t));
 
@@ -79,15 +103,10 @@ task_t *task_init() {
     return task;
 }
 
-void undo_task_init(task_t *task) {
-    free(task->maps);
-    task_mutexes_destroy(task);
-    task_lists_destroy(task);
-    sfree(task->page_dir, PAGE_SIZE);
-    task_node_t *task_node = TASK_TO_LIST_NODE(task);
-    free(task_node);
-}
-
+/**
+ * Clear everything inside task.
+ * @param task task control block pointer that is going to be cleared
+ */
 void task_clear(task_t *task) {
     /*
      * a task's resources are always freed together, so we just use the page
@@ -106,12 +125,20 @@ void task_clear(task_t *task) {
     }
 }
 
-// assumes no active children
+/**
+ * Clear task control block, and free block itself.
+ * @param task task control block that is going to be destroyed
+ * assumes no active children
+ */
 void task_destroy(task_t *task) {
     task_clear(task);
     free(TASK_TO_LIST_NODE(task));
 }
 
+/**
+ * Destroy all children of a task
+ * @param task task control block pointer
+ */
 void reap_threads(task_t *task) {
     node_t *thread_node = pop_first_node(task->zombie_thread_list);
     while (thread_node != NULL) {
@@ -120,6 +147,11 @@ void reap_threads(task_t *task) {
     }
 }
 
+/**
+ * Initializes task's lists to be used by syscall vanish and wait
+ * @param  task task control block pointer
+ * @return      0 as success, -1 as failure
+ */
 int task_lists_init(task_t *task) {
     task->live_thread_list = list_init();
     if (task->live_thread_list == NULL) return -1;
@@ -157,6 +189,10 @@ int task_lists_init(task_t *task) {
     return 0;
 }
 
+/**
+ * Destroy lists in task control block
+ * @param task task control block pointer
+ */
 void task_lists_destroy(task_t *task) {
     list_destroy(task->live_thread_list);
     list_destroy(task->zombie_thread_list);
@@ -165,6 +201,11 @@ void task_lists_destroy(task_t *task) {
     list_destroy(task->waiting_thread_list);
 }
 
+/**
+ * Initializes task'mutexes
+ * @param  task task control block pointer
+ * @return      0 as success, -1 as failure
+ */
 int task_mutexes_init(task_t *task) {
     int ret;
 
@@ -197,6 +238,10 @@ int task_mutexes_init(task_t *task) {
     return 0;
 }
 
+/**
+ * Destroy task'mutexes
+ * @param task task task control block pointer
+ */
 void task_mutexes_destroy(task_t *task) {
     kern_mutex_destroy(&(task->thread_list_mutex));
     kern_mutex_destroy(&(task->child_task_list_mutex));
@@ -204,7 +249,12 @@ void task_mutexes_destroy(task_t *task) {
     kern_mutex_destroy(&(task->vanish_mutex));
 }
 
-// leaves task pointer and status to be set outside
+/**
+ * Initializes thread control block, allocate kernel stack, set up user stack,
+ * and put it into tcb hash table.
+ * @return thread control block pointer
+ * and we leave task pointer and status to be set outside
+ */
 thread_t *thread_init() {
     int size = sizeof(sche_node_t) + sizeof(tcb_tb_node_t) +
                sizeof(thread_node_t) + sizeof(thread_t);
@@ -227,13 +277,16 @@ thread_t *thread_init() {
         return NULL;
     }
     thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
-    lprintf("kern_sp: %p", (void *)thread->kern_sp);
     thread->cur_sp = USER_STACK_START;
 
     tcb_hashtab_put(thread);
     return thread;
 }
 
+/**
+ * Destroy thread control block
+ * @param thread tcb that is to be destroyed
+ */
 void thread_destroy(thread_t *thread) {
     void *kern_stack = (void *)(thread->kern_sp - KERN_STACK_SIZE);
 
@@ -243,10 +296,16 @@ void thread_destroy(thread_t *thread) {
 
     tcb_hashtab_rmv(thread);
 
-    // allocator_free(TCB_TO_SCHE_NODE(thread));
     free(TCB_TO_SCHE_NODE(thread));
 }
 
+/**
+ * Check the validation of memory region by using mapping
+ * @param  addr  the address that needs to be checked
+ * @param  len   the length of memory needs to be checked
+ * @param  perms which permission needs to checked
+ * @return       0 as valid, -1 as invalid
+ */
 int validate_user_mem(uint32_t addr, uint32_t len, int perms) {
     thread_t *thread = get_cur_tcb();
     task_t *task = thread->task;
@@ -261,6 +320,10 @@ int validate_user_mem(uint32_t addr, uint32_t len, int perms) {
     if (map == NULL) return -1;
     if ((perms & map->perms) != perms) return -1;
 
+    /**
+     * if the memory region contains multiple mapping regions,
+     * check it recursively
+     */
     int ret = 0;
     if (low < map->low) {
         ret = validate_user_mem(low, map->low - low, perms);
@@ -274,10 +337,15 @@ int validate_user_mem(uint32_t addr, uint32_t len, int perms) {
     return 0;
 }
 
-// TODO
-// returns negative if string goes outside user memory
-// returns 0 if string is in valid memory but does not terminate in max_len
-// returns length including null terminator otherwise
+/**
+ * validate user's string input
+ * @param  addr    address of string
+ * @param  max_len max length that needs to be checked
+ * @return         negative if string goes outside user memory
+ *                 0 if string is in valid memory but does not terminate
+ *                 in max_len
+ *                 length including null terminator otherwise
+ */
 int validate_user_string(uint32_t addr, int max_len) {
     thread_t *thread = get_cur_tcb();
     task_t *task = thread->task;
@@ -287,10 +355,12 @@ int validate_user_string(uint32_t addr, int max_len) {
     int len = 0;
 
     while (len < max_len) {
+        /* find mapping regions one by one */
         map_t *map = maps_find(task->maps, low, low);
         if (map == NULL) return -1;
         if (!(MAP_USER & map->perms)) return -1;
 
+        /* for every region, check it is terminated by '\0' */
         uint32_t coverage = map->high - low + 1;
         char *check = (char *)low;
         int i;
@@ -309,7 +379,12 @@ int validate_user_string(uint32_t addr, int max_len) {
     return 0;
 }
 
-// assumes cr3 is already set
+/**
+ * Load program to the memory, and we assumes cr3 is already set.
+ * @param  header structures that store program data
+ * @param  maps   memory map
+ * @return        0 as success, -1 as failure
+ */
 int load_program(simple_elf_t *header, map_list_t *maps) {
     int ret;
     uint32_t high;
@@ -370,14 +445,21 @@ int load_program(simple_elf_t *header, map_list_t *maps) {
                            PTE_USER | PTE_WRITE | PTE_PRESENT);
     if (ret < 0) return -1;
     high = USER_STACK_LOW + (USER_STACK_SIZE - 1);
+    /* map user stack */
     maps_insert(maps, USER_STACK_LOW, high, MAP_USER | MAP_WRITE);
-
-    // test maps
-    // maps_print(maps);
 
     return 0;
 }
 
+/**
+ * Load each program region to memory
+ * @param  fname     file name
+ * @param  start     where the data region should start
+ * @param  len       the length of data region
+ * @param  offset    offset of each region
+ * @param  pte_flags the flag of page table entry
+ * @return           0 as success, -1 as failure
+ */
 int load_elf_section(const char *fname, unsigned long start, unsigned long len,
                      long offset, int pte_flags) {
     lprintf("%p", (void *)start);
@@ -388,6 +470,10 @@ int load_elf_section(const char *fname, unsigned long start, unsigned long len,
     uint32_t high = (uint32_t)(start + len);
 
     uint32_t addr = low;
+    /**
+     * keep mapping physical frames to page table until entire programs can be
+     * loaded to the memory
+     */
     while (addr < high) {
         if (!(get_pte(addr) & PTE_PRESENT)) {
             // TODO fix error handling here
@@ -400,6 +486,10 @@ int load_elf_section(const char *fname, unsigned long start, unsigned long len,
         addr += PAGE_SIZE;
     }
 
+    /**
+     * offset -1 indicate we just need to per map that much of memory without
+     * copying anything
+     */
     if (offset != -1) {
         getbytes(fname, offset, len, (char *)start);
     }
@@ -407,7 +497,10 @@ int load_elf_section(const char *fname, unsigned long start, unsigned long len,
     return 0;
 }
 
-// sends orphaned children to the init task
+/**
+ * sends orphaned children to the init task
+ * @param task control block pointer
+ */
 void orphan_children(task_t *task) {
     task_t *init_task = init_thread->task;
 
@@ -445,6 +538,10 @@ void orphan_children(task_t *task) {
 }
 
 // sends orphaned zombies to the init task
+/**
+ * Sends orphaned zombies to the init task.
+ * @param task task control block pointer
+ */
 void orphan_zombies(task_t *task) {
     task_t *init_task = init_thread->task;
     node_t *zombie_node;
