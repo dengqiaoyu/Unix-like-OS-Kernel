@@ -12,6 +12,4 @@ void pagefault_handler();
 
 void exn_handler(int cause, int ec_flag);
 
-void divide_handler();
-
 #endif

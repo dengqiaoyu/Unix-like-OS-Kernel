@@ -22,11 +22,11 @@ asm_pagefault:
     push    %fs
     push    %es
     push    %ds
-    mov     $SEGSEL_KERNEL_DS, %eax
-    mov     %eax, %ds
-    mov     %eax, %es
-    mov     %eax, %fs
-    mov     %eax, %gs
+    mov     $SEGSEL_KERNEL_DS, %ax
+    mov     %ax, %ds
+    mov     %ax, %es
+    mov     %ax, %fs
+    mov     %ax, %gs
     call    pagefault_handler
     pop     %ds
     pop     %es

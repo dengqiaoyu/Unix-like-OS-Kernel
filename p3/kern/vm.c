@@ -181,6 +181,7 @@ int page_dir_clear(uint32_t *page_dir) {
             page_tab[j] = 0;
             uint32_t frame = pte & PAGE_ALIGN_MASK;
             if (frame != zfod_frame) free_frame(frame);
+            inc_num_free_frames(1);
         }
 
         page_dir[i] = 0;
@@ -193,7 +194,7 @@ int page_dir_clear(uint32_t *page_dir) {
 
 int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
     int i, j;
-    int if_fail = 0;
+    int fail = 0;
     for (i = NUM_KERN_TABLES; i < NUM_PD_ENTRIES; i++) {
         uint32_t old_pde = old_page_dir[i];
         if ((old_pde & PDE_PRESENT) == 0) continue;
@@ -202,7 +203,7 @@ int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
 
         uint32_t *new_page_tab = smemalign(PAGE_SIZE, PAGE_SIZE);
         if (new_page_tab == NULL) {
-            if_fail = 1;
+            fail = 1;
             break;
         }
         memset(new_page_tab, 0, PAGE_SIZE);
@@ -212,6 +213,11 @@ int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
             uint32_t old_pte = old_page_tab[j];
             if ((old_pte & PTE_PRESENT) == 0) continue;
 
+            if (dec_num_free_frames(1) < 0) {
+                fail = 1;
+                break;
+            }
+
             uint32_t frame = old_pte & PAGE_ALIGN_MASK;
             if (frame == zfod_frame) {
                 new_page_tab[j] = old_pte;
@@ -220,11 +226,7 @@ int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
 
             // don't mess with the RW_PHYS reserved page
             if (i == RW_PHYS_PD_INDEX && j == RW_PHYS_PT_INDEX) continue;
-            // TODO before we get_frame, do we need to decrement num?
-            if (dec_num_free_frames(1) < 0) {
-                if_fail = 1;
-                break;
-            }
+
             uint32_t new_physical_frame = get_frame();
             int new_pte_flag = old_pte & PAGE_FLAG_MASK;
             uint32_t new_pte = new_physical_frame | new_pte_flag;
@@ -233,9 +235,9 @@ int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
             write_physical(new_physical_frame, (void *)virtual_addr, PAGE_SIZE);
             new_page_tab[j] = new_pte;
         }
-        if (if_fail) break;
+        if (fail) break;
     }
-    if (if_fail) {
+    if (fail) {
         page_dir_clear(new_page_dir);
         return -1;
     }

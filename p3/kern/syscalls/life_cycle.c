@@ -269,6 +269,8 @@ void kern_vanish(void) {
 
         orphan_children(task);
         orphan_zombies(task);
+        page_dir_clear(task->page_dir);
+        maps_destroy(task->maps);
 
         if (parent == NULL) lprintf("init or idle task vanished?");
         kern_mutex_lock(&(parent->wait_mutex));
@@ -311,8 +313,6 @@ void kern_vanish(void) {
             sche_yield(ZOMBIE);
         }
     }
-    // TODO error handling
-    lprintf("returned from end of vanish");
 }
 
 int kern_wait(void) {
