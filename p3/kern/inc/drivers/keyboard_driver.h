@@ -28,7 +28,7 @@ typedef struct keyboard_buffer {
 
 /* function declarations */
 
-int kb_buf_init();
+int keyboard_init();
 
 /**
  * @brief Read from keyboard port and put it into a buffer for further handling.

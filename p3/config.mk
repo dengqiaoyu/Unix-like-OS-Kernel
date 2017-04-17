@@ -53,7 +53,7 @@ UPDATE_METHOD = afs
 #
 STUDENTTESTS = my_fork_test my_maker_deschedule my_cond_sem_test my_readline\
 			   my_make_crash my_exec_and_fork my_exec_and_fork_helper\
-			   my_memory_permission
+			   my_memory_permission my_print_test
 
 ###########################################################################
 # Data files provided by course staff to build into the RAM disk

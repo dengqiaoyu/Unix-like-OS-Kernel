@@ -20,7 +20,7 @@
 thread_t *idle_thread;
 thread_t *init_thread;
 
-static int thread_id_counter;
+static int thread_id_counter = 0;
 static kern_mutex_t thread_id_counter_mutex;
 
 int id_counter_init() {

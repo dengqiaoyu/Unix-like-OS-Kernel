@@ -12,6 +12,7 @@
 #include "utils/kern_sem.h"
 
 extern keyboard_buffer_t kb_buf;
+kern_mutex_t print_mutex;
 
 int kern_readline(void) {
     uint32_t *esi = (uint32_t *)asm_get_esi();
@@ -70,9 +71,6 @@ int kern_readline(void) {
 }
 
 int kern_print(void) {
-    // TODO DEBUG
-    return 0;
-
     uint32_t *esi = (uint32_t *)asm_get_esi();
     int len = (int)(*esi);
     char *buf = (char *)(*(esi + 1));
@@ -82,7 +80,9 @@ int kern_print(void) {
     int ret = validate_user_mem((uint32_t)buf, len, MAP_USER);
     if (ret < 0) return -1;
 
+    kern_mutex_lock(&print_mutex);
     putbytes(buf, len);
+    kern_mutex_unlock(&print_mutex);
     return 0;
 }
 

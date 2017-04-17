@@ -4,7 +4,7 @@
 
 int main() {
     int pid, exitstatus;
-    char test[] = "mem_permissions";
+    char test[] = "shell";
     /*
     char test[] = "actual_wait";
     char test[] = "wild_test1";

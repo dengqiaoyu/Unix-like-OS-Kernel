@@ -31,14 +31,12 @@ int _process_keypress(uint8_t keypress);
 
 keyboard_buffer_t kb_buf;
 
-int kb_buf_init() {
+int keyboard_init() {
     kb_buf.buf_start = 0;
     kb_buf.buf_ending = 0;
     kb_buf.newline_cnt = 0;
     kb_buf.is_waiting = 0;
-    lprintf("before kern_mutex_init");
     kern_mutex_init(&kb_buf.mutex);
-    lprintf("pass kern_mutex_init");
     kern_cond_init(&kb_buf.cond);
     kern_sem_init(&kb_buf.readline_sem, 1);
     return 0;
