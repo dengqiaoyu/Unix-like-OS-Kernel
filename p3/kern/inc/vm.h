@@ -35,7 +35,7 @@ int vm_init();
 
 uint32_t get_pte(uint32_t addr);
 
-void set_pte(uint32_t addr, uint32_t frame_addr, int flags);
+int set_pte(uint32_t addr, uint32_t frame_addr, int flags);
 
 uint32_t get_frame();
 

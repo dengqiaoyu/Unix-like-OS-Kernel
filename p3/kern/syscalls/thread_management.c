@@ -25,8 +25,8 @@ int kern_yield(void) {
         return 0;
     }
 
-    thread_t *thr = tcb_hashtab_get(tid);
     disable_interrupts();
+    thread_t *thr = tcb_hashtab_get(tid);
     if (thr == NULL) return -1;
     if (thr->status != RUNNABLE) {
         enable_interrupts();
@@ -61,6 +61,7 @@ int kern_make_runnable(void) {
     thr->status = RUNNABLE;
     sche_push_front(thr);
     enable_interrupts();
+
     return 0;
 }
 

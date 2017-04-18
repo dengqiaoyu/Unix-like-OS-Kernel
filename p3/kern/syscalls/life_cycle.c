@@ -313,7 +313,8 @@ void kern_vanish(void) {
             }
 
             // must disable interrupts here
-            // otherwise, a waiting thread might free us before we yield
+            // otherwise, a waiting thread might try to clear the task before
+            // we yield
             disable_interrupts();
             add_node_to_tail(parent->zombie_task_list, TASK_TO_LIST_NODE(task));
             cli_kern_mutex_unlock(&(parent->wait_mutex));

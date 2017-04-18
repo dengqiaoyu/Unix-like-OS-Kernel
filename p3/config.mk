@@ -39,13 +39,14 @@ UPDATE_METHOD = afs
 	   wait_getpid fork_exit_bomb fork_wait_bomb sleep_test1 actual_wait\
 	   exec_nonexist print_basic remove_pages_test1 remove_pages_test2\
 	   yield_desc_mkrun deschedule_hang readline_basic halt_test\
-	   make_crash_helper make_crash wild_test1\
+	   make_crash_helper make_crash wild_test1 coolness\
 	   swexn_basic_test swexn_cookie_monster swexn_dispatch swexn_regs\
 	   swexn_stands_for_swextensible swexn_uninstall_test\
-	   \
-	   stack_test1 mem_eat_test\
 	   fork_bomb mem_permissions minclone_mem register_test\
-	   cho cho2 cho_variant\
+	   stack_test1 mem_eat_test cho cho2 cho_variant\
+	   \
+	   slaughter\
+	   #ack bistromath slaughter\
 
 ###########################################################################
 # Test programs you have written which you wish to run

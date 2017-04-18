@@ -52,16 +52,19 @@ void hwerror_handler(int cause, int ec_flag) {
 
 void exn_handler(int cause, int ec_flag) {
     thread_t *thread = get_cur_tcb();
-    if (thread->swexn_handler == NULL) {
-        // TODO print error messages
-        task_t *task = thread->task;
-        task->status = -2;
-        kern_vanish();
-        return;
-    }
 
     uint32_t *esp0 = (uint32_t *)(thread->kern_sp);
-    uint32_t *esp3 = thread->swexn_sp;
+    uint32_t *esp3;
+
+    if (thread->swexn_handler == NULL) {
+        ureg_t ureg;
+        esp3 = (uint32_t *)(&ureg);
+        esp3 += sizeof(ureg_t) / sizeof(uint32_t);
+    } else {
+        esp3 = thread->swexn_sp;
+    }
+
+    // begin setting up ureg
 
     // TODO macro
     esp0 -= 5;
@@ -79,19 +82,33 @@ void exn_handler(int cause, int ec_flag) {
 
     if (cause == SWEXN_CAUSE_PAGEFAULT) *(--esp3) = get_cr2();
     else *(--esp3) = 0;
-
     *(--esp3) = cause;
-    uint32_t ureg_ptr = (uint32_t)esp3;
-    *(--esp3) = ureg_ptr;
-    uint32_t swexn_arg = (uint32_t)thread->swexn_arg;
-    *(--esp3) = swexn_arg;
-    *(--esp3) = 0;
 
-    esp0 = (uint32_t *)(thread->kern_sp);
-    *(esp0 - 2) = (uint32_t)esp3;
-    *(esp0 - 5) = (uint32_t)(thread->swexn_handler);
+    // ureg is set up
+    
+    if (thread->swexn_handler == NULL) {
+        task_t *task = thread->task;
 
-    thread->swexn_sp = NULL;
-    thread->swexn_handler = NULL;
-    thread->swexn_arg = NULL;
+        kern_mutex_lock(&(task->thread_list_mutex));
+        int live_threads = get_list_size(task->live_thread_list);
+        if (live_threads == 1) task->status = -2;
+        kern_mutex_unlock(&(task->thread_list_mutex));
+
+        kern_vanish();
+    }
+    else {
+        uint32_t ureg_ptr = (uint32_t)esp3;
+        *(--esp3) = ureg_ptr;
+        uint32_t swexn_arg = (uint32_t)thread->swexn_arg;
+        *(--esp3) = swexn_arg;
+        *(--esp3) = 0;
+
+        esp0 = (uint32_t *)(thread->kern_sp);
+        *(esp0 - 2) = (uint32_t)esp3;
+        *(esp0 - 5) = (uint32_t)(thread->swexn_handler);
+
+        thread->swexn_sp = NULL;
+        thread->swexn_handler = NULL;
+        thread->swexn_arg = NULL;
+    }
 }

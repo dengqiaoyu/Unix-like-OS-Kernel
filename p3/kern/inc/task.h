@@ -64,6 +64,7 @@ typedef struct thread {
     void *swexn_arg;
 } thread_t;
 
+// TODO
 // these probably go somewhere else
 
 typedef struct wait_node {
