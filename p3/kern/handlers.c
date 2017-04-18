@@ -32,6 +32,10 @@
 /* DEBUG */
 #include <simics.h>
 
+/**
+ * @brief Callback function that is called by the handler.
+ * @param num_ticks the number of 10 ms that is triggered.
+ */
 void timer_callback(unsigned int num_ticks);
 
 /**
