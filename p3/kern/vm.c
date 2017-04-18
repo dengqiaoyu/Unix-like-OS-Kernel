@@ -63,10 +63,7 @@ int vm_init() {
     int i, j;
     for (i = 0; i < NUM_KERN_TABLES; i++) {
         page_tab_addr = smemalign(PAGE_SIZE, PAGE_SIZE);
-        if (page_tab_addr == NULL) {
-            page_dir_clear(kern_page_dir);
-            return -1;
-        }
+        if (page_tab_addr == NULL) return -1;
 
         memset(page_tab_addr, 0, PAGE_SIZE);
         kern_page_dir[i] = (uint32_t)page_tab_addr | flags;

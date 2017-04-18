@@ -157,7 +157,6 @@ int kern_exec(void) {
         if (ret < 0) return -1;
     }
 
-
     ret = validate_user_string((uint32_t)execname, 64);
     if (ret <= 0) return -1;
     char namebuf[64];
@@ -186,6 +185,9 @@ int kern_exec(void) {
     thread->cur_sp = USER_STACK_START;
     thread->ip = elf_header.e_entry;
 
+    // BUG
+    // TODO if maps or loading fails, how do we return??
+
     maps_clear(task->maps);
     // kernel memory region
     maps_insert(task->maps, 0, PAGE_SIZE * NUM_KERN_PAGES - 1, 0);
@@ -195,11 +197,7 @@ int kern_exec(void) {
     page_dir_clear(task->page_dir);
     set_cr3((uint32_t)task->page_dir);
 
-    ret = load_program(&elf_header, task->maps);
-    if (ret < 0) {
-        page_dir_clear(task->page_dir);
-        return -1;
-    }
+    load_program(&elf_header, task->maps);
 
     // need macros here badly
     // 5 because ret addr and 4 args

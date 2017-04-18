@@ -10,6 +10,7 @@
 /* libc includes. */
 #include <stdlib.h>
 #include <malloc.h>
+#include <string.h>
 #include <asm.h>                /* disable_interrupts enable_interrupts */
 
 /* DEBUG */
@@ -60,12 +61,15 @@ int gen_thread_id() {
  * @return task control block pointer
  */
 task_t *task_init() {
-    task_node_t *task_node = malloc(sizeof(task_node_t) + sizeof(task_t));
+    int size = sizeof(task_node_t) + sizeof(task_t);
+    task_node_t *task_node = malloc(size);
 
     if (task_node == NULL) {
         lprintf("malloc() failed in task_init at line %d", __LINE__);
         return NULL;
     }
+    memset(task_node, 0, size);
+
     task_t *task = LIST_NODE_TO_TASK(task_node);
 
     task->page_dir = page_dir_init();
@@ -264,6 +268,7 @@ thread_t *thread_init() {
         lprintf("malloc() failed in thread_init at line %d", __LINE__);
         return NULL;
     }
+    memset(sche_node, 0, size);
 
     thread_t *thread = SCHE_NODE_TO_TCB(sche_node);
     thread->tid = gen_thread_id();
@@ -386,67 +391,79 @@ int validate_user_string(uint32_t addr, int max_len) {
  * @return        0 as success, -1 as failure
  */
 int load_program(simple_elf_t *header, map_list_t *maps) {
-    int ret;
+    int ret, flags;
     uint32_t high;
 
-    // lprintf("text");
+    /* load text */
     ret = load_elf_section(header->e_fname,
                            header->e_txtstart,
                            header->e_txtlen,
                            header->e_txtoff,
                            PTE_USER | PTE_PRESENT);
     if (ret < 0) return -1;
-    if (header->e_txtlen > 0) {
-        high = header->e_txtstart + (header->e_txtlen - 1);
-        maps_insert(maps, header->e_txtstart, high, MAP_USER | MAP_EXECUTE);
-    }
 
-    // lprintf("dat");
+    high = header->e_txtstart + (header->e_txtlen - 1);
+    flags = MAP_USER | MAP_EXECUTE;
+    ret = maps_insert(maps, header->e_txtstart, high, flags);
+    if (ret < 0) return -1;
+
+    /* load dat */
     ret = load_elf_section(header->e_fname,
                            header->e_datstart,
                            header->e_datlen,
                            header->e_datoff,
                            PTE_USER | PTE_WRITE | PTE_PRESENT);
     if (ret < 0) return -1;
+
     if (header->e_datlen > 0) {
         high = header->e_datstart + (header->e_datlen - 1);
-        maps_insert(maps, header->e_datstart, high, MAP_USER | MAP_WRITE);
+        flags = MAP_USER | MAP_WRITE;
+        ret = maps_insert(maps, header->e_datstart, high, flags);
+        if (ret < 0) return -1;
     }
 
-    // lprintf("rodat");
+    /* load rodat */
     ret = load_elf_section(header->e_fname,
                            header->e_rodatstart,
                            header->e_rodatlen,
                            header->e_rodatoff,
                            PTE_USER | PTE_PRESENT);
     if (ret < 0) return -1;
+
     if (header->e_rodatlen > 0) {
         high = header->e_rodatstart + (header->e_rodatlen - 1);
-        maps_insert(maps, header->e_rodatstart, high, MAP_USER);
+        flags = MAP_USER;
+        ret = maps_insert(maps, header->e_rodatstart, high, flags);
+        if (ret < 0) return -1;
     }
 
-    // lprintf("bss");
+    /* load bss */
     ret = load_elf_section(header->e_fname,
                            header->e_bssstart,
                            header->e_bsslen,
                            -1,
                            PTE_USER | PTE_WRITE | PTE_PRESENT);
     if (ret < 0) return -1;
+
     if (header->e_bsslen > 0) {
         high = header->e_bssstart + (header->e_bsslen - 1);
-        maps_insert(maps, header->e_bssstart, high, MAP_USER | MAP_WRITE);
+        flags = MAP_USER | MAP_WRITE;
+        ret = maps_insert(maps, header->e_bssstart, high, flags);
+        if (ret < 0) return -1;
     }
 
-    // lprintf("stack");
+    /* load user stack */
     ret = load_elf_section(header->e_fname,
                            USER_STACK_LOW,
                            USER_STACK_SIZE,
                            -1,
                            PTE_USER | PTE_WRITE | PTE_PRESENT);
     if (ret < 0) return -1;
+
     high = USER_STACK_LOW + (USER_STACK_SIZE - 1);
-    /* map user stack */
-    maps_insert(maps, USER_STACK_LOW, high, MAP_USER | MAP_WRITE);
+    flags = MAP_USER | MAP_WRITE;
+    ret = maps_insert(maps, USER_STACK_LOW, high, flags);
+    if (ret < 0) return -1;
 
     return 0;
 }

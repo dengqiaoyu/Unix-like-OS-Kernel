@@ -40,7 +40,6 @@ void mutexes_init();
 void helper_init();
 thread_t *setup_task(const char *fname);
 
-
 /** @brief Kernel entrypoint.
  *
  *  This is the entrypoint for the kernel.
@@ -102,32 +101,46 @@ void helper_init() {
 
 thread_t *setup_task(const char *fname) {
     task_t *task = task_init();
-    thread_t *thread = thread_init();
-    thread->task = task;
-    /* add thread into task's living thread list */
-    add_node_to_head(task->live_thread_list, TCB_TO_LIST_NODE(thread));
-    thread->status = INITIALIZED;
-
-    task->task_id = thread->tid;
+    if (task == NULL) return NULL;
     task->parent_task = NULL;
-
-    // TODO can we macro these better?
+    
+    int ret = 0;
     /* validate the memory map for the kernel memory, 16MB */
-    maps_insert(task->maps, 0, PAGE_SIZE * NUM_KERN_PAGES - 1, 0);
+    ret += maps_insert(task->maps, 0, PAGE_SIZE * NUM_KERN_PAGES - 1, 0);
     /* validate the memory map for last page used to access physical frames */
-    maps_insert(task->maps, RW_PHYS_VA, RW_PHYS_VA + (PAGE_SIZE - 1), 0);
-
-    /* load program from memory */
-    simple_elf_t elf_header;
-    elf_load_helper(&elf_header, fname);
-    thread->ip = elf_header.e_entry;
-
-    // register new task for simics symbolic debugging
-    sim_reg_process(task->page_dir, fname);
+    ret += maps_insert(task->maps, RW_PHYS_VA, RW_PHYS_VA + (PAGE_SIZE - 1), 0);
+    if (ret < 0) {
+        task_destroy(task);
+        return NULL;
+    }
 
     /* set page directory for loading program data */
     set_cr3((uint32_t)task->page_dir);
-    load_program(&elf_header, task->maps);
+
+    /* load program from memory */
+    simple_elf_t elf_header;
+    ret += elf_load_helper(&elf_header, fname);
+    ret += load_program(&elf_header, task->maps);
+    if (ret < 0) {
+        task_destroy(task);
+        return NULL;
+    }
+
+    thread_t *thread = thread_init();
+    if (thread == NULL) {
+        task_destroy(task);
+        return NULL;
+    }
+    thread->task = task;
+    thread->status = INITIALIZED;
+    thread->ip = elf_header.e_entry;
+
+    /* add thread into task's living thread list */
+    add_node_to_head(task->live_thread_list, TCB_TO_LIST_NODE(thread));
+    task->task_id = thread->tid;
+
+    // register new task for simics symbolic debugging
+    sim_reg_process(task->page_dir, fname);
 
     return thread;
 }

@@ -14,7 +14,9 @@
 
 map_list_t *maps_init() {
     map_list_t *maps = malloc(sizeof(map_list_t));
-    if (maps != NULL) maps->root = NULL;
+    if (maps == NULL) return NULL;
+    
+    maps->root = NULL;
     return maps;
 }
 
@@ -44,13 +46,16 @@ void maps_print(map_list_t *maps) {
 }
 
 // assumes no overlaps
-void maps_insert(map_list_t *maps, uint32_t low, uint32_t high, int perms) {
+int maps_insert(map_list_t *maps, uint32_t low, uint32_t high, int perms) {
     map_node_t *node = make_node(low, high, perms);
+    if (node == NULL) return -1;
     maps->root = tree_insert(maps->root, node);
+    return 0;
 }
 
 map_t *maps_find(map_list_t *maps, uint32_t low, uint32_t high) {
     map_node_t *node = tree_find(maps->root, low, high);
+    if (node == NULL) return NULL;
     return &(node->map);
 }
 
@@ -75,6 +80,8 @@ void update_height(map_node_t *node) {
 
 map_node_t *make_node(uint32_t low, uint32_t high, int perms) {
     map_node_t *node = malloc(sizeof(map_node_t));
+    if (node == NULL) return NULL;
+
     MAP_LOW(node) = low;
     MAP_HIGH(node) = high;
     MAP_PERMS(node) = perms;
