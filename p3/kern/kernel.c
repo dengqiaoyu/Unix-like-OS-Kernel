@@ -103,7 +103,7 @@ thread_t *setup_task(const char *fname) {
     task_t *task = task_init();
     if (task == NULL) return NULL;
     task->parent_task = NULL;
-    
+
     int ret = 0;
     /* validate the memory map for the kernel memory, 16MB */
     ret += maps_insert(task->maps, 0, PAGE_SIZE * NUM_KERN_PAGES - 1, 0);

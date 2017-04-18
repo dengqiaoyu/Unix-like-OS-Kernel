@@ -61,6 +61,7 @@ int kern_make_runnable(void) {
     thr->status = RUNNABLE;
     sche_push_front(thr);
     enable_interrupts();
+
     return 0;
 }
 

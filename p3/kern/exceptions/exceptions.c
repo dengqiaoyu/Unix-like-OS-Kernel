@@ -4,6 +4,7 @@
 #include <ureg.h>
 #include <x86/seg.h>
 #include <x86/cr.h>
+#include <x86/asm.h>
 /*
 #include <x86/asm.h>
 #include <x86/idt.h>
@@ -20,9 +21,6 @@ void pagefault_handler() {
     uint32_t pf_addr = get_cr2();
     uint32_t pte = get_pte(pf_addr);
 
-    thread_t *thread = get_cur_tcb();
-    if (thread->tid == 3) MAGIC_BREAK;
-
     if ((pte & PAGE_ALIGN_MASK) == get_zfod_frame()) {
         asm_page_inval((void *)pf_addr);
         uint32_t frame_addr = get_frame();
@@ -35,21 +33,18 @@ void pagefault_handler() {
 void exn_handler(int cause, int ec_flag) {
     thread_t *thread = get_cur_tcb();
 
+    uint32_t *esp0 = (uint32_t *)(thread->kern_sp);
+    uint32_t *esp3;
+
     if (thread->swexn_handler == NULL) {
-        task_t *task = thread->task;
-        // disable_interrupts
-        kern_mutex_lock(&(task->thread_list_mutex));
-        int live_threads = get_list_size(task->live_thread_list);
-        if (live_threads == 1) task->status = -2;
-        kern_mutex_unlock(&(task->thread_list_mutex));
-        // enable_interrupts
-        kern_vanish();
-        // should never reach here
-        return;
+        ureg_t ureg;
+        esp3 = (uint32_t *)(&ureg);
+        esp3 += sizeof(ureg_t) / sizeof(uint32_t);
+    } else {
+        esp3 = thread->swexn_sp;
     }
 
-    uint32_t *esp0 = (uint32_t *)(thread->kern_sp);
-    uint32_t *esp3 = thread->swexn_sp;
+    // begin setting up ureg
 
     // TODO macro
     esp0 -= 5;
@@ -67,19 +62,33 @@ void exn_handler(int cause, int ec_flag) {
 
     if (cause == SWEXN_CAUSE_PAGEFAULT) *(--esp3) = get_cr2();
     else *(--esp3) = 0;
-
     *(--esp3) = cause;
-    uint32_t ureg_ptr = (uint32_t)esp3;
-    *(--esp3) = ureg_ptr;
-    uint32_t swexn_arg = (uint32_t)thread->swexn_arg;
-    *(--esp3) = swexn_arg;
-    *(--esp3) = 0;
 
-    esp0 = (uint32_t *)(thread->kern_sp);
-    *(esp0 - 2) = (uint32_t)esp3;
-    *(esp0 - 5) = (uint32_t)(thread->swexn_handler);
+    // ureg is set up
+    
+    if (thread->swexn_handler == NULL) {
+        task_t *task = thread->task;
 
-    thread->swexn_sp = NULL;
-    thread->swexn_handler = NULL;
-    thread->swexn_arg = NULL;
+        kern_mutex_lock(&(task->thread_list_mutex));
+        int live_threads = get_list_size(task->live_thread_list);
+        if (live_threads == 1) task->status = -2;
+        kern_mutex_unlock(&(task->thread_list_mutex));
+
+        kern_vanish();
+    }
+    else {
+        uint32_t ureg_ptr = (uint32_t)esp3;
+        *(--esp3) = ureg_ptr;
+        uint32_t swexn_arg = (uint32_t)thread->swexn_arg;
+        *(--esp3) = swexn_arg;
+        *(--esp3) = 0;
+
+        esp0 = (uint32_t *)(thread->kern_sp);
+        *(esp0 - 2) = (uint32_t)esp3;
+        *(esp0 - 5) = (uint32_t)(thread->swexn_handler);
+
+        thread->swexn_sp = NULL;
+        thread->swexn_handler = NULL;
+        thread->swexn_arg = NULL;
+    }
 }

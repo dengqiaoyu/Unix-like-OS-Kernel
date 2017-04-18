@@ -21,8 +21,8 @@ int kern_new_pages(void) {
     }
 
     uint32_t high = base + (len - 1);
-    // check for overflow
     if (high < base) {
+        // overflow
         return -1;
     }
 
@@ -35,14 +35,26 @@ int kern_new_pages(void) {
 
     if (dec_num_free_frames(len / PAGE_SIZE) < 0) {
         // not enough memory
-
-        // maps_print(task->maps);
         return -1;
     }
 
+    uint32_t zfod_frame = get_zfod_frame();
+
+    int ret;
     uint32_t offset;
     for (offset = 0; offset < len; offset += PAGE_SIZE) {
-        set_pte(base + offset, get_zfod_frame(), PTE_USER | PTE_PRESENT);
+        ret = set_pte(base + offset, zfod_frame, PTE_USER | PTE_PRESENT);
+        if (ret < 0) {
+            // set_pte could fail when calling smemalign
+            // we need to reset
+            uint32_t reoffset;
+            for (reoffset = 0; reoffset <= offset; reoffset += PAGE_SIZE) {
+                // this one should not fail
+                ret = set_pte(base + reoffset, 0, 0);
+                assert(ret == 0);
+            }
+            return -1;
+        }
     }
 
     maps_insert(task->maps, base, high, MAP_USER | MAP_WRITE | MAP_REMOVE);

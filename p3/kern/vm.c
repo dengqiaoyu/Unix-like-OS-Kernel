@@ -80,6 +80,7 @@ int vm_init() {
 
     int machine_frames = machine_phys_frames();
     kern_mutex_init(&first_free_frame_mutex);
+    kern_mutex_init(&num_free_frames_mutex);
     first_free_frame = frame;
     num_free_frames = machine_frames - NUM_KERN_PAGES - 1;
 
@@ -113,22 +114,24 @@ uint32_t get_pte(uint32_t addr) {
     }
 }
 
-void set_pte(uint32_t addr, uint32_t frame_addr, int flags) {
+int set_pte(uint32_t addr, uint32_t frame_addr, int flags) {
     uint32_t *page_dir = (uint32_t *)get_cr3();
     int pd_index = PD_INDEX(addr);
     int pt_index = PT_INDEX(addr);
 
     if (!(page_dir[pd_index] & PTE_PRESENT)) {
         void *ret = smemalign(PAGE_SIZE, PAGE_SIZE);
-        // TODO error!!!
-        if (ret == NULL) return;
+        if (ret == NULL) return -1;
         memset(ret, 0, PAGE_SIZE);
+
         page_dir[pd_index] = (uint32_t)ret;
         page_dir[pd_index] |= PTE_USER | PTE_WRITE | PTE_PRESENT;
     }
 
     uint32_t *page_tab = ENTRY_TO_ADDR(page_dir[pd_index]);
     page_tab[pt_index] = frame_addr | flags;
+
+    return 0;
 }
 
 uint32_t get_frame() {
