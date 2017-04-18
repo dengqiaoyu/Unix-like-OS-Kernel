@@ -31,7 +31,7 @@ int kern_yield(void) {
         enable_interrupts();
         return -1;
     }
-    sche_push_front(thr);
+    sche_move_front(thr);
     sche_yield(RUNNABLE);
     enable_interrupts();
     return 0;
@@ -58,7 +58,7 @@ int kern_make_runnable(void) {
     if (thr->status != SUSPENDED) return -1;
     disable_interrupts();
     thr->status = RUNNABLE;
-    sche_push_back(thr);
+    sche_push_front(thr);
     enable_interrupts();
     return 0;
 }
@@ -94,7 +94,7 @@ int kern_swexn(void) {
     ureg_t *newureg = (ureg_t *)(*(esi + 3));
 
     thread_t *thread = get_cur_tcb();
-    
+
     if (newureg != NULL) {
         uint32_t zero = 0;
         // check that io privilege is not changed
@@ -115,8 +115,7 @@ int kern_swexn(void) {
         thread->swexn_sp = NULL;
         thread->swexn_handler = NULL;
         thread->swexn_arg = NULL;
-    }
-    else {
+    } else {
         int ret;
         // TODO macro
         // 3 because ret addr and two args
