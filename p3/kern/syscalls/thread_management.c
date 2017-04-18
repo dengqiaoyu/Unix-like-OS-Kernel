@@ -18,12 +18,13 @@ int kern_gettid(void) {
 
 int kern_yield(void) {
     int tid = (int)asm_get_esi();
-
     if (tid < -1) return -1;
+
     if (tid == -1) {
         sche_yield(RUNNABLE);
         return 0;
     }
+
     thread_t *thr = tcb_hashtab_get(tid);
     if (thr == NULL) return -1;
     disable_interrupts();
@@ -33,7 +34,7 @@ int kern_yield(void) {
     }
     sche_move_front(thr);
     sche_yield(RUNNABLE);
-    enable_interrupts();
+
     return 0;
 }
 
@@ -46,17 +47,17 @@ int kern_deschedule(void) {
         return 0;
     }
     sche_yield(SUSPENDED);
-    enable_interrupts();
+
     return 0;
 }
 
 int kern_make_runnable(void) {
     int tid = (int)asm_get_esi();
 
+    disable_interrupts();
     thread_t *thr = tcb_hashtab_get(tid);
     if (thr == NULL) return -1;
     if (thr->status != SUSPENDED) return -1;
-    disable_interrupts();
     thr->status = RUNNABLE;
     sche_push_front(thr);
     enable_interrupts();

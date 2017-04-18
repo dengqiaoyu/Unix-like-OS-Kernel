@@ -60,9 +60,13 @@ int kern_fork(void) {
         task_destroy(new_task);
         return -1;
     }
+
     new_task->task_id = new_thread->tid;
     new_thread->task = new_task;
     new_thread->status = FORKED;
+    new_thread->swexn_sp = old_thread->swexn_sp;
+    new_thread->swexn_handler = old_thread->swexn_handler;
+    new_thread->swexn_arg = old_thread->swexn_arg;
     add_node_to_head(new_task->live_thread_list, TCB_TO_LIST_NODE(new_thread));
 
     kern_mutex_lock(&(old_task->child_task_list_mutex));
@@ -72,10 +76,10 @@ int kern_fork(void) {
                          new_thread->kern_sp,
                          &(new_thread->cur_sp),
                          &(new_thread->ip));
+
     // Now, we will have two tasks running
-    // BUG that has been found!!! cannot declare var here, because we will break
-    // stack
-    // Do we need a mutex to protect this one?
+    // cannot declare var here, because we will break stack
+
     cur_thr = get_cur_tcb();
     if (cur_thr->tid != old_tid) {
         return 0;
@@ -90,23 +94,27 @@ int kern_fork(void) {
 int kern_thread_fork(void) {
     thread_t *old_thread = get_cur_tcb();
     task_t *cur_task = old_thread->task;
-    thread_t *new_thread = thread_init();
     int old_tid = old_thread->tid;
     thread_t *cur_thr = NULL;
+
+    thread_t *new_thread = thread_init();
     if (new_thread == NULL) {
         lprintf("thread_init() failed in kern_thread_fork at line %d",
                 __LINE__);
         return -1;
     }
+
     kern_mutex_lock(&cur_task->thread_list_mutex);
-    add_node_to_head(cur_task->live_thread_list, TCB_TO_LIST_NODE(new_thread));
+    add_node_to_tail(cur_task->live_thread_list, TCB_TO_LIST_NODE(new_thread));
     kern_mutex_unlock(&cur_task->thread_list_mutex);
+
     new_thread->task = cur_task;
     new_thread->status = FORKED;
     asm_set_exec_context(old_thread->kern_sp,
                          new_thread->kern_sp,
                          &(new_thread->cur_sp),
                          &(new_thread->ip));
+
     cur_thr = get_cur_tcb();
     if (cur_thr->tid != old_tid) {
         return 0;
@@ -243,9 +251,6 @@ void kern_vanish(void) {
     thread_t *thread = get_cur_tcb();
     task_t *task = thread->task;
 
-    kern_mutex_lock(&(task->vanish_mutex));
-    task_t *parent = task->parent_task;
-
     kern_mutex_lock(&(task->thread_list_mutex));
     remove_node(task->live_thread_list, TCB_TO_LIST_NODE(thread));
     int live_threads = get_list_size(task->live_thread_list);
@@ -260,7 +265,6 @@ void kern_vanish(void) {
          */
         disable_interrupts();
         cli_kern_mutex_unlock(&(task->thread_list_mutex));
-        cli_kern_mutex_unlock(&(task->vanish_mutex));
         sche_yield(ZOMBIE);
     } else {
         kern_mutex_unlock(&(task->thread_list_mutex));
@@ -270,17 +274,25 @@ void kern_vanish(void) {
         page_dir_clear(task->page_dir);
         maps_clear(task->maps);
 
-        if (parent == NULL) lprintf("init or idle task vanished?");
+        kern_mutex_lock(&(task->vanish_mutex));
+        task_t *parent = task->parent_task;
+        if (parent == NULL) {
+            panic("init or idle task vanished?");
+        }
+
         kern_mutex_lock(&(parent->wait_mutex));
 
-        kern_mutex_lock(&(parent->child_task_list_mutex));
         // assumes we are in the parent's child task list
+        kern_mutex_lock(&(parent->child_task_list_mutex));
         remove_node(parent->child_task_list, TASK_TO_LIST_NODE(task));
         kern_mutex_unlock(&(parent->child_task_list_mutex));
 
         if (get_list_size(parent->waiting_thread_list) > 0) {
             node_t *node = pop_first_node(parent->waiting_thread_list);
             kern_mutex_unlock(&(parent->wait_mutex));
+            // there is no contention for vanish since no other threads
+            // and parent has live threads so it won't vanish
+            kern_mutex_unlock(&(task->vanish_mutex));
 
             wait_node_t *waiter = (wait_node_t *)node;
             waiter->zombie = task;
@@ -291,7 +303,6 @@ void kern_vanish(void) {
             waiter->thread->status = RUNNABLE;
             sche_push_back(waiter->thread);
 
-            cli_kern_mutex_unlock(&(task->vanish_mutex));
             sche_yield(ZOMBIE);
         } else {
             node_t *last_node = get_last_node(parent->zombie_task_list);
