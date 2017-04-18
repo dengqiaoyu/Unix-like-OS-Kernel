@@ -10,6 +10,8 @@
 
 void pagefault_handler();
 
+void hwerror_handler(int cause, int ec_flag);
+
 void exn_handler(int cause, int ec_flag);
 
 #endif

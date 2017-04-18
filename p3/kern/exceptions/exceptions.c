@@ -2,9 +2,11 @@
 #include <string.h>
 #include <simics.h>
 #include <ureg.h>
+#include <stdio.h>
 #include <x86/seg.h>
 #include <x86/cr.h>
-#include <x86/asm.h>
+#include <x86/idt.h>
+
 /*
 #include <x86/asm.h>
 #include <x86/idt.h>
@@ -30,10 +32,28 @@ void pagefault_handler() {
     }
 }
 
+void hwerror_handler(int cause, int ec_flag) {
+    /* IDT_CSO, IDT_TS, IDT_MC */
+    switch (cause) {
+    case IDT_CSO:
+        printf("Coprocessor Segment Overrun\n");
+        break;
+    case IDT_TS:
+        printf("Invalid TSS\n");
+        break;
+    case IDT_MC:
+        printf("Machine Check Error\n");
+        break;
+    default:
+        break;
+    }
+    kern_halt();
+}
+
 void exn_handler(int cause, int ec_flag) {
     thread_t *thread = get_cur_tcb();
-
     if (thread->swexn_handler == NULL) {
+        // TODO print error messages
         task_t *task = thread->task;
         task->status = -2;
         kern_vanish();
