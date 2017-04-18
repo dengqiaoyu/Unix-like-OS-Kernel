@@ -16,14 +16,12 @@
 #include "exceptions/exceptions.h"
 #include "asm_page_inval.h"
 
-void roll_over() {
-    lprintf("feeLs bad man\n");
-    while (1) continue;
-}
-
 void pagefault_handler() {
     uint32_t pf_addr = get_cr2();
     uint32_t pte = get_pte(pf_addr);
+
+    thread_t *thread = get_cur_tcb();
+    if (thread->tid == 3) MAGIC_BREAK;
 
     if ((pte & PAGE_ALIGN_MASK) == get_zfod_frame()) {
         asm_page_inval((void *)pf_addr);
@@ -32,12 +30,6 @@ void pagefault_handler() {
     } else {
         exn_handler(SWEXN_CAUSE_PAGEFAULT, ERROR_CODE);
     }
-    /*
-    if (!(pte & PTE_PRESENT)) {
-        lprintf("how did i pagefault at 0x%x?\n", (unsigned int)pf_addr);
-        roll_over();
-    }
-    */
 }
 
 void exn_handler(int cause, int ec_flag) {

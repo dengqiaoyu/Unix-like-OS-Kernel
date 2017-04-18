@@ -117,13 +117,11 @@ void task_clear(task_t *task) {
      * directory pointer as a flag for whether the task has been cleared
      */
     if (task->page_dir != NULL) {
-        // page_dir_clear(task->page_dir);
         sfree(task->page_dir, PAGE_SIZE);
         task->page_dir = NULL;
+        maps_destroy(task->maps);
 
-        // maps_destroy(task->maps);
         reap_threads(task);
-
         task_lists_destroy(task);
         task_mutexes_destroy(task);
     }
