@@ -36,9 +36,7 @@ void exn_handler(int cause, int ec_flag) {
     if (thread->swexn_handler == NULL) {
         task_t *task = thread->task;
         task->status = -2;
-        lprintf("Default");
         kern_vanish();
-        // should never reach here
         return;
     }
 

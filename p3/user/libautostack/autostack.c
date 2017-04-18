@@ -138,7 +138,7 @@ void print_ureg(ureg_t *ureg) {
            ureg->edi, ureg->esi, ureg->ebp);
     printf("eax: 0x%08x, ebx: 0x%08x, ecx: 0x%08x, edx: 0x%08x\n",
            ureg->eax, ureg->ebx, ureg->ecx, ureg->edx);
-    printf("eip: 0x%08x, esp: 0x%08x\neflags: 0x%08x\n",
+    printf("eip: 0x%08x, esp: 0x%08x\neflags: 0x%08x\n\n",
            ureg->eip, ureg->esp, ureg->eflags);
 }
 
