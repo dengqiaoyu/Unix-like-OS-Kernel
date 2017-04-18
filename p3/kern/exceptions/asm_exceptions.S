@@ -90,3 +90,4 @@ no_error_code:
 
 .global asm_divide
 WRAP_EXCEPTION(asm_divide, SWEXN_CAUSE_DIVIDE, NO_ERROR_CODE)
+

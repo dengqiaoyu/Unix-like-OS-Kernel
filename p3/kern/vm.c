@@ -80,6 +80,7 @@ int vm_init() {
 
     int machine_frames = machine_phys_frames();
     kern_mutex_init(&first_free_frame_mutex);
+    kern_mutex_init(&num_free_frames_mutex);
     first_free_frame = frame;
     num_free_frames = machine_frames - NUM_KERN_PAGES - 1;
 

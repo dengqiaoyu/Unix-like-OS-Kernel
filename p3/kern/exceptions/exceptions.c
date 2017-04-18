@@ -4,6 +4,7 @@
 #include <ureg.h>
 #include <x86/seg.h>
 #include <x86/cr.h>
+#include <x86/asm.h>
 /*
 #include <x86/asm.h>
 #include <x86/idt.h>
@@ -20,9 +21,6 @@ void pagefault_handler() {
     uint32_t pf_addr = get_cr2();
     uint32_t pte = get_pte(pf_addr);
 
-    thread_t *thread = get_cur_tcb();
-    if (thread->tid == 3) MAGIC_BREAK;
-
     if ((pte & PAGE_ALIGN_MASK) == get_zfod_frame()) {
         asm_page_inval((void *)pf_addr);
         uint32_t frame_addr = get_frame();
@@ -37,12 +35,8 @@ void exn_handler(int cause, int ec_flag) {
 
     if (thread->swexn_handler == NULL) {
         task_t *task = thread->task;
-        // disable_interrupts
-        kern_mutex_lock(&(task->thread_list_mutex));
-        int live_threads = get_list_size(task->live_thread_list);
-        if (live_threads == 1) task->status = -2;
-        kern_mutex_unlock(&(task->thread_list_mutex));
-        // enable_interrupts
+        task->status = -2;
+        lprintf("Default");
         kern_vanish();
         // should never reach here
         return;
