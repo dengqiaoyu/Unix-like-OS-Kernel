@@ -199,3 +199,28 @@ int kern_get_cursor_pos(void) {
     get_cursor(row, col);
     return 0;
 }
+
+int kern_readfile(void) {
+    uint32_t *esi = (uint32_t *)asm_get_esi();
+    char *filename = (char *)(*esi);
+    char *buf = (char *)(*(esi + 1));
+    int count = (int)(*(esi + 2));
+    int offset = (int)(*(esi + 3));
+
+    if (count < 0) return -1;
+
+    // TODO macro
+    int ret;
+    // check whether filename is valid
+    ret = validate_user_string((uint32_t)filename, 64);
+    if (ret <= 0) return -1;
+
+    if (count > 0) {
+        // no need to validate user memory if we aren't copying anything
+        ret = validate_user_mem((uint32_t)buf, count, MAP_USER | MAP_WRITE);
+        if (ret < 0) return -1;
+    }
+
+    ret = getbytes(filename, offset, count, buf);
+    return ret;
+}

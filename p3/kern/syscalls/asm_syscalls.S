@@ -98,6 +98,9 @@ WRAP_SYSCALL(asm_set_status, kern_set_status)
 .global asm_vanish
 WRAP_SYSCALL(asm_vanish, kern_vanish)
 
+.global asm_readfile
+WRAP_SYSCALL(asm_readfile, kern_readfile)
+
 .global asm_swexn
 asm_swexn:
     push    %eax

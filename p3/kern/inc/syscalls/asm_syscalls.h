@@ -47,6 +47,8 @@ void asm_set_status(void);
 
 void asm_vanish(void);
 
+void asm_readfile(void);
+
 void asm_swexn(void);
 
 /* syscall helper function */

@@ -1,16 +1,3 @@
-/**
- * The 15-410 kernel project.
- * @name loader.c
- *
- * Functions for the loading
- * of user programs from binary
- * files should be written in
- * this file. The function
- * elf_load_helper() is provided
- * for your use.
- */
-/*@{*/
-
 /* --- Includes --- */
 #include <string.h>
 #include <stdio.h>
@@ -34,11 +21,15 @@
  * @return returns the number of bytes copied on succes; -1 on failure
  */
 int getbytes( const char *filename, int offset, int size, char *buf ) {
+    if (offset < 0) return -1;
+
     int i, j;
     for (i = 0; i < MAX_NUM_APP_ENTRIES; i++) {
         const exec2obj_userapp_TOC_entry *entry = &exec2obj_userapp_TOC[i];
         if (!strcmp(filename, entry->execname)) {
+            if (offset > entry->execlen) return -1;
             for (j = 0; j < size; j++) {
+                if (offset + j >= entry->execlen) break;
                 buf[j] = entry->execbytes[offset + j];
             }
             return j;

@@ -55,8 +55,8 @@ UPDATE_METHOD = afs
 # directory.
 #
 STUDENTTESTS = my_fork_test my_maker_deschedule my_cond_sem_test my_readline\
-			   my_make_crash my_exec_and_fork my_exec_and_fork_helper\
-			   my_memory_permission my_print_test
+	       my_make_crash my_exec_and_fork my_exec_and_fork_helper\
+	       my_memory_permission my_print_test
 
 ###########################################################################
 # Data files provided by course staff to build into the RAM disk
@@ -97,7 +97,7 @@ SYSCALL_OBJS = syscall.o\
 	       set_status.o get_ticks.o sleep.o print.o set_term_color.o\
 	       get_cursor_pos.o set_cursor_pos.o remove_pages.o\
 	       deschedule.o make_runnable.o yield.o readline.o\
-	       swexn.o halt.o\
+	       swexn.o halt.o readfile.o\
 
 ###########################################################################
 # Object files for your automatic stack handling
