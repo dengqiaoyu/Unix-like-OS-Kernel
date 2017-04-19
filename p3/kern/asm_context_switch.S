@@ -1,9 +1,9 @@
 /**
- * @file asm_context_switch.S
- * @brief This file contains three functions that are used to switch to
- *        different threads with different status.
+ * @file   asm_context_switch.S
+ * @brief  This file contains three functions that are used to switch to
+ *         different threads with different status.
  * @author Newton Xie (ncx) Qiaoyu Deng (qdeng)
- * @bug No known bugs
+ * @bug    No known bugs
  */
 
 .global asm_switch_to_runnable

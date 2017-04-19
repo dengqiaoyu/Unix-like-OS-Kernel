@@ -1,8 +1,9 @@
-/** @file kernel.c
- *  @brief An initial kernel.c
+/**
+ *  @file   kernel.c
+ *  @brief  An initial kernel.c
  *  @author Newton Xie (ncx)
  *  @author Qiaoyu Deng (qdeng)
- *  @bug No known bugs.
+ *  @bug    No known bugs.
  */
 
 #include <common_kern.h>

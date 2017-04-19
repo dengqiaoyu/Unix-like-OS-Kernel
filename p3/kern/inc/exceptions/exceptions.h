@@ -7,6 +7,11 @@
 
 #define NO_ERROR_CODE 0
 #define ERROR_CODE 1
+#define ERROR_CODE_P (1)
+#define ERROR_CODE_WR (1 << 1)
+#define ERROR_CODE_US (1 << 2)
+#define ERROR_CODE_RSVD (1 << 3)
+
 
 void pagefault_handler();
 

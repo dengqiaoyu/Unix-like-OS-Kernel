@@ -1,14 +1,13 @@
 /**
- *  @file time_driver.c
- *  @brief A time driver that can conut time for every 10ms.
- *  @author Qiaoyu Deng
- *  @andrew_id qdeng
- *  @bug No known bugs.
+ *  @file    time_driver.c
+ *  @brief   A time driver that can conut time for every 10ms.
+ *  @author  Qiaoyu Deng (qdeng)
+ *  @bug     No known bugs.
  */
 
 #include <x86/timer_defines.h>
 
-/* x86 includes */
+/* x86 specific includes */
 #include <asm.h>                /* outb() */
 #include <interrupt_defines.h>  /* INT_ACK_CURRENT, INT_CTL_PORT */
 #include <stdio.h>              /* NULL */

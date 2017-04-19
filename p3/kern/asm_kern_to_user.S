@@ -1,9 +1,11 @@
-/** asm_switch.S
- *
+/**
+ * @file   asm_kern_to_user.S
+ * @author Newton Xie (ncw)
+ * @bug    No known bugs
  */
 
-#include <x86/seg.h>
-#include <x86/eflags.h>
+#include <x86/seg.h>        /* SEGSEL_USER_DS, SEGSEL_USER_CS */
+#include <x86/eflags.h>     /* EFL_IF */
 
 .global kern_to_user
 kern_to_user:

@@ -1,22 +1,45 @@
+/**
+ * @file thread_management.c
+ * @brief This file contains thread management system calls for controlling
+ *        thread running status.
+ * @author Newton Xie(ncx)
+ * @author Qiaoyu Deng(qdeng)
+ * @bug No known bugs
+ */
+
+/* libc includes */
 #include <stdlib.h>
 #include <asm.h>                 /* disable_interrupts(), enable_interrupts() */
-#include <simics.h>
 #include <x86/eflags.h>
 #include <x86/seg.h>
 #include <string.h>
 
-#include "syscalls/syscalls.h"
-#include "task.h"                /* task thread declaration and interface */
-#include "scheduler.h"           /* scheduler declaration and interface */
-#include "utils/tcb_hashtab.h"         /* insert and find tcb by tid */
-#include "drivers/timer_driver.h"        /* get_timer_ticks */
+/* DEBUG */
+#include <simics.h>
 
+#include "syscalls/syscalls.h"
+#include "task.h"                 /* task thread declaration and interface */
+#include "scheduler.h"            /* scheduler declaration and interface */
+#include "utils/tcb_hashtab.h"    /* insert and find tcb by tid */
+#include "drivers/timer_driver.h" /* get_timer_ticks */
+
+/**
+ * @brief Get thread id
+ * @return  tid
+ */
 int kern_gettid(void) {
     thread_t *thread = get_cur_tcb();
     return thread->tid;
 }
 
+/**
+ * @brief Yield to a thread whose tid is indicated by the argument, if tid is -1
+ *        ,just yield to the next thread in the scheduler.
+ * @return  0 when yield succeeds, -1 when the tid does not exist or the target
+ *          thread is not runnable return -1
+ */
 int kern_yield(void) {
+    /* tid is stored in %esi */
     int tid = (int)asm_get_esi();
     if (tid < -1) return -1;
 
@@ -25,6 +48,10 @@ int kern_yield(void) {
         return 0;
     }
 
+    /**
+     * We need disable interrupts here, because we need to ensure no one can
+     * change thread's status before we actually yield to that thread.
+     */
     disable_interrupts();
     thread_t *thr = tcb_hashtab_get(tid);
     if (thr == NULL) return -1;
@@ -38,9 +65,19 @@ int kern_yield(void) {
     return 0;
 }
 
+/**
+ * @brief   Atomically checks the integer pointed to by reject and acts on it.
+ *          If the integer is non-zero, the call returns immediately with return
+ *          value zero. If the integer pointed to by reject is zero, then the
+ *          calling thread will not be run by the scheduler until a make
+ *          runnable() call is made specifying the deschedule()’s thread
+ * @return  0 when the value pointed by reject is non-zero, or descheduled
+ *          successfully. Otherwise return -1
+ */
 int kern_deschedule(void) {
     int *reject = (int *)asm_get_esi();
 
+    /* still need to ensure no one can change reject's addressed value */
     disable_interrupts();
     if (*reject != 0) {
         enable_interrupts();
@@ -51,6 +88,11 @@ int kern_deschedule(void) {
     return 0;
 }
 
+/**
+ * @brief   Makes the deschedule()d thread with ID tid runnable by the scheduler
+ * @return  0 as success , -1 when thread does not exist or thread is currently
+ *          non-runnable due to a call to deschedule()
+ */
 int kern_make_runnable(void) {
     int tid = (int)asm_get_esi();
 
@@ -65,10 +107,21 @@ int kern_make_runnable(void) {
     return 0;
 }
 
+/**
+ * @brief   Returns the number of timer ticks which have occurred since system
+ *          boot.
+ * @return  ticks value
+ */
 unsigned int kern_get_ticks(void) {
     return get_timer_ticks();
 }
 
+/**
+ * @brief   Deschedules the calling thread until at least ticks timer
+ *          interrupts have occurred after the call.
+ * @return  return immediately if ticks is zero, return -1 if ticks is a
+ *          negative value, return on success
+ */
 int kern_sleep(void) {
     int ticks = (int)asm_get_esi();
 
@@ -88,6 +141,11 @@ int kern_sleep(void) {
     return 0;
 }
 
+// TODO
+/**
+ * [kern_swexn description]
+ * @return  [description]
+ */
 int kern_swexn(void) {
     uint32_t *esi = (uint32_t *)asm_get_esi();
     void *esp3 = (void *)(*esi);
