@@ -1,7 +1,7 @@
-/** @file task.c
- *  @brief this file contains functions create task structures, create thread
- *         structures and map user memory and load programs.
- *
+/**
+ *  @file   task.c
+ *  @brief  this file contains functions create task structures, create thread
+ *          structures and map user memory and load programs.
  *  @author Newton Xie (ncx)
  *  @author Qiaoyu Deng (qdeng)
  *  @bug No known bugs.

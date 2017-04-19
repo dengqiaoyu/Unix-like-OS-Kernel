@@ -1,9 +1,9 @@
 /**
- * @file scheduler.c
- * @brief This file contains the functions that are used to switch context
+ * @file   scheduler.c
+ * @brief  This file contains the functions that are used to switch context
  * @author Newton Xie (ncx)
  * @author Qiaoyu Deng (qdeng)
- * @bug No known bugs
+ * @bug    No known bugs
  */
 
 /* libc includes. */
@@ -32,8 +32,8 @@ static sche_node_t *cur_sche_node;     /* save the current running thread*/
 static schedule_t sche_list;           /* scheduler uses FIFO list to switch */
 
 /**
- * Initialize the scheduler's list structures.
- * @return 0 for success, -1 for failure
+ * @brief   Initialize the scheduler's list structures.
+ * @return  0 for success, -1 for failure
  */
 int scheduler_init() {
     sche_list.active_list = list_init();
@@ -204,11 +204,11 @@ void sche_move_front(thread_t *tcb_ptr) {
 }
 
 /**
- * Insert a sleeping thread to sleeping list in order according to their
- * sleeping time(ticks). So our scheduler could only always check the first one
- * in the list to determine whether to wake it up instead of scanning th entire
- * list.
- * @param sleep_node list node that contains sleeping tcb pointer
+ * @brief   Insert a sleeping thread to sleeping list in order according to
+ *          their sleeping time(ticks). So our scheduler could only always check
+ *          the first one in the list to determine whether to wake it up instead
+ *          of scanning th entire list.
+ * @param   sleep_node list node that contains sleeping tcb pointer
  */
 void tranquilize(sleep_node_t *sleep_node) {
     // TODO casting everywhere

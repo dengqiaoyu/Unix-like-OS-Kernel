@@ -1,43 +1,76 @@
+/**
+ * @file   exceptions.c
+ * @brief  This file contains functions that are used to handle exceptions or
+ *         call user defined software handler.
+ * @author Newton Xie (ncw)
+ * @author Qiaoyu Deng (qdeng)
+ * @bug No known bugs
+ */
+
+/* libc includes */
 #include <stdlib.h>
-#include <string.h>
-#include <ureg.h>
-#include <stdio.h>
-#include <x86/seg.h>
-#include <x86/cr.h>
-#include <x86/idt.h>
+#include <string.h>                     /* memcpy */
+#include <ureg.h>                       /* ureg_t */
+#include <stdio.h>                      /* printf */
 
-#include <simics.h>
+/* x86 specific includes */
+#include <x86/cr.h>                     /* get_cr2 */
+#include <x86/idt.h>                    /* IDT */
 
-#include "syscalls/syscalls.h"
+/* DEBUG */
+#include <simics.h>                     /* lprintf */
 
-/*
-#include <x86/asm.h>
-#include <x86/idt.h>
-*/
-
-#include "vm.h"
-#include "task.h"
-#include "scheduler.h"
-#include "syscalls/life_cycle.h"
 #include "exceptions/exceptions.h"
-#include "asm_page_inval.h"
+#include "vm.h"                         /* get_zfod_frame */
+#include "task.h"                       /* thread_t */
+#include "scheduler.h"                  /* get_cur_tcb */
+#include "asm_page_inval.h"             /* asm_page_inval */
+#include "syscalls/syscalls.h"          /* kern_halt, kern_vanish */
 
-void _exn_print_error_msg(ureg_t *ureg);
-void _exn_print_ureg(ureg_t *ureg);
+/* internal functions */
+/**
+ * @brief      print error message about fault type and where the error
+ *             happens(eip), and esp when the error has error code, and also
+ *             print memory address when page fault happens, and dump all the
+ *             registers' value.
+ * @param ureg structs that contains all error information
+ */
+static void _exn_print_error_msg(ureg_t *ureg);
 
+/**
+ * @brief      called by _exn_print_error_msg, dump all the registers'
+ *             information
+ * @param ureg structs that contains all error information
+ */
+static void _exn_print_ureg(ureg_t *ureg);
+
+/**
+ * @brief   handle with PAGEFAULT fault, when it is a ZFOD frame just assign a
+ *          new frame to the page fault address
+ */
 void pagefault_handler() {
+    /* get the page fault address from cr2 */
     uint32_t pf_addr = get_cr2();
+    /* get which page table entry this address belongs to  */
     uint32_t pte = get_pte(pf_addr);
 
     if ((pte & PAGE_ALIGN_MASK) == get_zfod_frame()) {
+        /* we need to invalidate this address in TLB because we put new frame */
         asm_page_inval((void *)pf_addr);
         uint32_t frame_addr = get_frame();
         set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
     } else {
+        /* otherwise call handler to handle page fault */
         exn_handler(SWEXN_CAUSE_PAGEFAULT, ERROR_CODE);
     }
 }
 
+/**
+ * @brief         Handle hardware exceptions that are impossible to recover by
+ *                just halting the entire system.
+ * @param cause   cause code that are defined in ureg.h or idt.h
+ * @param ec_flag whether this error has error code
+ */
 void hwerror_handler(int cause, int ec_flag) {
     /* IDT_CSO, IDT_TS, IDT_MC */
     switch (cause) {
@@ -56,6 +89,13 @@ void hwerror_handler(int cause, int ec_flag) {
     kern_halt();
 }
 
+// TODO
+/**
+ * @brief         Global exception handler for calling default handler or
+ *                software exception handler.
+ * @param cause   cause code that are defined in ureg.h or idt.h
+ * @param ec_flag whether this error has error code
+ */
 void exn_handler(int cause, int ec_flag) {
     thread_t *thread = get_cur_tcb();
 
@@ -90,7 +130,6 @@ void exn_handler(int cause, int ec_flag) {
     *(--esp3) = cause;
 
     // ureg is set up
-
     if (thread->swexn_handler == NULL) {
         task_t *task = thread->task;
         kern_mutex_lock(&(task->thread_list_mutex));
@@ -116,6 +155,13 @@ void exn_handler(int cause, int ec_flag) {
     }
 }
 
+/**
+ * @brief      print error message about fault type and where the error
+ *             happens(eip), and esp when the error has error code, and also
+ *             print memory address when page fault happens, and dump all the
+ *             registers' value.
+ * @param ureg structs that contains all error information
+ */
 void _exn_print_error_msg(ureg_t *ureg) {
     unsigned int fault_addr = ureg->cr2;
     unsigned int fault_ip_addr = ureg->eip;
@@ -180,6 +226,11 @@ void _exn_print_error_msg(ureg_t *ureg) {
     _exn_print_ureg(ureg);
 }
 
+/**
+ * @brief      called by _exn_print_error_msg, dump all the registers'
+ *             information
+ * @param ureg structs that contains all error information
+ */
 void _exn_print_ureg(ureg_t *ureg) {
     printf("Registers Dump:\n");
     printf("cause: %d, error_code: %d, cr2: 0x%08x\n",

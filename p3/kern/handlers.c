@@ -1,9 +1,10 @@
-/** @file handlers.c
- *  @brief This file contains the excepton handler, syscalls installer and
- *         keyboard and timer driver.
+/**
+ *  @file   handlers.c
+ *  @brief  This file contains the excepton handler, syscalls installer and
+ *          keyboard and timer driver.
  *  @author Newton Xie (ncx)
  *  @author Qiaoyu Deng(qdeng)
- *  @bug No known bugs.
+ *  @bug    No known bugs.
  */
 /* libc includes */
 #include <stdlib.h>

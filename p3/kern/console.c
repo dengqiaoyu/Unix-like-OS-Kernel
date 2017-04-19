@@ -1,9 +1,9 @@
-/** @file console.c
- *  @brief Implementation of the console driver API.
+/** @file   console.c
+ *  @brief  Implementation of the console driver API.
  *
  *  @author Newton Xie (ncx)
  *  @author Qiaoyu Deng (qdeng)
- *  @bug No known bugs.
+ *  @bug    No known bugs.
  */
 
 #include <ctype.h>

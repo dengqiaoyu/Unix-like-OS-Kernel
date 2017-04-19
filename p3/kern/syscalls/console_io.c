@@ -179,7 +179,7 @@ int kern_set_cursor_pos(void) {
 }
 
 /**
- * [Writes the current location of the cursor to the integers addressed by the
+ * Writes the current location of the cursor to the integers addressed by the
  * two arguments.
  * @param  row the address of row that the row number will written into
  * @param  col the address of col that the col number will written into

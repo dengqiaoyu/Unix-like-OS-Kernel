@@ -1,11 +1,11 @@
-/** @file vm.c
- *  @brief this file contains functions that are used to operate between virtual
- *         memory and physical frames, and provides helpers to create, copy,
- *         destroy, read and write memory.
- *
+/**
+ *  @file   vm.c
+ *  @brief  this file contains functions that are used to operate between virtual
+ *          memory and physical frames, and provides helpers to create, copy,
+ *          destroy, read and write memory.
  *  @author Newton Xie (ncx)
  *  @author Qiaoyu Deng (qdeng)
- *  @bug No known bugs.
+ *  @bug    No known bugs.
  */
 
 /* libc includes */

@@ -1,8 +1,11 @@
-/** asm_syscalls.S
- *
+/**
+ * @file   asm_syscalls.S
+ * @brief  This file contains all system call entry function.
+ * @author Newton Xie (ncx)
+ * @author Qiaoyu Deng (qdeng)
+ * @bug    No known bugs
  */
-#include <x86/seg.h>
-
+/* x86 specific includes */
 #include <x86/seg.h>
 
 #define WRAP_SYSCALL(wrapper_name, syscall) ;\

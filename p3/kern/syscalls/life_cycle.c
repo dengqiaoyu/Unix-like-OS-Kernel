@@ -1,3 +1,12 @@
+/**
+ * @file    life_cycle.c
+ * @brief   This file contains the system calls that are used for controlling
+ *          system and tasks' life cycle.
+ * @author  Newton Xie (ncx)
+ * @author  Qiaoyu Deng (qdeng)
+ * @bug     No known bugs
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -21,18 +30,36 @@ void asm_set_exec_context(uint32_t old_kern_sp,
                           uint32_t *new_ip_ptr);
 void asm_hlt(void);
 
+/**
+ * @brief   Creates a new task. The new task receives an exact, coherent copy of
+ *          all memory regions of the invoking task. The new task contains a
+ *          single thread which is a copy of the thread invoking fork() except
+ *          for the return value of the system call. If fork() succeeds, the
+ *          invoking thread will receive the ID of the new task’s thread and the
+ *          newly created thread will receive the value zero. The exit status
+ *          (see below) of a newly-created task is 0. If a thread in the task
+ *          invoking fork() has a software exception handler registered, the
+ *          corresponding thread in the newly-created task will have exactly the
+ *          same handler registered.
+ * @return  -1 if task has one more threads, or fork fails to get new memory.
+ *          return 0 if child task get created successfully, child's tid if
+ *          parent task create child task successfully.
+ */
 int kern_fork(void) {
     int ret = 0;
     thread_t *old_thread = get_cur_tcb();
+    /* get parent task information */
     int old_tid = old_thread->tid;
     task_t *old_task = old_thread->task;
     thread_t *cur_thr = NULL;
 
+    /* we need to check whether task has only one thread */
     kern_mutex_lock(&(old_task->thread_list_mutex));
     int live_threads = get_list_size(old_task->live_thread_list);
     kern_mutex_unlock(&(old_task->thread_list_mutex));
     if (live_threads > 1) return -1;
 
+    /* get essential task control block and assign important resources */
     task_t *new_task = task_init();
     if (new_task == NULL) {
         lprintf("task_init() failed in kern_fork at line %d", __LINE__);
@@ -40,6 +67,7 @@ int kern_fork(void) {
     }
     new_task->parent_task = old_task;
 
+    /* copy parent's page directory to the child */
     ret = page_dir_copy(new_task->page_dir, old_task->page_dir);
     if (ret != 0) {
         lprintf("page_dir_copy() failed in kern_fork at line %d", __LINE__);
@@ -47,6 +75,7 @@ int kern_fork(void) {
         return -1;
     }
 
+    /* copy parent's memory mapping to child */
     ret = maps_copy(old_task->maps, new_task->maps);
     if (ret != 0) {
         lprintf("maps_copy() failed in kern_fork at line %d", __LINE__);
@@ -54,6 +83,7 @@ int kern_fork(void) {
         return -1;
     }
 
+    /* get essential thread control block and assign important resources */
     thread_t *new_thread = thread_init();
     if (new_thread == NULL) {
         lprintf("thread_init() failed in kern_fork at line %d", __LINE__);
@@ -63,23 +93,29 @@ int kern_fork(void) {
 
     new_task->task_id = new_thread->tid;
     new_thread->task = new_task;
+    /**
+     * the scheduler need to tell the difference between FORKED and RUNNABLE to
+     * determine which way to set the registers.
+     */
     new_thread->status = FORKED;
+    /* get the same swexn handler just like parent */
     new_thread->swexn_sp = old_thread->swexn_sp;
     new_thread->swexn_handler = old_thread->swexn_handler;
     new_thread->swexn_arg = old_thread->swexn_arg;
+    /* add new thread to new task's thread list */
     add_node_to_head(new_task->live_thread_list, TCB_TO_LIST_NODE(new_thread));
-
+    /* add new task to parent's child task list */
     kern_mutex_lock(&(old_task->child_task_list_mutex));
     add_node_to_head(old_task->child_task_list, TASK_TO_LIST_NODE(new_task));
     kern_mutex_unlock(&(old_task->child_task_list_mutex));
+    /* copy parent's execution context to child */
     asm_set_exec_context(old_thread->kern_sp,
                          new_thread->kern_sp,
                          &(new_thread->cur_sp),
                          &(new_thread->ip));
 
-    // Now, we will have two tasks running
-    // cannot declare var here, because we will break stack
-
+    /* Now, we will have two tasks running */
+    /* Cannot declare variables here, because we will break the stack */
     cur_thr = get_cur_tcb();
     if (cur_thr->tid != old_tid) {
         return 0;
@@ -91,6 +127,10 @@ int kern_fork(void) {
     }
 }
 
+/**
+ * @brief Creates a new thread. The rest of code is the same like fork.
+ * @return  new thread's tid when succeeds, otherwise returns -1
+ */
 int kern_thread_fork(void) {
     thread_t *old_thread = get_cur_tcb();
     task_t *cur_task = old_thread->task;
@@ -126,6 +166,11 @@ int kern_thread_fork(void) {
     }
 }
 
+// TODO
+/**
+ * [kern_exec description]
+ * @return  [description]
+ */
 int kern_exec(void) {
     uint32_t *esi = (uint32_t *)asm_get_esi();
     char *execname = (char *)(*esi);
@@ -170,7 +215,6 @@ int kern_exec(void) {
     char namebuf[64];
     sprintf(namebuf, "%s", execname);
 
-    // lprintf("I am thread %d, I am going to execute %s", thread->tid, namebuf );
     simple_elf_t elf_header;
     ret = elf_load_helper(&elf_header, namebuf);
     if (ret < 0) return -1;
@@ -239,6 +283,9 @@ int kern_exec(void) {
     return 0;
 }
 
+/**
+ * Sets the exit status of the current task to status.
+ */
 void kern_set_status(void) {
     int status = (int)asm_get_esi();
 
@@ -247,6 +294,10 @@ void kern_set_status(void) {
     task->status = status;
 }
 
+// TODO
+/**
+ * [kern_vanish description]
+ */
 void kern_vanish(void) {
     thread_t *thread = get_cur_tcb();
     task_t *task = thread->task;
@@ -325,6 +376,11 @@ void kern_vanish(void) {
     }
 }
 
+// TODO
+/**
+ * [kern_wait description]
+ * @return  [description]
+ */
 int kern_wait(void) {
     int *status_ptr = (int *)asm_get_esi();
 
@@ -376,6 +432,9 @@ int kern_wait(void) {
     return ret;
 }
 
+/**
+ * Ceases execution of the operating system.
+ */
 void kern_halt(void) {
     clear_console();
     disable_interrupts();
