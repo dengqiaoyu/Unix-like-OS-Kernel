@@ -25,7 +25,8 @@ typedef struct exn_stk_info_t {
 } exn_stk_info_t;
 
 void autostack(void *arg, ureg_t *ureg);
-void print_and_vanish(ureg_t *ureg);
+void install_print_and_vanish(void *stack_base);
+void print_and_vanish(void *arg, ureg_t *ureg);
 void print_error_msg(ureg_t *ureg);
 void print_ureg(ureg_t *ureg);
 

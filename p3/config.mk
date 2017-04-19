@@ -77,7 +77,9 @@ STUDENTFILES =
 ###########################################################################
 # Object files for your thread library
 ###########################################################################
-THREAD_OBJS = malloc.o panic.o
+THREAD_OBJS = malloc.o panic.o thread.o start_thread.o wrap_thread_proc.o\
+			  thread_table.o allocator.o mutex_asm.o list.o mutex.o cond.o\
+			  sem.o rwlock.o
 
 # Thread Group Library Support.
 #
@@ -85,7 +87,7 @@ THREAD_OBJS = malloc.o panic.o
 # P3" we give you can't build libthrgrp.a.  Once you install your thread
 # library and fix THREAD_OBJS above, uncomment this line to enable building
 # libthrgrp.a:
-#410USER_LIBS_EARLY += libthrgrp.a
+410USER_LIBS_EARLY += libthrgrp.a
 
 ###########################################################################
 # Object files for your syscall wrappers
@@ -160,4 +162,4 @@ KERNEL_OBJS = console.o kernel.o handlers.o task.o vm.o scheduler.o\
 # kernel in, or else your tweaked version will run and the test harness
 # won't.
 #
-STUDENTREQPROGS = user_init my_cho
+STUDENTREQPROGS =
