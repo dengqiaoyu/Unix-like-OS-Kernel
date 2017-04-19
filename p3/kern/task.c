@@ -304,11 +304,11 @@ void thread_destroy(thread_t *thread) {
 }
 
 /**
- * Check the validation of memory region by using mapping
+ * Checks whether a region of user memory is accessible.
  * @param  addr  the address that needs to be checked
  * @param  len   the length of memory needs to be checked
- * @param  perms which permission needs to checked
- * @return       0 as valid, -1 as invalid
+ * @param  perms requested permissions, as defined in maps.h
+ * @return       0 if valid, -1 if invalid
  */
 int validate_user_mem(uint32_t addr, uint32_t len, int perms) {
     thread_t *thread = get_cur_tcb();
@@ -342,12 +342,11 @@ int validate_user_mem(uint32_t addr, uint32_t len, int perms) {
 }
 
 /**
- * validate user's string input
+ * Checks for validity of a string in user memory.
  * @param  addr    address of string
  * @param  max_len max length that needs to be checked
  * @return         negative if string goes outside user memory
- *                 0 if string is in valid memory but does not terminate
- *                 in max_len
+ *                 0 if string is present but does not terminate in max_len
  *                 length including null terminator otherwise
  */
 int validate_user_string(uint32_t addr, int max_len) {
@@ -359,24 +358,29 @@ int validate_user_string(uint32_t addr, int max_len) {
     int len = 0;
 
     while (len < max_len) {
-        /* find mapping regions one by one */
+        /* search for the maps region containing the string's start */
         map_t *map = maps_find(task->maps, low, low);
         if (map == NULL) return -1;
         if (!(MAP_USER & map->perms)) return -1;
 
-        /* for every region, check it is terminated by '\0' */
+        /* coverage = number of bytes covered by current maps region */
         uint32_t coverage = map->high - low + 1;
         char *check = (char *)low;
         int i;
         for (i = 0; i < coverage; i++) {
             len++;
             if (len > max_len)
+                // no null terminator was found
                 return 0;
             else if (*check == '\0')
                 return len;
             check++;
         }
 
+        /* 
+         * we are still under max_len but the string did not terminate, so
+         * increment its starting address and continue searching
+         */
         low += coverage;
     }
 
@@ -478,17 +482,13 @@ int load_program(simple_elf_t *header, map_list_t *maps) {
  */
 int load_elf_section(const char *fname, unsigned long start, unsigned long len,
                      long offset, int pte_flags) {
-    // lprintf("%p", (void *)start);
-    // lprintf("%p", (void *)len);
-    // lprintf("%p", (void *)offset);
-
     uint32_t low = (uint32_t)start & PAGE_ALIGN_MASK;
     uint32_t high = (uint32_t)(start + len);
 
     uint32_t addr = low;
     /**
-     * keep mapping physical frames to page table until entire programs can be
-     * loaded to the memory
+     * keep mapping physical frames to page table until entire program can be
+     * loaded into memory
      */
     while (addr < high) {
         if (!(get_pte(addr) & PTE_PRESENT)) {
@@ -503,8 +503,7 @@ int load_elf_section(const char *fname, unsigned long start, unsigned long len,
     }
 
     /**
-     * offset -1 indicate we just need to per map that much of memory without
-     * copying anything
+     * offset -1 indicates bss or stack sections
      */
     if (offset != -1) {
         getbytes(fname, offset, len, (char *)start);

@@ -13,4 +13,6 @@ int kern_set_cursor_pos(void);
 
 int kern_get_cursor_pos(void);
 
+int kern_readfile(void);
+
 #endif /* _CONSOLE_IO_H_ */

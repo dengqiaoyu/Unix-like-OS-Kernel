@@ -102,6 +102,7 @@ int syscall_init() {
     idt_install(HALT_INT,           asm_halt,           kern_cs, flag);
     idt_install(SET_STATUS_INT,     asm_set_status,     kern_cs, flag);
     idt_install(VANISH_INT,         asm_vanish,         kern_cs, flag);
+    idt_install(READFILE_INT,       asm_readfile,       kern_cs, flag);
     idt_install(SWEXN_INT,          asm_swexn,          kern_cs, flag);
     return 0;
 }
@@ -138,6 +139,5 @@ void idt_install(int idt_idx, void (*entry)(), int selector, int flag) {
  * @param num_ticks the number of 10 ms that is triggered.
  */
 void timer_callback(unsigned int num_ticks) {
-    outb(INT_ACK_CURRENT, INT_CTL_PORT);
     sche_yield(RUNNABLE);
 }

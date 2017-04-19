@@ -45,8 +45,8 @@ void timer_init(void (*tickback)(unsigned int)) {
  */
 void timer_handler() {
     num_ticks++;
+    outb(INT_ACK_CURRENT, INT_CTL_PORT);
     callback_func(num_ticks);
-    // outb(INT_ACK_CURRENT, INT_CTL_PORT);
 }
 
 int get_timer_ticks() {
