@@ -44,8 +44,8 @@ UPDATE_METHOD = afs
 	   swexn_stands_for_swextensible swexn_uninstall_test\
 	   fork_bomb mem_permissions minclone_mem register_test\
 	   stack_test1 mem_eat_test cho cho2 cho_variant\
-	   \
-	   slaughter\
+	   rwlock_downgrade_read_test cvar_test multitest thr_exit_join\
+	   slaughter startle\
 	   #ack bistromath slaughter\
 
 ###########################################################################
