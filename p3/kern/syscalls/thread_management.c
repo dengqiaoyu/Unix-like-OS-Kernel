@@ -1,3 +1,12 @@
+/**
+ * @file thread_management.c
+ * @brief This file contains thread management system calls for controlling
+ *        thread running status.
+ * @author Newton Xie(ncx)
+ * @author Qiaoyu Deng(qdeng)
+ * @bug No known bugs
+ */
+
 #include <stdlib.h>
 #include <asm.h>                 /* disable_interrupts(), enable_interrupts() */
 #include <simics.h>

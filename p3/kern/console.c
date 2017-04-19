@@ -25,8 +25,7 @@ static int cursor_hidden = 0;
  *
  *  @return void
  **/
-static void scroll_down()
-{
+static void scroll_down() {
     char *addr = (char *)CONSOLE_MEM_BASE;
 
     int row;
@@ -34,7 +33,7 @@ static void scroll_down()
         memcpy(addr, addr + 2 * CONSOLE_WIDTH, 2 * CONSOLE_WIDTH);
         addr += 2 * CONSOLE_WIDTH;
     }
-    
+
     int col;
     for (col = 0; col < CONSOLE_WIDTH; col++) {
         *(addr++) = ' ';
@@ -69,11 +68,10 @@ static void update_cursor() {
     int cursor_pos = cursor_row * CONSOLE_WIDTH + cursor_col;
     if (cursor_hidden) {
         cursor_pos += CONSOLE_HEIGHT * CONSOLE_WIDTH;
-    }
-    else {
+    } else {
         char *addr = (char *)CONSOLE_MEM_BASE;
         addr += 2 * cursor_pos;
-        *(addr+1) = (char)console_color;
+        *(addr + 1) = (char)console_color;
     }
 
     outb(CRTC_IDX_REG, CRTC_CURSOR_LSB_IDX);
@@ -90,8 +88,7 @@ int putbyte( char ch ) {
             cursor_col--;
             draw_char(cursor_row, cursor_col, ' ', console_color);
         }
-    }
-    else {
+    } else {
         draw_char(cursor_row, cursor_col, ch, console_color);
         if (cursor_col == CONSOLE_WIDTH - 1) new_line();
         else cursor_col++;
@@ -147,7 +144,7 @@ void show_cursor() {
 void clear_console() {
     char *base = (char *)CONSOLE_MEM_BASE;
     char *addr = base;
-    
+
     // clear first line
     int col;
     for (col = 0; col < CONSOLE_WIDTH; col++) {
@@ -174,7 +171,7 @@ void draw_char( int row, int col, int ch, int color ) {
     int addr = CONSOLE_MEM_BASE;
     addr += 2 * (row * CONSOLE_WIDTH + col);
     *(char *)addr = (char)ch;
-    *(char *)(addr+1) = (char)color;
+    *(char *)(addr + 1) = (char)color;
 }
 
 char get_char( int row, int col ) {
