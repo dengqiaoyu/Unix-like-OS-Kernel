@@ -8,3 +8,50 @@
 Same drill as last time.
 
 */
+
+1. Context Switch
+   We set a FIFO list for all of runnable threads, and each time when we got
+interrupted by timer, we will choose the next thread in the schedule list, and
+put the current running thread to the tail of the scheduler list. We also use
+context switch to block or suspend a thread by not adding it to the scheduler
+list but adding to block list(used by mutex), sleep list(used by sleep). We have
+two starting point for a thread which is INITIALIZED and FORKED, all of threads
+that are created in kern_main will start from INITIALIZED, and all tasks that
+are forked in tasks will start from FORKED, however, they have only one way to
+go out from context switch which is the status of RUNNABLE. in order to
+implement sleep, each time when we go into context switch, we will first check
+the sleep list, find if there is any thread that should be waked up, if so we
+then switch to that thread, otherwise we choose a runnable thread from normal
+schedule list, and then switch to. For the switch, we never use dynamic memory,
+but always use the pointers which are allocated when we create new tasks and
+threads, so we will save a lot of time on get new memory from malloc.
+
+2. fork
+    For fork, we create task and thread first just like running the first task
+in kernel initialization. And then we copy the parent page directory to child,
+after that we will set the child running context by copying parent's kernel
+stack to the child but change the child's esp and ebp to let child use its own
+kernel stack, And we let child starts from where the copy is finished, so we
+will have child and parent running the same instruction once child is started by
+context switcher.
+
+3. readline
+    For different thread call readline at the same time, we use semaphore to let
+thread waiting to use readline one by one after we get into readine, we will
+check whether there is enough newline character in keyboard buffer, if not we
+will print all the characters in the buffer to indicate those character will be
+consumed by the current thread, and then use conditional variables going to
+be blocked, and the keyboard driver is responsible for print new character when
+there is some thread waiting on newline character. Once keyboard driver detects
+newline character it will use single to activate that blocked thread, which
+means put the thread back to scheduler list again. In that situation, we will
+let waked up thread get its character from the keyboard buffer but does not
+print characters since when thread is waiting, keyboard already print characters
+However, when there are newline characters in keyboard buffer, we will let
+thread pass the conditional wait and get input directly, since we never have
+chance to print those buffered characters, we will let thread itself prints out,
+which is different from the waiting situation. At last, after we get all the
+input (get newline or reach max length), we will use semaphore to activate the
+next thread waiting on the readline.
+
+4. 

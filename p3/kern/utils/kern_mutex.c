@@ -16,11 +16,6 @@
 #include "utils/kern_mutex.h"
 #include "utils/list.h"
 
-/* assembly helpers
-int kern_mutex_lock_asm(kern_mutex_t *mp);
-int kern_mutex_unlock_asm(kern_mutex_t *mp);
-*/
-
 int kern_mutex_init(kern_mutex_t *mp) {
     mp->is_locked = 0;
     mp->blocked_list = list_init();
