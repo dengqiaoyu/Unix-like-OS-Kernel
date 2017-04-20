@@ -45,7 +45,7 @@ UPDATE_METHOD = afs
 	   fork_bomb mem_permissions minclone_mem register_test\
 	   stack_test1 mem_eat_test cho cho2 cho_variant\
 	   rwlock_downgrade_read_test cvar_test multitest thr_exit_join\
-	   slaughter startle join_specific_test\
+	   slaughter startle join_specific_test agility_drill cyclone largetest\
 	   #ack bistromath slaughter\
 
 ###########################################################################

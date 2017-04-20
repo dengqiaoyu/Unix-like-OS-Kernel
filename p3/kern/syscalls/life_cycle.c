@@ -171,7 +171,7 @@ int kern_thread_fork(void) {
 }
 
 /** @brief  Replaces the currently running program with another.
- *  
+ *
  *  If the calling task has multiple threads, an error is returned.
  *  The total length of argvec arguments cannot exceed 128, and the number
  *  of arguments cannot exceed 16. If all arguments are within length bounds

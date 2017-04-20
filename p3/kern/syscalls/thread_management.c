@@ -56,7 +56,9 @@ int kern_yield(void) {
     disable_interrupts();
     thread_t *thr = tcb_hashtab_get(tid);
     if (thr == NULL) return -1;
-    if (thr->status != RUNNABLE) {
+    if (thr->status != RUNNABLE
+            && thr->status != INITIALIZED
+            && thr->status != FORKED) {
         enable_interrupts();
         return -1;
     }
@@ -152,7 +154,7 @@ int kern_sleep(void) {
  *  by the return sequence in asm_swexn.
  *
  *  If any of the parameters are judged to be invalid, no actions are taken.
- * 
+ *
  *  @return 0 on success and negative on failure (may not return)
  */
 int kern_swexn(void) {
@@ -186,7 +188,7 @@ int kern_swexn(void) {
         thread->swexn_arg = NULL;
     } else {
         int ret;
-        
+
         /* store the required size of esp3 for validation */
         uint32_t esp3_size = sizeof(ureg_t);
         /* stack must also store its two arguments and a dummy return address */
