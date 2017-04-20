@@ -272,8 +272,6 @@ thread_t *thread_init() {
     thread_t *thread = SCHE_NODE_TO_TCB(sche_node);
     thread->tid = gen_thread_id();
 
-    // TODO CURRENT
-    // void *kern_stack = malloc(KERN_STACK_SIZE);
     void *kern_stack = smemalign(KERN_STACK_SIZE, KERN_STACK_SIZE);
     if (kern_stack == NULL) {
         lprintf("smemalign() failed in thread_init at line %d", __LINE__);
@@ -294,8 +292,6 @@ thread_t *thread_init() {
 void thread_destroy(thread_t *thread) {
     void *kern_stack = (void *)(thread->kern_sp - KERN_STACK_SIZE);
 
-    // TODO CURRENT
-    // free(kern_stack);
     sfree(kern_stack, KERN_STACK_SIZE);
 
     tcb_hashtab_rmv(thread);
@@ -394,7 +390,8 @@ int validate_user_string(uint32_t addr, int max_len) {
  * @return        0 as success, -1 as failure
  */
 int load_program(simple_elf_t *header, map_list_t *maps) {
-    int ret, flags;
+    int flags;
+    int ret = 0;
     uint32_t high;
 
     /* load text */
@@ -492,12 +489,15 @@ int load_elf_section(const char *fname, unsigned long start, unsigned long len,
      */
     while (addr < high) {
         if (!(get_pte(addr) & PTE_PRESENT)) {
-            // TODO fix error handling here
             if (dec_num_free_frames(1) < 0) {
+                // freeing resources is deferred to caller
                 return -1;
             }
             uint32_t frame_addr = get_frame();
-            set_pte(addr, frame_addr, pte_flags);
+            if (set_pte(addr, frame_addr, pte_flags) < 0) {
+                // freeing resources is deferred to caller
+                return -1;
+            }
         }
         addr += PAGE_SIZE;
     }

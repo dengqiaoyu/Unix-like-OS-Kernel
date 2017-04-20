@@ -15,6 +15,12 @@
 map_list_t *maps_init() {
     map_list_t *maps = malloc(sizeof(map_list_t));
     if (maps == NULL) return NULL;
+
+    int ret = kern_mutex_init(&(maps->mutex));
+    if (ret < 0) {
+        free(maps);
+        return NULL;
+    }
     
     maps->root = NULL;
     return maps;
@@ -22,40 +28,71 @@ map_list_t *maps_init() {
 
 void maps_destroy(map_list_t *maps) {
     tree_destroy(maps->root);
+    kern_mutex_destroy(&(maps->mutex));
     free(maps);
 }
 
 void maps_clear(map_list_t *maps) {
+    kern_mutex_lock(&(maps->mutex));
     tree_destroy(maps->root);
     maps->root = NULL;
+    kern_mutex_unlock(&(maps->mutex));
 }
 
 int maps_insert(map_list_t *maps, uint32_t low, uint32_t high, int perms) {
+    kern_mutex_lock(&(maps->mutex));
+
     map_node_t *node = tree_node(low, high, perms);
-    if (node == NULL) return -1;
+    if (node == NULL) {
+        kern_mutex_unlock(&(maps->mutex));
+        return -1;
+    }
     maps->root = tree_insert(maps->root, node);
+
+    kern_mutex_unlock(&(maps->mutex));
     return 0;
 }
 
 map_t *maps_find(map_list_t *maps, uint32_t low, uint32_t high) {
+    kern_mutex_lock(&(maps->mutex));
+
     map_node_t *node = tree_find(maps->root, low, high);
-    if (node == NULL) return NULL;
+    if (node == NULL) {
+        kern_mutex_unlock(&(maps->mutex));
+        return NULL;
+    }
+
+    kern_mutex_unlock(&(maps->mutex));
     return &(node->map);
 }
 
 void maps_delete(map_list_t *maps, uint32_t low) {
+    kern_mutex_lock(&(maps->mutex));
     tree_delete(maps->root, low);
+    kern_mutex_unlock(&(maps->mutex));
 }
 
 int maps_copy(map_list_t *from, map_list_t *to) {
+    kern_mutex_lock(&(from->mutex));
+    kern_mutex_lock(&(to->mutex));
+
     map_node_t *copy = tree_copy(from->root);
-    if (copy == NULL && from->root != NULL) return -1;
+    if (copy == NULL && from->root != NULL) {
+        kern_mutex_unlock(&(to->mutex));
+        kern_mutex_unlock(&(from->mutex));
+        return -1;
+    }
     to->root = copy;
+
+    kern_mutex_unlock(&(to->mutex));
+    kern_mutex_unlock(&(from->mutex));
     return 0;
 }
 
 void maps_print(map_list_t *maps) {
+    kern_mutex_lock(&(maps->mutex));
     tree_print(maps->root);
+    kern_mutex_unlock(&(maps->mutex));
 }
 
 int max(int a, int b) {

@@ -20,6 +20,7 @@
 #include "utils/kern_sem.h"
 
 #define MEGABYTES (1024 * 1024)
+#define EXECNAME_MAX 64
 
 /* keyboard input buffer */
 extern keyboard_buffer_t kb_buf;
@@ -49,6 +50,7 @@ int kern_readline(void) {
     int len = (int)(*esi);
     char *buf = (char *)(*(esi + 1));
     if (len > 4096 || len <= 0) return -1;
+
     /* check buf validation */
     int ret = validate_user_mem((uint32_t)buf, len, MAP_USER | MAP_WRITE);
     if (ret < 0) return -1;
@@ -138,7 +140,6 @@ int kern_print(void) {
     int len = (int)(*esi);
     char *buf = (char *)(*(esi + 1));
 
-    // TODO macro megabyte
     if (len > MEGABYTES) return -1;
     int ret = validate_user_mem((uint32_t)buf, len, MAP_USER);
     if (ret < 0) return -1;
@@ -209,10 +210,9 @@ int kern_readfile(void) {
 
     if (count < 0) return -1;
 
-    // TODO macro
     int ret;
     // check whether filename is valid
-    ret = validate_user_string((uint32_t)filename, 64);
+    ret = validate_user_string((uint32_t)filename, EXECNAME_MAX);
     if (ret <= 0) return -1;
 
     if (count > 0) {
