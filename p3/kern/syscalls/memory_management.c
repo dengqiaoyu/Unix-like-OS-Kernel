@@ -62,14 +62,13 @@ int kern_new_pages(void) {
         /* ser page table entry for user */
         ret = set_pte(base + offset, zfod_frame, PTE_USER | PTE_PRESENT);
         if (ret < 0) {
-            // set_pte could fail when calling smemalign
-            // we need to reset
+            // set_pte could fail when calling smemalign, so we reset
             uint32_t reoffset;
-            for (reoffset = 0; reoffset <= offset; reoffset += PAGE_SIZE) {
-                // this one should not fail
-                ret = set_pte(base + reoffset, 0, 0);
-                assert(ret == 0);
+            for (reoffset = 0; reoffset < offset; reoffset += PAGE_SIZE) {
+                // this call will not fail
+                set_pte(base + reoffset, 0, 0);
             }
+            inc_num_free_frames(len / PAGE_SIZE);
             return -1;
         }
     }

@@ -89,19 +89,29 @@ void hwerror_handler(int cause, int ec_flag) {
     kern_halt();
 }
 
-// TODO
-/**
- * @brief         Global exception handler for calling default handler or
- *                software exception handler.
- * @param cause   cause code that are defined in ureg.h or idt.h
- * @param ec_flag whether this error has error code
+/** @brief  General exception handler.
+ *
+ *  If the current thread has a swexn handler installed, then the swexn stack
+ *  is set up, and the handler is invoked by changing esp and eip values in the
+ *  IRET block. Otherwise, a register dump is printed, and the thread vanishes.
+ *
+ *  @param cause   cause code that are defined in ureg.h or idt.h
+ *  @param ec_flag whether this error has error code
  */
 void exn_handler(int cause, int ec_flag) {
     thread_t *thread = get_cur_tcb();
 
     uint32_t *esp0 = (uint32_t *)(thread->kern_sp);
     uint32_t *esp3;
+
+    /* 
+     * we declare a ureg_t structure on the stack. if there is a swexn handler,
+     * this ureg_t serves no purpose. if not, we copy over registers from the
+     * exception stack to this ureg_t exactly as we would for the ureg_t on the
+     * swexn handler stack. this is for printing the register dump.
+     */
     ureg_t ureg;
+
     if (thread->swexn_handler == NULL) {
         esp3 = (uint32_t *)(&ureg);
         esp3 += sizeof(ureg_t) / sizeof(uint32_t);
@@ -109,46 +119,56 @@ void exn_handler(int cause, int ec_flag) {
         esp3 = thread->swexn_sp;
     }
 
-    // begin setting up ureg
+    /* begin setting up ureg_t */
+    esp0 -= N_IRET_PARAMS;
+    esp3 -= N_IRET_PARAMS;
+    memcpy(esp3, esp0, sizeof(int) * N_IRET_PARAMS);
 
-    // TODO macro
-    esp0 -= 5;
-    esp3 -= 5;
-    memcpy(esp3, esp0, sizeof(int) * 5);
+    /* 
+     * the low address of the general purpose registers on our exception stack
+     * depends on whether or not an error code is pushed.
+     */
+    esp0 -= (N_REGISTERS + ec_flag);
+    esp3 -= (N_REGISTERS + 1); // plus one for the error code
+    memcpy(esp3, esp0, sizeof(int) * (N_REGISTERS + 1));
+    if (!ec_flag) {
+        // if no error code was pushed, zero the error code in the ureg_t
+        *(esp3 + N_REGISTERS) = 0;
+    }
 
-    esp0 -= (8 + ec_flag);
-    esp3 -= (8 + 1);
-    memcpy(esp3, esp0, sizeof(int) * (8 + 1));
-    if (!ec_flag) *(esp3 + 8) = 0;
-
-    esp0 -= 4;
-    esp3 -= 4;
-    memcpy(esp3, esp0, sizeof(int) * 4);
+    esp0 -= N_SEGMENTS;
+    esp3 -= N_SEGMENTS;
+    memcpy(esp3, esp0, sizeof(int) * N_SEGMENTS);
 
     if (cause == SWEXN_CAUSE_PAGEFAULT) *(--esp3) = get_cr2();
     else *(--esp3) = 0;
     *(--esp3) = cause;
+    /* ureg_t is set up */
 
-    // ureg is set up
     if (thread->swexn_handler == NULL) {
         task_t *task = thread->task;
+
         kern_mutex_lock(&(task->thread_list_mutex));
         int live_threads = get_list_size(task->live_thread_list);
         if (live_threads == 1) task->status = -2;
         kern_mutex_unlock(&(task->thread_list_mutex));
+
         _exn_print_error_msg(&ureg);
         kern_vanish();
     } else {
+        // push the two swexn handler arguments and a dummy return address
         uint32_t ureg_ptr = (uint32_t)esp3;
         *(--esp3) = ureg_ptr;
         uint32_t swexn_arg = (uint32_t)thread->swexn_arg;
         *(--esp3) = swexn_arg;
         *(--esp3) = 0;
 
+        // set the IRET block up to return to the handler
         esp0 = (uint32_t *)(thread->kern_sp);
         *(esp0 - 2) = (uint32_t)esp3;
         *(esp0 - 5) = (uint32_t)(thread->swexn_handler);
 
+        // deregister the handler
         thread->swexn_sp = NULL;
         thread->swexn_handler = NULL;
         thread->swexn_arg = NULL;

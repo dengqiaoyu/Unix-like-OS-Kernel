@@ -8,6 +8,8 @@
 #ifndef _MAPS_INTERNAL_H_
 #define _MAPS_INTERNAL_H_
 
+#include "utils/kern_mutex.h"
+
 /** @brief Wraps a map_t struct with a binary tree node.
  *
  *  The map_t struct is defined in maps.h.
@@ -32,6 +34,7 @@ typedef struct map_node {
  */
 struct map_list {
     map_node_t *root;
+    kern_mutex_t mutex;
 };
 
 /** @brief Returns the max of two integers.

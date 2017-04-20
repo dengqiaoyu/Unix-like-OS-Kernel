@@ -155,12 +155,9 @@ void sche_yield(int status) {
         if (old_status == INITIALIZED) {
             asm_switch_to_initialized(&cur_tcb_ptr->cur_sp,
                                       idle_thread->cur_sp, idle_thread->ip);
-        } else if (old_status == RUNNABLE) {
+        } else {
             asm_switch_to_runnable(&cur_tcb_ptr->cur_sp,
                                    idle_thread->cur_sp);
-        } else {
-            lprintf("how did i get here?");
-            while (1) continue;
         }
     }
 

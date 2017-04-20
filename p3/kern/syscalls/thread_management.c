@@ -17,6 +17,7 @@
 /* DEBUG */
 #include <simics.h>
 
+#include "exceptions/exceptions.h"
 #include "syscalls/syscalls.h"
 #include "task.h"                 /* task thread declaration and interface */
 #include "scheduler.h"            /* scheduler declaration and interface */
@@ -34,7 +35,7 @@ int kern_gettid(void) {
 
 /**
  * @brief Yield to a thread whose tid is indicated by the argument, if tid is -1
- *        ,just yield to the next thread in the scheduler.
+ *        just yield to the next thread in the scheduler.
  * @return  0 when yield succeeds, -1 when the tid does not exist or the target
  *          thread is not runnable return -1
  */
@@ -141,10 +142,18 @@ int kern_sleep(void) {
     return 0;
 }
 
-// TODO
-/**
- * [kern_swexn description]
- * @return  [description]
+/** @brief Installs a swexn handler.
+ *
+ *  If esp3 or eip are zero, the current handler is deregistered if one exists.
+ *  Otherwise, a handler is registered, overwriting any current handler. If
+ *  newureg is non-null, then the system attempts to set all registers to the
+ *  newureg values before returning from kern_swexn. This is done by copying
+ *  newureg attributes to the stack. These stack values will be popped off
+ *  by the return sequence in asm_swexn.
+ *
+ *  If any of the parameters are judged to be invalid, no actions are taken.
+ * 
+ *  @return 0 on success and negative on failure (may not return)
  */
 int kern_swexn(void) {
     uint32_t *esi = (uint32_t *)asm_get_esi();
@@ -177,28 +186,33 @@ int kern_swexn(void) {
         thread->swexn_arg = NULL;
     } else {
         int ret;
-        // TODO macro
-        // 3 because ret addr and two args
-        uint32_t esp3_size = sizeof(ureg_t) + 3 * sizeof(int);
+        
+        /* store the required size of esp3 for validation */
+        uint32_t esp3_size = sizeof(ureg_t);
+        /* stack must also store its two arguments and a dummy return address */
+        esp3_size += 3 * sizeof(int);
+
         uint32_t esp3_low = (uint32_t)esp3 - esp3_size;
         ret = validate_user_mem(esp3_low, esp3_size, MAP_USER | MAP_WRITE);
         if (ret < 0) return -1;
+        /* check that eip is in executable user code */
         ret = validate_user_mem((uint32_t)eip, 1, MAP_USER | MAP_EXECUTE);
         if (ret < 0) return -1;
 
+        /* parameters seem valid, so install the handler */
         thread->swexn_sp = esp3;
         thread->swexn_handler = eip;
         thread->swexn_arg = arg;
     }
 
     if (newureg != NULL) {
-        // TODO macro
-        int stack_regs_offset = sizeof(int) * (5 + 8);
-        int stack_regs_size = sizeof(int) * 8;
+        /* copy over stack values to appropriate ureg_t positions */
+        int stack_regs_offset = sizeof(int) * (N_IRET_PARAMS + N_REGISTERS);
+        int stack_regs_size = sizeof(int) * N_REGISTERS;
         uint32_t stack_regs_ptr = thread->kern_sp - stack_regs_offset;
         memcpy((void *)stack_regs_ptr, &(newureg->edi), stack_regs_size);
 
-        int iret_args_offset = sizeof(int) * 5;
+        int iret_args_offset = sizeof(int) * N_IRET_PARAMS;
         uint32_t iret_args_ptr = thread->kern_sp - iret_args_offset;
         memcpy((void *)iret_args_ptr, &(newureg->eip), iret_args_offset);
 

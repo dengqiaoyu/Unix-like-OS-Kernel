@@ -23,6 +23,11 @@
 #include "vm.h"                  /* virtual memory management */
 #include "asm_kern_to_user.h"    /* asm_kern_to_user */
 
+#define EXECNAME_MAX 64
+#define ARGVEC_MAX 128
+#define ARGC_MAX 16
+#define N_MAIN_ARGS 4
+
 /* helper function declaration */
 void asm_set_exec_context(uint32_t old_kern_sp,
                           uint32_t new_kern_sp,
@@ -166,10 +171,15 @@ int kern_thread_fork(void) {
     }
 }
 
-// TODO
-/**
- * [kern_exec description]
- * @return  [description]
+/** @brief  Replaces the currently running program with another.
+ *  
+ *  If the calling task has multiple threads, an error is returned.
+ *  The total length of argvec arguments cannot exceed 128, and the number
+ *  of arguments cannot exceed 16. If all arguments are within length bounds
+ *  and in valid user memory, then a new stack is setup with four arguments:
+ *  argc, argv, and high and low bounds for the initial user stack.
+ *
+ *  @return no return on success and negative on failure
  */
 int kern_exec(void) {
     uint32_t *esi = (uint32_t *)asm_get_esi();
@@ -190,74 +200,108 @@ int kern_exec(void) {
     int ret;
     int len;
 
+    /* check whether temp points to a valid location in user meory */
     ret = validate_user_mem((uint32_t)temp, sizeof(char *), MAP_USER);
+    /* if temp is NULL, argv is empty and we can move on */
     if (temp && ret < 0) return -1;
 
-    // why temp?
-    // check parameters
     while (temp && *temp) {
         char *arg = *temp;
-        len = validate_user_string((uint32_t)arg, 128);
+        /* validate_user_string return string length if valid */
+        len = validate_user_string((uint32_t)arg, ARGVEC_MAX);
         if (len <= 0) return -1;
         total_len += len;
-        if (total_len > 128) return -1;
+        if (total_len > ARGVEC_MAX) return -1;
 
         argc += 1;
-        if (argc > 16) return -1;
-        temp += 1;
+        if (argc > ARGC_MAX) return -1;
 
+        /* increment temp, which points to the next argument */
+        temp += 1;
         ret = validate_user_mem((uint32_t)temp, sizeof(char *), MAP_USER);
         if (ret < 0) return -1;
     }
 
-    ret = validate_user_string((uint32_t)execname, 64);
+    ret = validate_user_string((uint32_t)execname, EXECNAME_MAX);
     if (ret <= 0) return -1;
-    char namebuf[64];
+    // copy execname to kernel memory so we can clear user memory
+    char namebuf[EXECNAME_MAX];
     sprintf(namebuf, "%s", execname);
 
     simple_elf_t elf_header;
     ret = elf_load_helper(&elf_header, namebuf);
     if (ret < 0) return -1;
 
-    char argbuf[128];
-    char *ptrbuf[16];
+    // copy arguments to kernel memory so we can clear user memory
+    char argbuf[ARGVEC_MAX];
+    char *ptrbuf[ARGC_MAX];
     char *arg;
     char *marker = argbuf;
 
     int i;
     for (i = 0; i < argc; i++) {
+        // point arg to next argument
         arg = *(argvec + i);
+        // we can use strlen now since we know that the argument terminates
         len = strlen(arg);
         strncpy(marker, arg, len);
         marker[len] = '\0';
+        // store the argument's kernel memory address
         ptrbuf[i] = marker;
+        // point marker to the next free space in argbuf
         marker += len + 1;
     }
 
     thread->cur_sp = USER_STACK_START;
     thread->ip = elf_header.e_entry;
+    // we need to deregister the swexn handler if one exists
+    thread->swexn_sp = NULL;
+    thread->swexn_handler = NULL;
+    thread->swexn_arg = NULL;
 
-    // BUG
-    // TODO if maps or loading fails, how do we return??
+    /*
+     * THERE IS A KNOWN BUG HERE.
+     *
+     * At this point we start clearing out the user memory and setting up
+     * a clean execution state for the new program. However, we could still
+     * fail when setting the new map list or loading the new elf binary.
+     * In this case, we can no longer return to the calling code, and must
+     * vanish...
+     */
 
     maps_clear(task->maps);
-    // kernel memory region
-    maps_insert(task->maps, 0, PAGE_SIZE * NUM_KERN_PAGES - 1, 0);
-    // populated memory region for accessing physical frames
-    maps_insert(task->maps, RW_PHYS_VA, RW_PHYS_VA + PAGE_SIZE - 1, 0);
+    // reserve the kernel memory region
+    ret = maps_insert(task->maps, 0, PAGE_SIZE * NUM_KERN_PAGES - 1, 0);
+    if (ret < 0) {
+        lprintf("i commited to exec and failed :(");
+        kern_vanish();
+    }
+    // reserve the highest page for physical reads and writes
+    ret = maps_insert(task->maps, RW_PHYS_VA, RW_PHYS_VA + PAGE_SIZE - 1, 0);
+    if (ret < 0) {
+        lprintf("i commited to exec and failed :(");
+        kern_vanish();
+    }
 
     page_dir_clear(task->page_dir);
     set_cr3((uint32_t)task->page_dir);
 
-    load_program(&elf_header, task->maps);
+    // load the new binary into the fresh virtual memory
+    ret = load_program(&elf_header, task->maps);
+    if (ret < 0) {
+        lprintf("i commited to exec and failed :(");
+        kern_vanish();
+    }
 
-    // need macros here badly
-    // 5 because ret addr and 4 args
-    char **argv = (char **)(USER_STACK_START + 5 * sizeof(int));
-    // 6 because argv is a null terminated char ptr array
-    char *buf = (char *)(USER_STACK_START + 6 * sizeof(int) +
-                         argc * sizeof(int));
+    /* point argv to immediately above the arguments on the main stack */
+    char **argv = (char **)USER_STACK_START;
+    argv += N_MAIN_ARGS + 1; // plus one for the return address
 
+    /* point buf to immediately above the argument vector */
+    char *buf = (char *)argv;
+    buf += (argc + 1) * sizeof(int); // plus one for the argv null terminator
+
+    // copy from kernel memory to user space
     for (i = 0; i < argc; i++) {
         arg = *(ptrbuf + i);
         len = strlen(arg);
@@ -266,6 +310,7 @@ int kern_exec(void) {
         argv[i] = buf;
         buf += len + 1;
     }
+    // null terminate the user argument vector
     argv[argc] = NULL;
 
     uint32_t *ptr = (uint32_t *)USER_STACK_START;
@@ -294,9 +339,24 @@ void kern_set_status(void) {
     task->status = status;
 }
 
-// TODO
-/**
- * [kern_vanish description]
+/** @brief  Causes a thread to cease execution.
+ *
+ *  The thread moves itself from its task's live thread list to the zombie
+ *  thread list.
+ *
+ *  If the thread is the last in its task, it does some work:
+ *
+ *      1:  It "orphans" child tasks (dead or alive) to the init task.
+ *      2:  It cleans up virtual memory resources.
+ *      3:  It removes the task from its parent's child task list.
+ *      4a: If the parent has waiting threads, it wakes a waiting thread, which
+ *          will receive the task's id and status. If the task is the last child
+ *          of its parent, then all the parent's waiting threads are woken.
+ *       b: Otherwise, it adds the task to its parent's zombie task list, where
+ *          it can be waited on. If the zombie task list is populated, it frees
+ *          as many resources as possible from the previous zombie task.
+ *
+ *  The thread then yields and will never be scheduled again.
  */
 void kern_vanish(void) {
     thread_t *thread = get_cur_tcb();
@@ -306,13 +366,18 @@ void kern_vanish(void) {
     remove_node(task->live_thread_list, TCB_TO_LIST_NODE(thread));
     int live_threads = get_list_size(task->live_thread_list);
     add_node_to_tail(task->zombie_thread_list, TCB_TO_LIST_NODE(thread));
-    // TODO try to free previous zombie stack
+
+    /*
+     * We are missing an optimization here. We could free thread resources
+     * from the previous zombie thread...
+     */
+
     if (live_threads > 0) {
         /*
-         * need to disable interrupts here, before unlocking the thread list
-         * mutex. otherwise, another thread might be switched to and vanish,
-         * finding that it is the last thread to vanish. then the task could
-         * be given to a waiting thread and destroyed, and with it our stack...
+         * Need to disable interrupts here, before unlocking the thread list
+         * mutex. Otherwise, another thread might be switched to and vanish,
+         * finding that it is the last thread to vanish. Then the task could
+         * be given to a waiting thread and destroyed while we are running...
          */
         disable_interrupts();
         cli_kern_mutex_unlock(&(task->thread_list_mutex));
@@ -325,61 +390,90 @@ void kern_vanish(void) {
         page_dir_clear(task->page_dir);
         maps_clear(task->maps);
 
+        // lock the vanish mutex to access the parent pointer
         kern_mutex_lock(&(task->vanish_mutex));
         task_t *parent = task->parent_task;
         if (parent == NULL) {
             panic("init or idle task vanished?");
         }
 
-        kern_mutex_lock(&(parent->wait_mutex));
-
         // assumes we are in the parent's child task list
         kern_mutex_lock(&(parent->child_task_list_mutex));
         remove_node(parent->child_task_list, TASK_TO_LIST_NODE(task));
+        int num_siblings = get_list_size(parent->child_task_list);
         kern_mutex_unlock(&(parent->child_task_list_mutex));
+
+        // gain access to the parent's waiting threads and zombie task lists
+        kern_mutex_lock(&(parent->wait_mutex));
 
         if (get_list_size(parent->waiting_thread_list) > 0) {
             node_t *node = pop_first_node(parent->waiting_thread_list);
-            kern_mutex_unlock(&(parent->wait_mutex));
-            // there is no contention for vanish since no other threads
-            // and parent has live threads so it won't vanish
-            kern_mutex_unlock(&(task->vanish_mutex));
 
+            // get the pointer to the wait node on the waiting thread's stack
             wait_node_t *waiter = (wait_node_t *)node;
             waiter->zombie = task;
 
-            // must disable interrupts here
-            // otherwise, the waiting thread might free us before we yield
+            // disable interrupts to protect scheduler structures
             disable_interrupts();
+
+            // wake the waiting thread
             waiter->thread->status = RUNNABLE;
             sche_push_back(waiter->thread);
+
+            // if the parent has no other children, we have to wake all waiters
+            if (num_siblings == 0) {
+                node = pop_first_node(parent->waiting_thread_list);
+                while (node) {
+                    waiter = (wait_node_t *)node;
+                    waiter->thread->status = RUNNABLE;
+                    sche_push_back(waiter->thread);
+                    node = pop_first_node(parent->waiting_thread_list);
+                }
+            }
+
+            cli_kern_mutex_unlock(&(parent->wait_mutex));
+            cli_kern_mutex_unlock(&(task->vanish_mutex));
 
             sche_yield(ZOMBIE);
         } else {
             node_t *last_node = get_last_node(parent->zombie_task_list);
             if (last_node != NULL) {
-                // we can free the previous zombie's vm and thread resources
+                // we can free the previous zombie's memory and thread resources
                 task_t *prev_zombie = LIST_NODE_TO_TASK(last_node);
                 task_clear(prev_zombie);
             }
 
-            // must disable interrupts here
-            // otherwise, a waiting thread might try to clear the task before
-            // we yield
+            /*
+             * We must disable interrupts before adding the task to the zombie
+             * task list. Otherwise, a waiting thread could receive the task
+             * and destroy it before we finish yielding...
+             */
             disable_interrupts();
             add_node_to_tail(parent->zombie_task_list, TASK_TO_LIST_NODE(task));
             cli_kern_mutex_unlock(&(parent->wait_mutex));
-
             cli_kern_mutex_unlock(&(task->vanish_mutex));
             sche_yield(ZOMBIE);
         }
     }
 }
 
-// TODO
-/**
- * [kern_wait description]
- * @return  [description]
+/** @brief  Collects the exit status of a child task.
+ *
+ *  The task's zombie task list is checked. If it is populated, then we simply
+ *  pop the first zombie off of the list, free its resources, and return. If
+ *  the zombie task list and child task list are both empty, then we return
+ *  a failure.
+ *
+ *  Otherwise, we must block. We do so by allocating space on our stack for a
+ *  "wait node", defined in task.h. This wait node is simply a linked list node
+ *  with a pointer to its waiting thread and space for a task pointer. This
+ *  wait node is added to the task's waiting thread list, and the caller yields.
+ *
+ *  When the caller is woken up, the zombie field of the wait node will be
+ *  populated with a pointer to the task which has been received, or NULL if
+ *  there are no more children.
+ *
+ *  @return zombie task id on success and negative on failure
  */
 int kern_wait(void) {
     int *status_ptr = (int *)asm_get_esi();
@@ -394,6 +488,8 @@ int kern_wait(void) {
     }
 
     task_t *zombie;
+
+    // get access to the waiting threads and zombie task lists
     kern_mutex_lock(&(task->wait_mutex));
     if (get_list_size(task->zombie_task_list) > 0) {
         zombie = LIST_NODE_TO_TASK(pop_first_node(task->zombie_task_list));
@@ -403,24 +499,27 @@ int kern_wait(void) {
         int active_children = get_list_size(task->child_task_list);
         kern_mutex_unlock(&(task->child_task_list_mutex));
 
-        // another fork could happen in between, but that's fine
+        // return failure if no zombies or children
         if (active_children == 0) {
             kern_mutex_unlock(&(task->wait_mutex));
             return -1;
         }
 
-        // declare on stack
+        // declare a wait node on the stack
         wait_node_t wait_node;
         wait_node.thread = thread;
 
         disable_interrupts();
 
-        // this unlock goes after disable_interrupts
-        // otherwise, a child could turn into a zombie before blocking
-        // then we might incorrectly block forever
-        cli_kern_mutex_unlock(&(task->wait_mutex));
+        /*
+         * We must disable interrupts here before adding ourselves to the
+         * waiting thread list. Otherwise, we could be "woken up" before
+         * we block...
+         */
         add_node_to_tail(task->waiting_thread_list, &(wait_node.node));
+        cli_kern_mutex_unlock(&(task->wait_mutex));
         sche_yield(BLOCKED_WAIT);
+
         if (wait_node.zombie == NULL) return -1;
         else zombie = wait_node.zombie;
     }

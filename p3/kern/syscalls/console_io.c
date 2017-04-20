@@ -49,6 +49,7 @@ int kern_readline(void) {
     int len = (int)(*esi);
     char *buf = (char *)(*(esi + 1));
     if (len > 4096 || len <= 0) return -1;
+
     /* check buf validation */
     int ret = validate_user_mem((uint32_t)buf, len, MAP_USER | MAP_WRITE);
     if (ret < 0) return -1;
@@ -138,7 +139,6 @@ int kern_print(void) {
     int len = (int)(*esi);
     char *buf = (char *)(*(esi + 1));
 
-    // TODO macro megabyte
     if (len > MEGABYTES) return -1;
     int ret = validate_user_mem((uint32_t)buf, len, MAP_USER);
     if (ret < 0) return -1;
