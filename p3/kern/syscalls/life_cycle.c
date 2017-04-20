@@ -36,16 +36,16 @@ void asm_set_exec_context(uint32_t old_kern_sp,
 void asm_hlt(void);
 
 /**
- * @brief   Creates a new task. The new task receives an exact, coherent copy of
- *          all memory regions of the invoking task. The new task contains a
- *          single thread which is a copy of the thread invoking fork() except
- *          for the return value of the system call. If fork() succeeds, the
- *          invoking thread will receive the ID of the new task’s thread and the
- *          newly created thread will receive the value zero. The exit status
- *          (see below) of a newly-created task is 0. If a thread in the task
- *          invoking fork() has a software exception handler registered, the
- *          corresponding thread in the newly-created task will have exactly the
- *          same handler registered.
+ * @brief   Creates a new task.
+ * The new task receives an exact, coherent copy of all memory regions of the invoking task. The new task contains a
+ * single thread which is a copy of the thread invoking fork() except
+ * for the return value of the system call. If fork() succeeds, the
+ * invoking thread will receive the ID of the new task’s thread and the
+ * newly created thread will receive the value zero. The exit status
+ * of a newly-created task is 0. If a thread in the task
+ * invoking fork() has a software exception handler registered, the
+ * corresponding thread in the newly-created task will have exactly the
+ * same handler registered.
  * @return  -1 if task has one more threads, or fork fails to get new memory.
  *          return 0 if child task get created successfully, child's tid if
  *          parent task create child task successfully.

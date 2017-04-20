@@ -33,7 +33,7 @@ main(int argc, char *argv[])
   REPORT_START_CMPLT;
 
   for (c = 0; c < NCHILD; ++c)
-    switch(((pid = fork()) < 0) ? -1 : pid) {
+    switch(pid = fork()) {
     case -1:
       REPORT_MISC("cannot fork");
 	  goto fail;
@@ -105,7 +105,7 @@ child(int which)
   printf("%s\n", msg);
   REPORT_MISC(msg);
 
-  switch(((gpid = fork()) < 0) ? -1 : gpid) {
+  switch (gpid = fork()) {
   case -1:
     REPORT_MISC("child cannot fork");
     goto fail;

@@ -44,8 +44,8 @@ UPDATE_METHOD = afs
 	   swexn_stands_for_swextensible swexn_uninstall_test\
 	   fork_bomb mem_permissions minclone_mem register_test\
 	   stack_test1 mem_eat_test cho cho2 cho_variant\
-	   \
-	   slaughter\
+	   rwlock_downgrade_read_test cvar_test multitest thr_exit_join\
+	   slaughter startle join_specific_test\
 	   #ack bistromath slaughter\
 
 ###########################################################################
@@ -56,7 +56,8 @@ UPDATE_METHOD = afs
 #
 STUDENTTESTS = my_fork_test my_maker_deschedule my_cond_sem_test my_readline\
 	       my_make_crash my_exec_and_fork my_exec_and_fork_helper\
-	       my_memory_permission my_print_test
+	       my_memory_permission my_print_test my_startle\
+
 
 ###########################################################################
 # Data files provided by course staff to build into the RAM disk
@@ -77,7 +78,9 @@ STUDENTFILES =
 ###########################################################################
 # Object files for your thread library
 ###########################################################################
-THREAD_OBJS = malloc.o panic.o
+THREAD_OBJS = malloc.o panic.o thread.o start_thread.o wrap_thread_proc.o\
+			  thread_table.o allocator.o mutex_asm.o list.o mutex.o cond.o\
+			  sem.o rwlock.o
 
 # Thread Group Library Support.
 #
@@ -85,7 +88,7 @@ THREAD_OBJS = malloc.o panic.o
 # P3" we give you can't build libthrgrp.a.  Once you install your thread
 # library and fix THREAD_OBJS above, uncomment this line to enable building
 # libthrgrp.a:
-#410USER_LIBS_EARLY += libthrgrp.a
+410USER_LIBS_EARLY += libthrgrp.a
 
 ###########################################################################
 # Object files for your syscall wrappers
@@ -160,4 +163,4 @@ KERNEL_OBJS = console.o kernel.o handlers.o task.o vm.o scheduler.o\
 # kernel in, or else your tweaked version will run and the test harness
 # won't.
 #
-STUDENTREQPROGS = user_init my_cho
+STUDENTREQPROGS =

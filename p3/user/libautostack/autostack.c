@@ -5,6 +5,7 @@
 #include "autostack_internal.h"
 
 static swexn_handler_t autostack_handler = autostack;
+static swexn_handler_t print_and_vanish_handler = print_and_vanish;
 static exn_stk_info_t glb_exn_stk_info = {0};
 static char exn_stk_bottom[EXECEPTION_STACK_SIZE + WORD_SIZE] = {0};
 
@@ -21,10 +22,10 @@ void autostack(void *arg, ureg_t *ureg) {
     exn_stk_info_t *exn_stk_info = arg;
     void *page_fault_addr = (void *)ureg->cr2;
     if (ureg->cause != SWEXN_CAUSE_PAGEFAULT) {
-        print_and_vanish(ureg);
+        print_and_vanish(arg, ureg);
     } else if (page_fault_addr == NULL) {
         printf("NULL pointer derefrence\n");
-        print_and_vanish(ureg);
+        print_and_vanish(arg, ureg);
     }
 
     void *stack_high = exn_stk_info->stack_high;
@@ -34,12 +35,12 @@ void autostack(void *arg, ureg_t *ureg) {
     unsigned int dist_to_low = stack_low - page_fault_addr;
     if (dist_to_low > INITIAL_STACK_SIZE * 1024) {
         printf("Invalid memory access\n");
-        print_and_vanish(ureg);
+        print_and_vanish(arg, ureg);
     }
     unsigned int required_stack_size = stack_high - page_fault_addr;
     if (required_stack_size > max_stack_size) {
         printf("Required stack too large\n");
-        print_and_vanish(ureg);
+        print_and_vanish(arg, ureg);
     }
     while (stack_size < required_stack_size) {
         stack_size *= 2;
@@ -51,13 +52,18 @@ void autostack(void *arg, ureg_t *ureg) {
     int ret = new_pages(start_addr, rounded_len);
     if (ret != SUCCESS) {
         printf("No more space for stack\n");
-        print_and_vanish(ureg);
+        print_and_vanish(arg, ureg);
     }
     swexn(exn_stk_info->esp3,
           autostack_handler, exn_stk_info, ureg);
 }
 
-void print_and_vanish(ureg_t *ureg) {
+void install_print_and_vanish(void *stack_base) {
+    void *esp3 = stack_base + WORD_SIZE;
+    swexn(esp3, print_and_vanish_handler, esp3, NULL);
+}
+
+void print_and_vanish(void *arg, ureg_t *ureg) {
     print_error_msg(ureg);
     set_status(-2);
     vanish();

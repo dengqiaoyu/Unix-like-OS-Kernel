@@ -5,9 +5,13 @@
 #ifndef _MUTEX_TYPE_H
 #define _MUTEX_TYPE_H
 
+#include "return_type.h"
+
+#define INIT_MUTEX {.lock = 0, .holder_tid = -1}
 
 typedef struct mutex {
-    int lock;
+  int lock;
+  int holder_tid;
 } mutex_t;
 
 #endif /* _MUTEX_TYPE_H */
