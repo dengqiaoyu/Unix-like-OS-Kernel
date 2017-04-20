@@ -45,7 +45,7 @@ UPDATE_METHOD = afs
 	   fork_bomb mem_permissions minclone_mem register_test\
 	   stack_test1 mem_eat_test cho cho2 cho_variant\
 	   rwlock_downgrade_read_test cvar_test multitest thr_exit_join\
-	   slaughter startle\
+	   slaughter startle join_specific_test\
 	   #ack bistromath slaughter\
 
 ###########################################################################
@@ -56,7 +56,8 @@ UPDATE_METHOD = afs
 #
 STUDENTTESTS = my_fork_test my_maker_deschedule my_cond_sem_test my_readline\
 	       my_make_crash my_exec_and_fork my_exec_and_fork_helper\
-	       my_memory_permission my_print_test
+	       my_memory_permission my_print_test my_startle\
+
 
 ###########################################################################
 # Data files provided by course staff to build into the RAM disk

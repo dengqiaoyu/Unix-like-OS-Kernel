@@ -11,7 +11,12 @@
 asm_set_exec_context:
     pushl %ebp              /* save old ebp */
     movl %esp, %ebp         /* %ebp = old %esp */
-    pusha                   /* save all general purpose register  */
+    pushl %eax
+    pushl %ecx
+    pushl %edx
+    pushl %ebx
+    pushl %esi
+    pushl %edi
     movl 20(%ebp), %eax     /* %eax = &(new_thread->ip) */
     pushl %eax              /* push &(new_thread->ip) to stack for future use */
     movl %esp, %eax         /* save parent %esp to %eax */
@@ -26,10 +31,27 @@ asm_set_exec_context:
     movl %edx, (%eax)       /* *new_thread->cur_sp = new thread %esp */
     call memcpy             /* memcpy(new_thread_sp, old_thread_sp, len) */
     addl $12, %esp          /* restore %esp */
+    movl 8(%ebp), %ecx      /* %ecx = old_kern_sp */
+    movl 12(%ebp), %edx     /* %edx = new_kern_sp */
+    subl %ebp, %ecx         /* len = old_kern_sp - current %esp */
+    subl %ecx, %edx         /* new thread %ebp's address = new_kern_sp - len */
+    pushl %edx
+    movl (%ebp), %eax       /* %eax = old %ebp value */
+    movl 8(%ebp), %ecx      /* %ecx = old_kern_sp */
+    movl 12(%ebp), %edx     /* %edx = new_kern_sp */
+    subl %eax, %ecx         /* offset = old_kern_sp - old %ebp value */
+    subl %ecx, %edx         /* new thread %ebp's value = new_kern_sp - offset */
+    popl %eax               /* new thread %ebp's address */
+    movl %edx, (%eax)       /*  */
     call asm_get_eip        /* get current parent eip, child also run here */
     popl %edx               /* %edx = &(new_thread->ip) */
     movl %eax, (%edx)       /* new_thread->ip = %eip */
-    popa                    /* restore all the general purpose registers */
+    popl %edi
+    popl %esi
+    popl %ebx
+    popl %edx
+    popl %ecx
+    popl %eax
     popl %ebp               /* restore old %ebp */
     ret
 
