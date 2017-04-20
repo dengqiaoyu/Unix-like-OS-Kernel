@@ -29,27 +29,46 @@
 typedef node_t task_node_t;
 typedef node_t thread_node_t;
 
+/** @brief  Task control block structure.
+ *  
+ *  Contains task id, status, virtual memory housekeeping, thread and task
+ *  lists, and mutexes.
+ */
 typedef struct task {
     int task_id;
     int status;
     uint32_t *page_dir;
     map_list_t *maps;
 
+    kern_mutex_t thread_list_mutex;
     list_t *live_thread_list;
     list_t *zombie_thread_list;
-    kern_mutex_t thread_list_mutex;
 
-    list_t *child_task_list;
     kern_mutex_t child_task_list_mutex;
+    list_t *child_task_list;
 
     list_t *zombie_task_list;
     list_t *waiting_thread_list;
 
+    /* 
+     * This wait_mutex protects both zombie_task_list and waiting_thread_list.
+     */
     kern_mutex_t wait_mutex;
+
+    /* 
+     * This vanish_mutex is acquired by a task when it vanishes, or by a parent
+     * task when it orphans its children. It ensures that the task's parent
+     * pointer is not changed to the init task in the middle of vanishing.
+     */
     kern_mutex_t vanish_mutex;
     struct task *parent_task;
 } task_t;
 
+/** @brief  Thread control block structure.
+ *
+ *  Contains tid, status, a pointer to the parent task, stack and instruction
+ *  pointer information, and exception handler information.
+ */
 typedef struct thread {
     int tid;
     int status;
@@ -64,15 +83,25 @@ typedef struct thread {
     void *swexn_arg;
 } thread_t;
 
-// TODO
-// these probably go somewhere else
-
+/** @brief  Structure used for blocking on wait().
+ *
+ *  An instance of this structure is declared on the stack before a waiting
+ *  thread blocks. This is done instead of using the thread block itself in
+ *  the waiting threads list, because the list node must contain a place to
+ *  store the zombie task address, and we don't want to put this in the thread
+ *  block (too messy).
+ */
 typedef struct wait_node {
     node_t node;
     thread_t *thread;
     task_t *zombie;
 } wait_node_t;
 
+/** @brief  Structure used to block on sleep().
+ *
+ *  This is here for similar reasons as wait_node, since we must be able to
+ *  access the number of ticks needed for wakeup.
+ */
 typedef struct sleep_node {
     node_t node;
     thread_t *thread;

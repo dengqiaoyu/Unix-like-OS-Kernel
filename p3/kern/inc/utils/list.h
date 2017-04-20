@@ -23,7 +23,6 @@ typedef struct list {
 
 list_t *list_init();
 
-// TODO
 void list_destroy(list_t *list);
 
 int get_list_size(list_t *list);
@@ -42,7 +41,11 @@ void add_node_to_head(list_t *list, node_t *node);
  */
 void add_node_to_tail(list_t *list, node_t *node);
 
-// TODO
+/**
+ * Removes a node from a list.
+ * @param list the pointer to the list
+ * @param node the pointer to the node
+ */
 void remove_node(list_t *list, node_t *node);
 
 /**
@@ -66,12 +69,21 @@ node_t *get_first_node(list_t *list);
  */
 node_t *get_last_node(list_t *list);
 
-// TODO
+/**
+ * Gets the next node in a list.
+ * @param   list        the pointer to the list
+ *          node    a node present in the list
+ * @return A pointer to the next node, or NULL if none exists.
+ */
 node_t *get_next_node(list_t *list, node_t *node);
 
+/**
+ * Inserts a node before another node in a list.
+ * @param   list        the pointer to the list
+ *          cur_node    a node present in the list
+ *          new_node    the node to be inserted
+ */
 void insert_before(list_t *list, node_t *cur_node, node_t *new_node);
-
-node_t *get_prev_node(node_t *node);
 
 /**
  * Get the first node in the list and unlinked it in the list.

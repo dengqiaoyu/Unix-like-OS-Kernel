@@ -493,7 +493,6 @@ int load_elf_section(const char *fname, unsigned long start, unsigned long len,
                 // freeing resources is deferred to caller
                 return -1;
             }
-            frames_taken += 1;
             uint32_t frame_addr = get_frame();
             if (set_pte(addr, frame_addr, pte_flags) < 0) {
                 // freeing resources is deferred to caller

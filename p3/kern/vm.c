@@ -135,14 +135,12 @@ int set_pte(uint32_t addr, uint32_t frame_addr, int flags) {
 }
 
 uint32_t get_frame() {
-    // TODO make sure never called unless have free frames
     kern_mutex_lock(&first_free_frame_mutex);
     uint32_t frame = first_free_frame;
     assert(frame != 0);
 
     access_physical(frame);
     first_free_frame = *((uint32_t *)RW_PHYS_VA);
-    // TODO
 
     memset((void *)RW_PHYS_VA, 0, PAGE_SIZE);
     kern_mutex_unlock(&first_free_frame_mutex);
@@ -153,7 +151,6 @@ void free_frame(uint32_t frame) {
     kern_mutex_lock(&first_free_frame_mutex);
     access_physical(frame);
 
-    // TODO mutex locking
     *((uint32_t *)RW_PHYS_VA) = first_free_frame;
     first_free_frame = frame;
     kern_mutex_unlock(&first_free_frame_mutex);
@@ -249,7 +246,7 @@ int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir) {
             uint32_t new_physical_frame = get_frame();
             int new_pte_flag = old_pte & PAGE_FLAG_MASK;
             uint32_t new_pte = new_physical_frame | new_pte_flag;
-            // TODO macro these
+
             uint32_t virtual_addr = ((uint32_t)i << 22) | ((uint32_t)j << 12);
             write_physical(new_physical_frame, (void *)virtual_addr, PAGE_SIZE);
             new_page_tab[j] = new_pte;
@@ -271,7 +268,6 @@ void access_physical(uint32_t addr) {
 }
 
 void read_physical(void *virtual_dest, uint32_t phys_src, uint32_t n) {
-    // TODO
     kern_mutex_lock(&first_free_frame_mutex);
 
     access_physical(phys_src);
@@ -288,7 +284,6 @@ void read_physical(void *virtual_dest, uint32_t phys_src, uint32_t n) {
 }
 
 void write_physical(uint32_t phys_dest, void *virtual_src, uint32_t n) {
-    // TODO
     kern_mutex_lock(&first_free_frame_mutex);
 
     access_physical(phys_dest);

@@ -208,7 +208,6 @@ void sche_move_front(thread_t *tcb_ptr) {
  * @param   sleep_node list node that contains sleeping tcb pointer
  */
 void tranquilize(sleep_node_t *sleep_node) {
-    // TODO casting everywhere
     sleep_node_t *temp;
     node_t *next;
     temp = (sleep_node_t *)get_first_node(sche_list.sleeping_list);

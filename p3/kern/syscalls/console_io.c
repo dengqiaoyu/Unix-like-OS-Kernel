@@ -20,6 +20,7 @@
 #include "utils/kern_sem.h"
 
 #define MEGABYTES (1024 * 1024)
+#define EXECNAME_MAX 64
 
 /* keyboard input buffer */
 extern keyboard_buffer_t kb_buf;
@@ -209,10 +210,9 @@ int kern_readfile(void) {
 
     if (count < 0) return -1;
 
-    // TODO macro
     int ret;
     // check whether filename is valid
-    ret = validate_user_string((uint32_t)filename, 64);
+    ret = validate_user_string((uint32_t)filename, EXECNAME_MAX);
     if (ret <= 0) return -1;
 
     if (count > 0) {
