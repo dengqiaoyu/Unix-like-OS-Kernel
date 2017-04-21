@@ -1,0 +1,8 @@
+410user/progs/minclone_mem.o: 410user/progs/minclone_mem.S \
+ 410user/inc/410_tests.h 410user/libsimics/simics.h spec/syscall_int.h
+
+410user/inc/410_tests.h:
+
+410user/libsimics/simics.h:
+
+spec/syscall_int.h:

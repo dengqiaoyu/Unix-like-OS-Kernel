@@ -5,10 +5,6 @@
 @author Newton Xie (ncx)
 @author Qiaoyu Deng (qdeng)
 
-Same drill as last time.
-
-*/
-
 1. Context Switch
    We set a FIFO list for all of runnable threads, and each time when we got
 interrupted by timer, we will choose the next thread in the schedule list, and
@@ -54,4 +50,44 @@ which is different from the waiting situation. At last, after we get all the
 input (get newline or reach max length), we will use semaphore to activate the
 next thread waiting on the readline.
 
-4. 
+4. exec
+If the calling task has multiple threads, an error is returned.
+The total length of argvec arguments cannot exceed 128, and the number
+of arguments cannot exceed 16. If all arguments are within length bounds
+and in valid user memory, then a new stack is setup with four arguments:
+argc, argv, and high and low bounds for the initial user stack.
+
+5. wait
+The task's zombie task list is checked. If it is populated, then we simply
+pop the first zombie off of the list, free its resources, and return. If
+the zombie task list and child task list are both empty, then we return
+a failure.
+
+Otherwise, we must block. We do so by allocating space on our stack for a
+"wait node", defined in task.h. This wait node is simply a linked list node
+with a pointer to its waiting thread and space for a task pointer. This
+wait node is added to the task's waiting thread list, and the caller yields.
+
+When the caller is woken up, the zombie field of the wait node will be
+populated with a pointer to the task which has been received, or NULL if
+there are no more children.
+
+6. vanish
+The thread moves itself from its task's live thread list to the zombie
+thread list.
+
+If the thread is the last in its task, it does some work:
+
+    1:  It "orphans" child tasks (dead or alive) to the init task.
+    2:  It cleans up virtual memory resources.
+    3:  It removes the task from its parent's child task list.
+    4a: If the parent has waiting threads, it wakes a waiting thread, which
+        will receive the task's id and status. If the task is the last child
+        of its parent, then all the parent's waiting threads are woken.
+     b: Otherwise, it adds the task to its parent's zombie task list, where
+        it can be waited on. If the zombie task list is populated, it frees
+        as many resources as possible from the previous zombie task.
+
+The thread then yields and will never be scheduled again.
+
+*/
