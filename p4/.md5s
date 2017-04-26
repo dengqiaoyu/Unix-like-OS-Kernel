@@ -327,4 +327,4 @@
 644 8888e1d92f83bc66e1e21922babc3207  spec/syscall_int.h
 644 eb96ec4f3641ce8b88f2f694bb900d33  spec/ureg.h
 # finished on Sun Apr 23 23:16:07 EDT 2017
-# Fetched by ./update.sh afs query at Tue Apr 25 22:01:51 EDT 2017
+# Fetched by ./update.sh afs query at Tue Apr 25 22:13:48 EDT 2017

@@ -35,19 +35,19 @@ UPDATE_METHOD = afs
 # directory.
 #
 410TESTS = actual_wait agility_drill beady_test bistromath cat cho cho2\
-		   cho_variant chow ck1 coolness cvar_test cyclone deschedule_hang\
-		   excellent exec_basic exec_basic_helper exec_nonexist fib fork_bomb\
-		   fork_exit_bomb fork_test1 fork_wait fork_wait_bomb getpid_test1\
-		   halt_test join_specific_test juggle knife largetest loader_test1\
-		   loader_test2 make_crash make_crash_helper mandelbrot mem_eat_test\
-		   mem_permissions merchant misbehave misbehave_wrap multitest\
-		   mutex_destroy_test new_pages nibbles paraguay peon print_basic racer\
-		   readline_basic register_test remove_pages_test1 remove_pages_test2\
-		   rwlock_downgrade_read_test slaughter sleep_test1 stack_test1\
-		   startle swexn_basic_test swexn_cookie_monster swexn_dispatch\
-		   swexn_regs swexn_stands_for_swextensible swexn_uninstall_test\
-		   switzerland thr_exit_join wait_getpid wild_test1 work\
-		   yield_desc_mkrun minclone_mem
+    	   cho_variant chow ck1 coolness cvar_test cyclone deschedule_hang\
+    	   excellent exec_basic exec_basic_helper exec_nonexist fib fork_bomb\
+	   fork_exit_bomb fork_test1 fork_wait fork_wait_bomb getpid_test1\
+	   halt_test join_specific_test juggle knife largetest loader_test1\
+	   loader_test2 make_crash make_crash_helper mandelbrot mem_eat_test\
+	   mem_permissions merchant misbehave misbehave_wrap multitest\
+	   mutex_destroy_test new_pages nibbles paraguay peon print_basic racer\
+	   readline_basic register_test remove_pages_test1 remove_pages_test2\
+	   rwlock_downgrade_read_test slaughter sleep_test1 stack_test1\
+	   startle swexn_basic_test swexn_cookie_monster swexn_dispatch\
+	   swexn_regs swexn_stands_for_swextensible swexn_uninstall_test\
+	   switzerland thr_exit_join wait_getpid wild_test1 work\
+	   yield_desc_mkrun minclone_mem
 
 
 ###########################################################################
@@ -57,7 +57,6 @@ UPDATE_METHOD = afs
 # directory.
 #
 STUDENTTESTS =
-
 
 ###########################################################################
 # Data files provided by course staff to build into the RAM disk
@@ -79,8 +78,8 @@ STUDENTFILES =
 # Object files for your thread library
 ###########################################################################
 THREAD_OBJS = malloc.o panic.o thread.o start_thread.o wrap_thread_proc.o\
-			  thread_table.o allocator.o mutex_asm.o list.o mutex.o cond.o\
-			  sem.o rwlock.o
+	      thread_table.o allocator.o mutex_asm.o list.o mutex.o cond.o\
+	      sem.o rwlock.o
 
 # Thread Group Library Support.
 #
