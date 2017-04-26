@@ -11,12 +11,12 @@
 asm_set_exec_context:
     pushl %ebp              /* save old ebp */
     movl %esp, %ebp         /* %ebp = old %esp */
-    pushl %eax
-    pushl %ecx
-    pushl %edx
-    pushl %ebx
-    pushl %esi
-    pushl %edi
+    pushl %eax              /* save general purpose registers except esp ebp */
+    pushl %ecx              /* continue... */
+    pushl %edx              /* continue... */
+    pushl %ebx              /* continue... */
+    pushl %esi              /* continue... */
+    pushl %edi              /* continue... */
     movl 20(%ebp), %eax     /* %eax = &(new_thread->ip) */
     pushl %eax              /* push &(new_thread->ip) to stack for future use */
     movl %esp, %eax         /* save parent %esp to %eax */
@@ -35,23 +35,23 @@ asm_set_exec_context:
     movl 12(%ebp), %edx     /* %edx = new_kern_sp */
     subl %ebp, %ecx         /* len = old_kern_sp - current %esp */
     subl %ecx, %edx         /* new thread %ebp's address = new_kern_sp - len */
-    pushl %edx
+    pushl %edx              /* store new thread %ebp's address to stack */
     movl (%ebp), %eax       /* %eax = old %ebp value */
     movl 8(%ebp), %ecx      /* %ecx = old_kern_sp */
     movl 12(%ebp), %edx     /* %edx = new_kern_sp */
     subl %eax, %ecx         /* offset = old_kern_sp - old %ebp value */
     subl %ecx, %edx         /* new thread %ebp's value = new_kern_sp - offset */
     popl %eax               /* new thread %ebp's address */
-    movl %edx, (%eax)       /*  */
+    movl %edx, (%eax)
     call asm_get_eip        /* get current parent eip, child also run here */
     popl %edx               /* %edx = &(new_thread->ip) */
     movl %eax, (%edx)       /* new_thread->ip = %eip */
-    popl %edi
-    popl %esi
-    popl %ebx
-    popl %edx
-    popl %ecx
-    popl %eax
+    popl %edi               /* restore registers except esp ebp */
+    popl %esi               /* continue... */
+    popl %ebx               /* continue... */
+    popl %edx               /* continue... */
+    popl %ecx               /* continue... */
+    popl %eax               /* continue... */
     popl %ebp               /* restore old %ebp */
     ret
 

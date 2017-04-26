@@ -34,19 +34,21 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the 410user/progs
 # directory.
 #
-410TESTS = loader_test1 loader_test2 ck1 merchant peon knife new_pages\
-    	   exec_basic exec_basic_helper fork_test1 fork_wait getpid_test1\
-	   wait_getpid fork_exit_bomb fork_wait_bomb sleep_test1 actual_wait\
-	   exec_nonexist print_basic remove_pages_test1 remove_pages_test2\
-	   yield_desc_mkrun deschedule_hang readline_basic halt_test\
-	   make_crash_helper make_crash wild_test1 coolness\
-	   swexn_basic_test swexn_cookie_monster swexn_dispatch swexn_regs\
-	   swexn_stands_for_swextensible swexn_uninstall_test\
-	   fork_bomb mem_permissions minclone_mem register_test\
-	   stack_test1 mem_eat_test cho cho2 cho_variant\
-	   rwlock_downgrade_read_test cvar_test multitest thr_exit_join\
-	   slaughter startle join_specific_test\
-	   #ack bistromath slaughter\
+410TESTS = actual_wait agility_drill beady_test bistromath cat cho cho2\
+		   cho_variant chow ck1 coolness cvar_test cyclone deschedule_hang\
+		   excellent exec_basic exec_basic_helper exec_nonexist fib fork_bomb\
+		   fork_exit_bomb fork_test1 fork_wait fork_wait_bomb getpid_test1\
+		   halt_test join_specific_test juggle knife largetest loader_test1\
+		   loader_test2 make_crash make_crash_helper mandelbrot mem_eat_test\
+		   mem_permissions merchant misbehave misbehave_wrap multitest\
+		   mutex_destroy_test new_pages nibbles paraguay peon print_basic racer\
+		   readline_basic register_test remove_pages_test1 remove_pages_test2\
+		   rwlock_downgrade_read_test slaughter sleep_test1 stack_test1\
+		   startle swexn_basic_test swexn_cookie_monster swexn_dispatch\
+		   swexn_regs swexn_stands_for_swextensible swexn_uninstall_test\
+		   switzerland thr_exit_join wait_getpid wild_test1 work\
+		   yield_desc_mkrun minclone_mem
+
 
 ###########################################################################
 # Test programs you have written which you wish to run
@@ -54,9 +56,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the user/progs
 # directory.
 #
-STUDENTTESTS = my_fork_test my_maker_deschedule my_cond_sem_test my_readline\
-	       my_make_crash my_exec_and_fork my_exec_and_fork_helper\
-	       my_memory_permission my_print_test my_startle\
+STUDENTTESTS =
 
 
 ###########################################################################
