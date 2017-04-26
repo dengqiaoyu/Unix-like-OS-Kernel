@@ -1,0 +1,93 @@
+/**
+
+@mainpage 15-410 Project 3
+
+@author Newton Xie (ncx)
+@author Qiaoyu Deng (qdeng)
+
+1. Context Switch
+   We set a FIFO list for all of runnable threads, and each time when we got
+interrupted by timer, we will choose the next thread in the schedule list, and
+put the current running thread to the tail of the scheduler list. We also use
+context switch to block or suspend a thread by not adding it to the scheduler
+list but adding to block list(used by mutex), sleep list(used by sleep). We have
+two starting point for a thread which is INITIALIZED and FORKED, all of threads
+that are created in kern_main will start from INITIALIZED, and all tasks that
+are forked in tasks will start from FORKED, however, they have only one way to
+go out from context switch which is the status of RUNNABLE. in order to
+implement sleep, each time when we go into context switch, we will first check
+the sleep list, find if there is any thread that should be waked up, if so we
+then switch to that thread, otherwise we choose a runnable thread from normal
+schedule list, and then switch to. For the switch, we never use dynamic memory,
+but always use the pointers which are allocated when we create new tasks and
+threads, so we will save a lot of time on get new memory from malloc.
+
+2. fork
+    For fork, we create task and thread first just like running the first task
+in kernel initialization. And then we copy the parent page directory to child,
+after that we will set the child running context by copying parent's kernel
+stack to the child but change the child's esp and ebp to let child use its own
+kernel stack, And we let child starts from where the copy is finished, so we
+will have child and parent running the same instruction once child is started by
+context switcher.
+
+3. readline
+    For different thread call readline at the same time, we use semaphore to let
+thread waiting to use readline one by one after we get into readine, we will
+check whether there is enough newline character in keyboard buffer, if not we
+will print all the characters in the buffer to indicate those character will be
+consumed by the current thread, and then use conditional variables going to
+be blocked, and the keyboard driver is responsible for print new character when
+there is some thread waiting on newline character. Once keyboard driver detects
+newline character it will use single to activate that blocked thread, which
+means put the thread back to scheduler list again. In that situation, we will
+let waked up thread get its character from the keyboard buffer but does not
+print characters since when thread is waiting, keyboard already print characters
+However, when there are newline characters in keyboard buffer, we will let
+thread pass the conditional wait and get input directly, since we never have
+chance to print those buffered characters, we will let thread itself prints out,
+which is different from the waiting situation. At last, after we get all the
+input (get newline or reach max length), we will use semaphore to activate the
+next thread waiting on the readline.
+
+4. exec
+If the calling task has multiple threads, an error is returned.
+The total length of argvec arguments cannot exceed 128, and the number
+of arguments cannot exceed 16. If all arguments are within length bounds
+and in valid user memory, then a new stack is setup with four arguments:
+argc, argv, and high and low bounds for the initial user stack.
+
+5. wait
+The task's zombie task list is checked. If it is populated, then we simply
+pop the first zombie off of the list, free its resources, and return. If
+the zombie task list and child task list are both empty, then we return
+a failure.
+
+Otherwise, we must block. We do so by allocating space on our stack for a
+"wait node", defined in task.h. This wait node is simply a linked list node
+with a pointer to its waiting thread and space for a task pointer. This
+wait node is added to the task's waiting thread list, and the caller yields.
+
+When the caller is woken up, the zombie field of the wait node will be
+populated with a pointer to the task which has been received, or NULL if
+there are no more children.
+
+6. vanish
+The thread moves itself from its task's live thread list to the zombie
+thread list.
+
+If the thread is the last in its task, it does some work:
+
+    1:  It "orphans" child tasks (dead or alive) to the init task.
+    2:  It cleans up virtual memory resources.
+    3:  It removes the task from its parent's child task list.
+    4a: If the parent has waiting threads, it wakes a waiting thread, which
+        will receive the task's id and status. If the task is the last child
+        of its parent, then all the parent's waiting threads are woken.
+     b: Otherwise, it adds the task to its parent's zombie task list, where
+        it can be waited on. If the zombie task list is populated, it frees
+        as many resources as possible from the previous zombie task.
+
+The thread then yields and will never be scheduled again.
+
+*/

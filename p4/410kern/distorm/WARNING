@@ -1,0 +1,7 @@
+This is a 2008 (pre-GPL) version of diStorm ("DISTORM_VER 0x01071e").
+It is ok to link against student kernel code.  Some versions of
+diStorm newer than this one are GPL'd and are thus not ok to link
+with student kernel code.  However, after a while the author saw fit
+to return to using a BSD license, so it would be possible to pull a
+newer diStorm version.  The need isn't super-obvious, though, since
+we are not trying to disassemble post-2008 instructions.
