@@ -1,3 +1,0 @@
-make scheduler sense out of mutex
-update vm including tree, new pages, zfod
-implement new pages and test malloc
