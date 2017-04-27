@@ -19,11 +19,9 @@ typedef struct keyboard_buffer {
     char buf[KB_BUF_LEN];
     int buf_start;
     int buf_ending;
-    int newline_cnt;
-    int is_waiting;
-    kern_mutex_t mutex;
-    kern_cond_t cond;
-    kern_sem_t readline_sem;
+    kern_mutex_t wait_mutex;
+    kern_sem_t console_io_sem;
+    kern_cond_t new_input_cond;
 } keyboard_buffer_t;
 
 /* function declarations */

@@ -56,7 +56,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the user/progs
 # directory.
 #
-STUDENTTESTS =
+STUDENTTESTS = my_getchar_test
 
 ###########################################################################
 # Data files provided by course staff to build into the RAM disk
@@ -96,7 +96,7 @@ SYSCALL_OBJS = syscall.o\
 	       exec.o gettid.o fork.o new_pages.o wait.o vanish.o\
 	       set_status.o get_ticks.o sleep.o print.o set_term_color.o\
 	       get_cursor_pos.o set_cursor_pos.o remove_pages.o\
-	       deschedule.o make_runnable.o yield.o readline.o\
+	       deschedule.o make_runnable.o yield.o readline.o getchar.o\
 	       swexn.o halt.o readfile.o\
 
 ###########################################################################

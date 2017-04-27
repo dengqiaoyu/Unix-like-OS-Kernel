@@ -68,6 +68,9 @@ WRAP_SYSCALL(asm_remove_pages, kern_remove_pages)
 .global asm_sleep
 WRAP_SYSCALL(asm_sleep, kern_sleep)
 
+.global asm_getchar
+WRAP_SYSCALL(asm_getchar, kern_getchar)
+
 .global asm_readline
 WRAP_SYSCALL(asm_readline, kern_readline)
 

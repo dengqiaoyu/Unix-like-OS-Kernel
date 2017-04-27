@@ -27,6 +27,8 @@ void asm_remove_pages(void);
 
 void asm_sleep(void);
 
+void asm_getchar(void);
+
 void asm_readline(void);
 
 void asm_print(void);

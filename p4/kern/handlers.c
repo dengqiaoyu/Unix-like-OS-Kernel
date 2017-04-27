@@ -97,6 +97,7 @@ int syscall_init() {
     idt_install(NEW_PAGES_INT,      asm_new_pages,      kern_cs, flag);
     idt_install(REMOVE_PAGES_INT,   asm_remove_pages,   kern_cs, flag);
     idt_install(SLEEP_INT,          asm_sleep,          kern_cs, flag);
+    idt_install(GETCHAR_INT,        asm_getchar,       kern_cs, flag);
     idt_install(READLINE_INT,       asm_readline,       kern_cs, flag);
     idt_install(PRINT_INT,          asm_print,          kern_cs, flag);
     idt_install(SET_TERM_COLOR_INT, asm_set_term_color, kern_cs, flag);
