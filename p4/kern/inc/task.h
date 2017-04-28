@@ -30,7 +30,7 @@ typedef node_t task_node_t;
 typedef node_t thread_node_t;
 
 /** @brief  Task control block structure.
- *  
+ *
  *  Contains task id, status, virtual memory housekeeping, thread and task
  *  lists, and mutexes.
  */
@@ -50,12 +50,12 @@ typedef struct task {
     list_t *zombie_task_list;
     list_t *waiting_thread_list;
 
-    /* 
+    /*
      * This wait_mutex protects both zombie_task_list and waiting_thread_list.
      */
     kern_mutex_t wait_mutex;
 
-    /* 
+    /*
      * This vanish_mutex is acquired by a task when it vanishes, or by a parent
      * task when it orphans its children. It ensures that the task's parent
      * pointer is not changed to the init task in the middle of vanishing.
@@ -81,6 +81,8 @@ typedef struct thread {
     void *swexn_sp;
     swexn_handler_t swexn_handler;
     void *swexn_arg;
+
+    int virtu_flag;
 } thread_t;
 
 /** @brief  Structure used for blocking on wait().

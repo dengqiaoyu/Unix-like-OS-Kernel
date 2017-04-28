@@ -280,6 +280,9 @@ thread_t *thread_init() {
     }
     thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
     thread->cur_sp = USER_STACK_START;
+    // BUG For test!
+    thread->virtu_flag = 1;
+    // thread->virtu_flag = 0;
 
     tcb_hashtab_put(thread);
     return thread;
@@ -373,7 +376,7 @@ int validate_user_string(uint32_t addr, int max_len) {
             check++;
         }
 
-        /* 
+        /*
          * we are still under max_len but the string did not terminate, so
          * increment its starting address and continue searching
          */
