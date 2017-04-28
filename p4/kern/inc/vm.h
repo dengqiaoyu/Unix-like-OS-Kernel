@@ -53,6 +53,12 @@ int page_dir_copy(uint32_t *new_page_dir, uint32_t *old_page_dir);
 
 void undo_page_dir_copy(uint32_t *page_dir);
 
+void read_guest(void *host_dest, uint32_t guest_src,
+                uint32_t size, uint16_t guest_segsel);
+
+void write_guest(uint32_t guest_dest, void *host_src,
+                 uint32_t size, uint16_t guest_segsel);
+
 uint32_t *get_kern_page_dir(void);
 
 uint32_t get_zfod_frame(void);

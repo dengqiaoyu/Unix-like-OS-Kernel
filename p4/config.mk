@@ -115,7 +115,7 @@ AUTOSTACK_OBJS = autostack.o
 # Kernel object files you provide in from kern/
 #
 KERNEL_OBJS = console.o kernel.o handlers.o task.o vm.o scheduler.o\
-	      asm_kern_to_user.o asm_page_inval.o\
+	      asm_kern_to_user.o asm_page_inval.o asm_mem_helper.o\
 	      asm_context_switch.o\
 	      \
 	      drivers/timer_driver.o drivers/keyboard_driver.o\
