@@ -5,6 +5,8 @@
 #ifndef _ASM_EXCEPTIONS_H_
 #define _ASM_EXCEPTIONS_H_
 
+#include <stdlib.h>
+
 void asm_divide();
 
 void asm_debug();

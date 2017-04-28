@@ -153,7 +153,8 @@ void exn_handler(int cause, int ec_flag) {
 
     int virtualized = 0;
     ureg_t *ureg_ptr = (ureg_t *)esp3;
-    if (ureg_ptr->cause == SWEXN_CAUSE_PROTFAULT && thread->virtu_flag) {
+    task_t *task = thread->task;
+    if (ureg_ptr->cause == SWEXN_CAUSE_PROTFAULT && task->virtu_flag) {
         virtualized = _handle_sensi_instr(ureg_ptr);
     }
     if (virtualized) return;
@@ -205,8 +206,10 @@ int _handle_sensi_instr(ureg_t *ureg) {
     lprintf("disassemble_len: %d", disassemble_len);
     lprintf("%s", instr_buf_decoded);
 
-    MAGIC_BREAK;
-    return 0;
+    *((uint32_t *)(kern_sp - 5)) = eip_value + 1;
+    eip_value = *((uint32_t *)(kern_sp - 5));
+    lprintf("eip_value: %p", (void *)eip_value);
+    return 1;
 }
 
 /**

@@ -104,6 +104,9 @@ task_t *task_init() {
         return NULL;
     }
 
+    /* virtualization init */
+    task->virtu_flag = 1;
+    task->dis_inter_tid = -1;
     return task;
 }
 
@@ -280,9 +283,6 @@ thread_t *thread_init() {
     }
     thread->kern_sp = (uint32_t)kern_stack + KERN_STACK_SIZE;
     thread->cur_sp = USER_STACK_START;
-    // BUG For test!
-    thread->virtu_flag = 1;
-    // thread->virtu_flag = 0;
 
     tcb_hashtab_put(thread);
     return thread;

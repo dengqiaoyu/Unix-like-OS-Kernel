@@ -62,6 +62,10 @@ typedef struct task {
      */
     kern_mutex_t vanish_mutex;
     struct task *parent_task;
+
+    /* for vtualization */
+    int virtu_flag;
+    int dis_inter_tid;
 } task_t;
 
 /** @brief  Thread control block structure.
@@ -81,8 +85,6 @@ typedef struct thread {
     void *swexn_sp;
     swexn_handler_t swexn_handler;
     void *swexn_arg;
-
-    int virtu_flag;
 } thread_t;
 
 /** @brief  Structure used for blocking on wait().
