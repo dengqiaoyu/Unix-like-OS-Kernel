@@ -106,7 +106,7 @@ task_t *task_init() {
     }
 
     /* virtualization init */
-    task->guest = guest_init();
+    task->guest_info = guest_info_init();
     return task;
 }
 

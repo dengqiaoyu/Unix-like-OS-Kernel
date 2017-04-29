@@ -28,6 +28,7 @@
 #include "scheduler.h"                  /* scheduler_init */
 #include "utils/tcb_hashtab.h"          /* tcb_hashtab_init */
 #include "drivers/keyboard_driver.h"    /* keyboard_init */
+#include "inc/hypervisor.h"
 
 // will need to find a better way to do this eventually
 extern kern_mutex_t malloc_mutex;
@@ -63,6 +64,9 @@ int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     keyboard_init();
     /* set up other essentials like tcb table, tid counter */
     helper_init();
+
+    // TODO
+    hypervisor_init();
 
     /* set up an idle task for thread to switch when there is no more thread */
     idle_thread = setup_task("idle");

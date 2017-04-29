@@ -72,7 +72,7 @@ STUDENTTESTS = my_getchar_test my_sensitive_instr
 # A list of the data files you want built in from the user/files
 # directory.
 #
-STUDENTFILES =
+STUDENTFILES = kernel
 
 ###########################################################################
 # Object files for your thread library
@@ -131,6 +131,8 @@ KERNEL_OBJS = console.o kernel.o handlers.o task.o vm.o scheduler.o\
 	      syscalls/memory_management.o syscalls/console_io.o\
 	      \
 	      exceptions/asm_exceptions.o exceptions/exceptions.o\
+	      \
+	      hypervisor.o\
 
 ###########################################################################
 # WARNING: Do not put **test** programs into the REQPROGS variables.  Your

@@ -65,7 +65,7 @@ typedef struct task {
     struct task *parent_task;
 
     /* for vtualization */
-    guest_t *guest;
+    guest_info_t *guest_info;
 } task_t;
 
 /** @brief  Thread control block structure.

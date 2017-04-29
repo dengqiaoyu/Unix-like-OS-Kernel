@@ -153,7 +153,7 @@ void exn_handler(int cause, int ec_flag) {
     int virtualized = -1;
     ureg_t *ureg_ptr = (ureg_t *)esp3;
     task_t *task = thread->task;
-    if (ureg_ptr->cause == SWEXN_CAUSE_PROTFAULT && task->guest != NULL) {
+    if (ureg_ptr->cause == SWEXN_CAUSE_PROTFAULT && task->guest_info != NULL) {
         virtualized = handle_sensi_instr(ureg_ptr);
     }
     if (virtualized == 0) return;
