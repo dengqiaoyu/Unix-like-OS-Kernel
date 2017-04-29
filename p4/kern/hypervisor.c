@@ -133,12 +133,15 @@ int handle_sensi_instr(ureg_t *ureg) {
     char instr_buf_decoded[MAX_INS_DECODED_LENGTH + 1] = {0};
     lprintf("fault_ip: %p", fault_ip);
     /* BUG just for test not SEGSEL_KERNEL_DS ! */
-    read_guest(instr_buf, (uint32_t)fault_ip, MAX_INS_LENGTH, SEGSEL_KERNEL_DS);
+    MAGIC_BREAK;
+    read_guest(instr_buf, (uint32_t)fault_ip, MAX_INS_LENGTH,
+               (uint16_t)SEGSEL_SPARE0);
+    MAGIC_BREAK;
     int eip_offset = disassemble(instr_buf, MAX_INS_LENGTH,
                                  instr_buf_decoded, MAX_INS_LENGTH + 1);
     lprintf("eip_offset: %d, instruction: %s",
             eip_offset, instr_buf_decoded);
-    // MAGIC_BREAK;
+    MAGIC_BREAK;
     int ret = _simulate_instr(instr_buf_decoded, ureg);
     if (ret != 0) return -1;
     *((uint32_t *)(kern_sp - 5)) = eip_value + eip_offset;
@@ -212,25 +215,27 @@ int _timer_init(ureg_t *ureg) {
 
 int _set_cursor(ureg_t *ureg) {
     guest_info_t *guest_info = get_cur_tcb()->task->guest_info;
+    uint16_t outb_param1 = ureg->edx;
+    uint8_t outb_param2 = ureg->eax;
     switch (guest_info->cursor_state) {
     case SIGNAL_CURSOR_NORMAL:
-        if (ureg->edx == CRTC_IDX_REG && ureg->eax == CRTC_CURSOR_LSB_IDX) {
+        if (outb_param1 == CRTC_IDX_REG && ureg->eax == CRTC_CURSOR_LSB_IDX) {
             guest_info->cursor_state = SIGNAL_CURSOR_LSB_IDX;
-        } else if (ureg->edx == CRTC_IDX_REG
-                   && ureg->eax == CRTC_CURSOR_MSB_IDX) {
+        } else if (outb_param1 == CRTC_IDX_REG
+                   && outb_param2 == CRTC_CURSOR_MSB_IDX) {
             guest_info->cursor_state = SIGNAL_CURSOR_MSB_IDX;
         } else return -1;
         break;
     case SIGNAL_CURSOR_LSB_IDX:
-        if (ureg->edx == CRTC_DATA_REG) {
+        if (outb_param1 == CRTC_DATA_REG) {
             guest_info->cursor_state = SIGNAL_CURSOR_NORMAL;
-            guest_info->cursor_idx = ureg->eax;
+            guest_info->cursor_idx = outb_param2;
         } else return -1;
         break;
     case SIGNAL_CURSOR_MSB_IDX:
-        if (ureg->edx == CRTC_DATA_REG) {
+        if (outb_param1 == CRTC_DATA_REG) {
             guest_info->cursor_state = SIGNAL_CURSOR_NORMAL;
-            guest_info->cursor_idx += ureg->eax << 8;
+            guest_info->cursor_idx += outb_param2 << 8;
             /* begin set cursor */
             int row = guest_info->cursor_idx / CONSOLE_WIDTH;
             int col = guest_info->cursor_idx % CONSOLE_WIDTH;

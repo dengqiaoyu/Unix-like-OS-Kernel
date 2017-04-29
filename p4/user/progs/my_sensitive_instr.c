@@ -15,8 +15,6 @@ int main() {
     asm("movw $0x43, %dx");
     asm("movb $0x36, %al");
     asm("out %ax, %dx");
-
-    MAGIC_BREAK;
     /* outb(TIMER_PERIOD_IO_PORT, LSB(cycles_per_interrupt)); */
     lprintf("outb(TIMER_PERIOD_IO_PORT, LSB(cycles_per_interrupt)");
     asm("movw $0x40, %dx");
