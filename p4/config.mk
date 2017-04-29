@@ -56,7 +56,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the user/progs
 # directory.
 #
-STUDENTTESTS =
+STUDENTTESTS = my_getchar_test
 
 ###########################################################################
 # Data files provided by course staff to build into the RAM disk
@@ -96,7 +96,7 @@ SYSCALL_OBJS = syscall.o\
 	       exec.o gettid.o fork.o new_pages.o wait.o vanish.o\
 	       set_status.o get_ticks.o sleep.o print.o set_term_color.o\
 	       get_cursor_pos.o set_cursor_pos.o remove_pages.o\
-	       deschedule.o make_runnable.o yield.o readline.o\
+	       deschedule.o make_runnable.o yield.o readline.o getchar.o\
 	       swexn.o halt.o readfile.o\
 
 ###########################################################################
@@ -115,7 +115,7 @@ AUTOSTACK_OBJS = autostack.o
 # Kernel object files you provide in from kern/
 #
 KERNEL_OBJS = console.o kernel.o handlers.o task.o vm.o scheduler.o\
-	      asm_kern_to_user.o asm_page_inval.o\
+	      asm_kern_to_user.o asm_page_inval.o asm_mem_helper.o\
 	      asm_context_switch.o\
 	      \
 	      drivers/timer_driver.o drivers/keyboard_driver.o\

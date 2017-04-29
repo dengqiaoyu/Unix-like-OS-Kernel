@@ -23,10 +23,6 @@
 #include <syscall.h>
 #include <simics.h>
 
-int getchar(void) {
-    return -1;
-}
-
 void task_vanish(int status) {
     status ^= status;
     status /= status;

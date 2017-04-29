@@ -26,6 +26,7 @@
 #include "vm_internal.h"
 #include "asm_page_inval.h"     /* asm_page_inval */
 #include "utils/kern_mutex.h"
+#include "asm_mem_helper.h"
 
 /* DEBUG */
 #define print_line lprintf("line %d", __LINE__)
@@ -45,6 +46,8 @@ static uint32_t first_free_frame;
 static kern_mutex_t first_free_frame_mutex;
 /* physical frames allocator */
 
+#define SEG_SELECTOR_INDEX_MASK  (~(0xfff8))
+uint32_t _get_offset(uint16_t seg_selector);
 
 /**
  * Set up kernel virtual memory, set paging and create free physical frames list
@@ -297,6 +300,52 @@ void write_physical(uint32_t phys_dest, void *virtual_src, uint32_t n) {
     memcpy((void *)virtual_dest, virtual_src, len);
 
     kern_mutex_unlock(&first_free_frame_mutex);
+}
+
+void read_guest(void *host_dest, uint32_t guest_src,
+                uint32_t size, uint16_t guest_segsel) {
+    uint16_t gs_value = asm_get_gs();
+    asm_set_gs(guest_segsel);
+    uint8_t *mem_dest_host = (uint8_t *)host_dest;
+    uint8_t *mem_src_guest = (uint8_t *)guest_src;
+    int i = 0;
+    int loops = (size / sizeof(uint32_t));
+    for (i = 0; i < loops; i++) {
+        asm_copy_dw_from_gs(mem_dest_host, mem_src_guest);
+        mem_dest_host += sizeof(uint32_t);
+        mem_src_guest += sizeof(uint32_t);
+    }
+
+    loops = size % sizeof(uint32_t);
+    for (i = 0; i < loops; i++) {
+        asm_copy_b_from_gs(mem_dest_host, mem_src_guest);
+        mem_dest_host += sizeof(uint8_t);
+        mem_src_guest += sizeof(uint8_t);
+    }
+    asm_set_gs(gs_value);
+}
+
+void write_guest(uint32_t guest_dest, void *host_src,
+                 uint32_t size, uint16_t guest_segsel) {
+    uint16_t gs_value = asm_get_gs();
+    asm_set_gs(guest_segsel);
+    uint8_t *mem_dest_guest = (uint8_t *)guest_dest;
+    uint8_t *mem_src_host = (uint8_t *)host_src;
+    int i = 0;
+    int loops = (size / sizeof(uint32_t));
+    for (i = 0; i < loops; i++) {
+        asm_copy_dw_to_gs(mem_dest_guest, mem_src_host);
+        mem_dest_guest += sizeof(uint32_t);
+        mem_src_host += sizeof(uint32_t);
+    }
+
+    loops = size % sizeof(uint32_t);
+    for (i = 0; i < loops; i++) {
+        asm_copy_b_to_gs(mem_dest_guest, mem_src_host);
+        mem_dest_guest += sizeof(uint8_t);
+        mem_src_host += sizeof(uint8_t);
+    }
+    asm_set_gs(gs_value);
 }
 
 uint32_t *get_kern_page_dir(void) {
