@@ -14,6 +14,7 @@
 #include <asm.h>                 /* disable_interrupts(), enable_interrupts() */
 #include <console.h>             /* clear_console */
 #include <simics.h>              /* lprintf and debug */
+#include <common_kern.h>         /* USER_MEM_START */
 
 /* user define includes */
 #include "syscalls/syscalls.h"
@@ -22,6 +23,7 @@
 #include "scheduler.h"           /* scheduler declaration and interface */
 #include "vm.h"                  /* virtual memory management */
 #include "asm_kern_to_user.h"    /* asm_kern_to_user */
+#include "inc/hypervisor.h"
 
 #define EXECNAME_MAX 64
 #define ARGVEC_MAX 128
@@ -284,6 +286,16 @@ int kern_exec(void) {
 
     page_dir_clear(task->page_dir);
     set_cr3((uint32_t)task->page_dir);
+
+    // check whether we should defer to hypervisor loader
+    if (thread->ip < USER_MEM_START) {
+        if (guest_init(&elf_header) < 0) {
+            lprintf("i commited to exec and failed :(");
+            kern_vanish();
+        }
+        // should never reach here
+        return 0;
+    }
 
     // load the new binary into the fresh virtual memory
     ret = load_program(&elf_header, task->maps);

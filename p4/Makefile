@@ -311,6 +311,13 @@ $(BUILDDIR)/% : $(STUUDIR)/$(UPROGDIR)/%
 	mkdir -p $(BUILDDIR)
 	cp $< $@
 
+# 410user/files/* and user/files/* are dependencies, but
+# they are not targets to be built.  In particular, if
+# both 410user/files/x and 410user/files/x.S exist, don't
+# try to build one from the other.
+.PHONY: $(410FILES:%=$(410UDIR)/$(UFILEDIR)/%)
+.PHONY: $(STUDENTFILES:%=$(STUUDIR)/$(UFILEDIR)/%)
+
 $(410FILES:%=$(BUILDDIR)/%) : \
 $(BUILDDIR)/% : $(410UDIR)/$(UFILEDIR)/%
 	mkdir -p $(BUILDDIR)
