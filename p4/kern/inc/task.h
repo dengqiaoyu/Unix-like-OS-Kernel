@@ -10,6 +10,7 @@
 #include <elf_410.h>
 #include <syscall.h>
 
+#include "hypervisor.h"
 #include "utils/list.h"
 #include "utils/kern_mutex.h"
 #include "utils/maps.h"
@@ -64,8 +65,7 @@ typedef struct task {
     struct task *parent_task;
 
     /* for vtualization */
-    int virtu_flag;
-    int dis_inter_tid;
+    guest_t *guest;
 } task_t;
 
 /** @brief  Thread control block structure.

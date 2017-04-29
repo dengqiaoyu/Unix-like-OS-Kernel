@@ -56,7 +56,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the user/progs
 # directory.
 #
-STUDENTTESTS = my_getchar_test
+STUDENTTESTS = my_getchar_test my_sensitive_instr
 
 ###########################################################################
 # Data files provided by course staff to build into the RAM disk
@@ -115,6 +115,7 @@ AUTOSTACK_OBJS = autostack.o
 # Kernel object files you provide in from kern/
 #
 KERNEL_OBJS = console.o kernel.o handlers.o task.o vm.o scheduler.o\
+		  hypervisor.o\
 	      asm_kern_to_user.o asm_page_inval.o asm_mem_helper.o\
 	      asm_context_switch.o\
 	      \

@@ -30,9 +30,8 @@
 #include "scheduler.h"                  /* get_cur_tcb */
 #include "asm_page_inval.h"             /* asm_page_inval */
 #include "syscalls/syscalls.h"          /* kern_halt, kern_vanish */
+#include "hypervisor.h"
 
-/* internal functions */
-int _handle_sensi_instr(ureg_t *ureg);
 /**
  * @brief      print error message about fault type and where the error
  *             happens(eip), and esp when the error has error code, and also
@@ -151,13 +150,13 @@ void exn_handler(int cause, int ec_flag) {
     *(--esp3) = cause;
     /* ureg_t is set up */
 
-    int virtualized = 0;
+    int virtualized = -1;
     ureg_t *ureg_ptr = (ureg_t *)esp3;
     task_t *task = thread->task;
-    if (ureg_ptr->cause == SWEXN_CAUSE_PROTFAULT && task->virtu_flag) {
-        virtualized = _handle_sensi_instr(ureg_ptr);
+    if (ureg_ptr->cause == SWEXN_CAUSE_PROTFAULT && task->guest != NULL) {
+        virtualized = handle_sensi_instr(ureg_ptr);
     }
-    if (virtualized) return;
+    if (virtualized == 0) return;
 
     if (thread->swexn_handler == NULL) {
         task_t *task = thread->task;
@@ -186,30 +185,6 @@ void exn_handler(int cause, int ec_flag) {
         thread->swexn_handler = NULL;
         thread->swexn_arg = NULL;
     }
-}
-
-int _handle_sensi_instr(ureg_t *ureg) {
-    thread_t *thread = get_cur_tcb();
-    uint32_t *kern_sp = (uint32_t *)(thread->kern_sp);
-    uint32_t cs_value = *((uint32_t *)(kern_sp - 4));
-    uint32_t eip_value = *((uint32_t *)(kern_sp - 5));
-    lprintf("cs_value: %p, eip_value: %p", (void *)cs_value, (void *)eip_value);
-    void *fault_ip = (void *)ureg->eip;
-    char instr_buf[MAX_INS_LENGTH + 1] = {0};
-    char instr_buf_decoded[MAX_INS_DECODED_LENGTH + 1] = {0};
-    lprintf("fault_ip: %p", fault_ip);
-
-    /* BUG just for test not SEGSEL_KERNEL_DS ! */
-    read_guest(instr_buf, (uint32_t)fault_ip, MAX_INS_LENGTH, SEGSEL_KERNEL_DS);
-    int disassemble_len = disassemble(instr_buf, MAX_INS_LENGTH,
-                                      instr_buf_decoded, MAX_INS_LENGTH + 1);
-    lprintf("disassemble_len: %d", disassemble_len);
-    lprintf("%s", instr_buf_decoded);
-
-    *((uint32_t *)(kern_sp - 5)) = eip_value + 1;
-    eip_value = *((uint32_t *)(kern_sp - 5));
-    lprintf("eip_value: %p", (void *)eip_value);
-    return 1;
 }
 
 /**

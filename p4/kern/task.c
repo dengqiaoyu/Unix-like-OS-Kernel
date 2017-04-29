@@ -23,6 +23,7 @@
 #include "scheduler.h"          /* schedule node */
 #include "utils/maps.h"         /* memory mapping */
 #include "utils/tcb_hashtab.h"
+#include "hypervisor.h"
 
 thread_t *idle_thread;
 /* used when task is cleared, give all children to init */
@@ -105,8 +106,7 @@ task_t *task_init() {
     }
 
     /* virtualization init */
-    task->virtu_flag = 1;
-    task->dis_inter_tid = -1;
+    task->guest = guest_init();
     return task;
 }
 

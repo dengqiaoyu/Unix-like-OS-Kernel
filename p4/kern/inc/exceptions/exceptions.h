@@ -19,9 +19,6 @@
 #define N_REGISTERS 8
 #define N_SEGMENTS 4
 
-/* translate sensitive instruction */
-#define MAX_INS_DECODED_LENGTH 64
-
 void pagefault_handler();
 
 void hwerror_handler(int cause, int ec_flag);
