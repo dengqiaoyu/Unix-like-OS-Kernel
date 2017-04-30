@@ -105,11 +105,14 @@ int load_guest_section(const char *fname, unsigned long start,
 
 guest_info_t *guest_info_init() {
     guest_info_t *guest_info = calloc(1, sizeof(guest_info_t));
-    guest_info->io_ack_flag = 0;
+    guest_info->pic_ack_flag = ACKED;
+    guest_info->inter_en_flag = 0;
     /* virtual timer */
     guest_info->timer_init_stat = TIMER_UNINT;
-    guest_info->timer_init_stat = 0;
+    guest_info->timer_interval = 0;
 
+    /* virtual keyboard */
+    memset();
     /* virtual_console, maybe? */
     guest_info->cursor_state = SIGNAL_CURSOR_NORMAL;
     guest_info->cursor_idx = 0;
@@ -125,18 +128,16 @@ void guest_info_destroy(guest_info_t *guest_info) {
 int handle_sensi_instr(ureg_t *ureg) {
     thread_t *thread = get_cur_tcb();
     uint32_t *kern_sp = (uint32_t *)(thread->kern_sp);
-    uint32_t cs_value = *((uint32_t *)(kern_sp - 4));
+    // uint32_t cs_value = *((uint32_t *)(kern_sp - 4));
     uint32_t eip_value = *((uint32_t *)(kern_sp - 5));
-    lprintf("cs_value: %p, eip_value: %p", (void *)cs_value, (void *)eip_value);
+    // lprintf("cs_value: %p, eip_value: %p", (void *)cs_value, (void *)eip_value);
     void *fault_ip = (void *)ureg->eip;
     char instr_buf[MAX_INS_LENGTH + 1] = {0};
     char instr_buf_decoded[MAX_INS_DECODED_LENGTH + 1] = {0};
-    lprintf("fault_ip: %p", fault_ip);
+    // lprintf("fault_ip: %p", fault_ip);
     /* BUG just for test not SEGSEL_KERNEL_DS ! */
-    MAGIC_BREAK;
     read_guest(instr_buf, (uint32_t)fault_ip, MAX_INS_LENGTH,
                (uint16_t)SEGSEL_SPARE0);
-    MAGIC_BREAK;
     int eip_offset = disassemble(instr_buf, MAX_INS_LENGTH,
                                  instr_buf_decoded, MAX_INS_LENGTH + 1);
     lprintf("eip_offset: %d, instruction: %s",
@@ -146,7 +147,7 @@ int handle_sensi_instr(ureg_t *ureg) {
     if (ret != 0) return -1;
     *((uint32_t *)(kern_sp - 5)) = eip_value + eip_offset;
     eip_value = *((uint32_t *)(kern_sp - 5));
-    lprintf("eip_value: %p", (void *)eip_value);
+    // lprintf("eip_value: %p", (void *)eip_value);
     MAGIC_BREAK;
     return 0;
 }

@@ -17,17 +17,31 @@
 /* translate sensitive instruction */
 #define MAX_INS_DECODED_LENGTH 64
 #define MS_PER_S 1000
+#define KC_BUF_LEN 32
 
 typedef struct guest_info_t {
-    int io_ack_flag;
+    /* use disable_interrupt to protect ? */
+    int pic_ack_flag;
+    int inter_en_flag;
     /* virtual timer */
     int timer_init_stat;
     uint32_t timer_interval;
+
+    /* virtual keyboard */
+    int keycode_buf[KC_BUF_LEN];
+    int buf_start;
+    int but_end;
 
     /* virtual_console, maybe? */
     int cursor_state;
     uint32_t cursor_idx;
 } guest_info_t;
+/* pic_ack_flag */
+#define ACKED 0
+#define KEYBOARD_NOT_ACKED 1
+#define TIMER_NOT_ACKED 2
+#define ALL_NOT_ACKED 3
+
 /* timer_status */
 #define TIMER_UNINT 0
 #define TIMER_FREQUENCY_PART1 2
