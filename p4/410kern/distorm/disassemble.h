@@ -6,6 +6,8 @@
 #ifndef _DISASSEMBLE_H_
 #define _DISASSEMBLE_H_
 
+#include <stddef.h>
+
 // Maximum encoded x86 instruction size in bytes
 // Determined via newsgroup post
 #define MAX_INS_LENGTH 15

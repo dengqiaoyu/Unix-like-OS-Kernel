@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <ureg.h>                       /* ureg_t */
 #include <elf_410.h>
+#include <console.h>
 
 #define SEGDES_GUEST_CS 0x01cffb000000ffff
 #define SEGDES_GUEST_DS 0x01cff2000000ffff
@@ -24,10 +25,14 @@ typedef struct guest_info_t {
     int timer_init_stat;
     uint32_t timer_interval;
 
-    /* virtual_console, maybe? */
-    int cursor_state;
+    /* virtual cursor registers */
+    int cursor_data;
     uint32_t cursor_idx;
+
+    /* virtual console status info */
+    console_state_t *console_state;
 } guest_info_t;
+
 /* timer_status */
 #define TIMER_UNINT 0
 #define TIMER_FREQUENCY_PART1 2

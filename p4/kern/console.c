@@ -11,12 +11,16 @@
 
 #include <x86/asm.h>
 #include <x86/video_defines.h>
+#include <malloc.h>
+#include <assert.h>
 #include <console.h>
 
 static int cursor_row = 0;
 static int cursor_col = 0;
 static int console_color = FGND_WHITE | BGND_BLACK;
 static int cursor_hidden = 0;
+
+static void *console_mem_back = NULL;
 
 /** @brief Scrolls the console down one line
  *
@@ -182,4 +186,28 @@ char get_char( int row, int col ) {
     return *(char *)addr;
 }
 
+int backup_main_console() {
+    assert(console_mem_back == NULL);
+    console_mem_back = malloc(CONSOLE_MEM_SIZE);
+    if (console_mem_back == NULL) return -1;
+    memcpy(console_mem_back, (void *)CONSOLE_MEM_BASE, CONSOLE_MEM_SIZE);
+    return 0;
+}
 
+void restore_main_console() {
+    assert(console_mem_back != NULL);
+    memcpy((void *)CONSOLE_MEM_BASE, console_mem_back, CONSOLE_MEM_SIZE);
+    free(console_mem_back);
+    console_mem_back = NULL;
+    update_cursor();
+}
+
+console_state_t *backup_console() {
+    // TODO for virtual consoles
+    return NULL;
+}
+
+void restore_console(console_state_t *backup) {
+    // TODO for virtual consoles
+    return;
+}
