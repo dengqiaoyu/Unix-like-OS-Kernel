@@ -77,7 +77,7 @@ int kern_readline(void) {
         ch = _getchar();
         switch (ch) {
         case '\b':
-            if (actual_len == 0) break;
+            if (actual_len == 0) continue;
             actual_len--;
             break;
         case '\n':

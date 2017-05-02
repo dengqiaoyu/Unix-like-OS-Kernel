@@ -105,6 +105,8 @@ task_t *task_init() {
         return NULL;
     }
 
+    task->guest_info = NULL;
+
     return task;
 }
 

@@ -5,6 +5,7 @@
  *  @author Qiaoyu Deng (qdeng)
  *  @bug    No known bugs.
  */
+#include <stdlib.h>
 #include <keyhelp.h>
 
 /* libc includes */
@@ -20,10 +21,13 @@
 #include "scheduler.h"
 
 /* internal function */
-int _process_keypress(uint8_t keypress);
+static int _process_keypress(uint8_t keypress);
+static void _handle_guest_kb_handler(uint8_t keypress);
 
 /* functions definition */
 keyboard_buffer_t kb_buf;
+
+extern guest_info_t *guest_info_driver;
 
 /**
  * Initialize ketboard input buffer
@@ -43,6 +47,10 @@ int keyboard_init() {
  */
 void add_to_kb_buf(void) {
     uint8_t keypress = inb(KEYBOARD_PORT);
+    if (guest_info_driver != NULL) {
+        _handle_guest_kb_handler(keypress);
+        return;
+    }
     /* convert keyboard press into character */
     char ch = _process_keypress(keypress);
     if (ch == -1) {
@@ -53,7 +61,10 @@ void add_to_kb_buf(void) {
     int new_buf_ending = 0;
     new_buf_ending = (kb_buf.buf_ending + 1) % KB_BUF_LEN;
     /* if buffer is full */
-    if (new_buf_ending == kb_buf.buf_start) return;
+    if (new_buf_ending == kb_buf.buf_start) {
+        outb(INT_ACK_CURRENT, INT_CTL_PORT);
+        return;
+    }
     kb_buf.buf[kb_buf.buf_ending] = ch;
     kb_buf.buf_ending = new_buf_ending;
     /* report port here, then we can get more input */
@@ -71,4 +82,37 @@ int _process_keypress(uint8_t keypress) {
     if (KH_HASDATA(augchar) && !KH_ISMAKE(augchar))
         return KH_GETCHAR(augchar);
     return -1;
+}
+
+void _handle_guest_kb_handler(uint8_t keypress) {
+    int inter_en_flag = guest_info_driver->inter_en_flag;
+    if (inter_en_flag != ENABLED && inter_en_flag != DISABLED) return;
+    int pic_ack_flag = guest_info_driver->pic_ack_flag;
+    if (pic_ack_flag != ACKED && pic_ack_flag != TIMER_NOT_ACKED) return;
+
+    /* check whether full */
+    int new_buf_end = (guest_info_driver->buf_end + 1) % KC_BUF_LEN;
+    if (new_buf_end == guest_info_driver->buf_start) {
+        outb(INT_ACK_CURRENT, INT_CTL_PORT);
+        return;
+    }
+
+    guest_info_driver->keycode_buf[guest_info_driver->buf_end] = keypress;
+    guest_info_driver->buf_end = new_buf_end;
+    /* set iret go to keyboard handler */
+
+    if (pic_ack_flag == ACKED) {
+        guest_info_driver->pic_ack_flag = KEYBOARD_NOT_ACKED;
+    } else {
+        /* TIMER_NOT_ACKED */
+        guest_info_driver->pic_ack_flag = TIMER_KEYBOARD_NOT_ACKED;
+    }
+
+    if (inter_en_flag == DISABLED)
+        guest_info_driver->inter_en_flag = DISABLED_KEYBOARD_PENDING;
+    else
+        set_user_handler(KEYBOARD_DEVICE);
+
+    outb(INT_ACK_CURRENT, INT_CTL_PORT);
+    return;
 }
