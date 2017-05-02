@@ -7,6 +7,7 @@
 
 /* libc include */
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <ureg.h>                       /* ureg_t */
@@ -14,6 +15,7 @@
 #include <common_kern.h>                /* USER_MEM_START */
 #include <cr.h>                         /* set_crX */
 #include <assert.h>
+
 
 /* x86 include */
 #include <x86/seg.h>                    /* CS, DS */
@@ -43,6 +45,7 @@ static void _handle_cli(guest_info_t *guest_info);
 static void _handle_sti(guest_info_t *guest_info);
 static int _handle_in(guest_info_t *guest_info, ureg_t *ureg);
 static void _handle_hlt(guest_info_t *guest_info, ureg_t *ureg);
+static int _handle_jmp_far(guest_info_t *guest_info, char *instr);
 
 /* used by _handle_out */
 static int _handle_timer_init(ureg_t *ureg);
@@ -207,8 +210,9 @@ int _simulate_instr(char *instr, ureg_t *ureg) {
     } else if (strncmp(instr, "HLT", strlen("HLT")) == 0) {
         _handle_hlt(guest_info, ureg);
         return 0;
-    } else {
-        // TODO with move
+    } else if (strncmp(instr, "JMP FAR", strlen("JMP FAR")) == 0) {
+        ret = _handle_jmp_far(guest_info, instr);
+        if (ret == 0) return 0;
     }
     return -1;
 }
@@ -382,6 +386,25 @@ void _handle_hlt(guest_info_t *guest_info, ureg_t *ureg) {
     task_t *task = thread->task;
     task->status = ureg->eax;
     kern_vanish();
+}
+
+int _handle_jmp_far(guest_info_t *guest_info, char *instr) {
+    // JMP FAR 0x10:0x104ef2
+    unsigned int cs_value = 0;
+    unsigned int memory_addr = 0;
+    sscanf(instr, "JMP FAR 0x%x:0x%x", &cs_value, &memory_addr);
+    lprintf("memory_addr: 0x%08x", memory_addr);
+    if (cs_value != SEGSEL_KERNEL_CS) return -1;
+    memory_addr += _get_descriptor_base_addr(SEGSEL_SPARE0);
+    lprintf("memory_addr: 0x%08x", memory_addr);
+    /* Why this memory region is not valid? */
+    int ret = validate_user_mem(memory_addr, 1, MAP_USER | MAP_EXECUTE);
+    lprintf("ret: %d", ret);
+    MAGIC_BREAK;
+    if (ret < 0) return -1;
+    MAGIC_BREAK;
+
+    return 0;
 }
 
 void set_user_handler(int device_type) {
