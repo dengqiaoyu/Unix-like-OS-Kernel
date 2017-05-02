@@ -19,6 +19,7 @@
 #include <x86/interrupt_defines.h>      /*  */
 #include <x86/timer_defines.h>
 #include <x86/video_defines.h>
+#include <x86/asm.h>                    /* disable_interrupts() */
 
 #include <simics.h>                     /* debug */
 
@@ -36,6 +37,7 @@ static int _timer_init(ureg_t *ureg);
 static int _set_cursor(ureg_t *ureg);
 
 extern uint64_t init_gdt[GDT_SEGS];
+extern guest_info_t *guest_info_for_kb;
 
 void hypervisor_init() {
     init_gdt[SEGSEL_SPARE0_IDX] = SEGDES_GUEST_CS;
@@ -44,6 +46,8 @@ void hypervisor_init() {
 
 int guest_init(simple_elf_t *header) {
     thread_t *thread = get_cur_tcb();
+    // thread->task->guest_info = guest_info_init();
+
     task_t *task = thread->task;
 
     uint32_t addr = USER_MEM_START;
@@ -88,8 +92,10 @@ int guest_init(simple_elf_t *header) {
     sim_reg_process(task->page_dir, header->e_fname);
 
     set_esp0(thread->kern_sp);
-    kern_to_guest(header->e_entry);
 
+    // disable_interrupts();
+    // guest_info_for_kb = thread->task->guest_info;
+    kern_to_guest(header->e_entry);
     return 0;
 }
 
@@ -106,13 +112,16 @@ int load_guest_section(const char *fname, unsigned long start,
 guest_info_t *guest_info_init() {
     guest_info_t *guest_info = calloc(1, sizeof(guest_info_t));
     guest_info->pic_ack_flag = ACKED;
-    guest_info->inter_en_flag = 0;
+    guest_info->inter_en_flag = DISABLED;
     /* virtual timer */
     guest_info->timer_init_stat = TIMER_UNINT;
     guest_info->timer_interval = 0;
 
     /* virtual keyboard */
-    memset();
+    memset(guest_info->keycode_buf, 0, KC_BUF_LEN);
+    guest_info->buf_start = 0;
+    guest_info->buf_end = 0;
+
     /* virtual_console, maybe? */
     guest_info->cursor_state = SIGNAL_CURSOR_NORMAL;
     guest_info->cursor_idx = 0;
@@ -135,7 +144,7 @@ int handle_sensi_instr(ureg_t *ureg) {
     char instr_buf[MAX_INS_LENGTH + 1] = {0};
     char instr_buf_decoded[MAX_INS_DECODED_LENGTH + 1] = {0};
     // lprintf("fault_ip: %p", fault_ip);
-    /* BUG just for test not SEGSEL_KERNEL_DS ! */
+    MAGIC_BREAK;
     read_guest(instr_buf, (uint32_t)fault_ip, MAX_INS_LENGTH,
                (uint16_t)SEGSEL_SPARE0);
     int eip_offset = disassemble(instr_buf, MAX_INS_LENGTH,
@@ -169,12 +178,41 @@ int _simulate_instr(char *instr, ureg_t *ureg) {
             return 0;
         } else if (outb_param1 == INT_ACK_CURRENT) {
             /* guest_info ack device interrupt */
-            guest_info->io_ack_flag = 1;
+            if (guest_info->pic_ack_flag == KEYBOARD_NOT_ACKED
+                    || guest_info->pic_ack_flag == TIMER_NOT_ACKED) {
+                guest_info->pic_ack_flag = ACKED;
+            } else if (guest_info->pic_ack_flag == TIMER_KEYBOARD_NOT_ACKED) {
+                guest_info->pic_ack_flag = TIMER_NOT_ACKED;
+            } else if (guest_info->pic_ack_flag == KEYBOARD_TIMER_NOT_ACKED) {
+                guest_info->pic_ack_flag = KEYBOARD_NOT_ACKED;
+            }
             return 0;
         } else if (outb_param1 == CRTC_IDX_REG || ureg->eax == CRTC_DATA_REG) {
             /* set cursor in the console */
             ret = _set_cursor(ureg);
             if (ret == 0) return 0;
+        }
+    } else if (strcmp(instr, "CLI") == 0) {
+        if (guest_info->inter_en_flag == ENABLED)
+            guest_info->inter_en_flag = DISABLED;
+        return 0;
+    } else if (strcmp(instr, "STI") == 0) {
+        switch (guest_info->inter_en_flag) {
+        case ENABLED:
+        case DISABLED:
+            guest_info->inter_en_flag = ENABLED;
+            return 0;
+        case DISABLED_TIMER_PENDING:
+            guest_info->inter_en_flag = ENABLED;
+            // be ready to call handler
+            return 0;
+        case DISABLED_KEYBOARD_PENDING:
+            guest_info->inter_en_flag = ENABLED;
+            // be ready to call handler
+            return 0;
+        default:
+            /* impossible */
+            return -1;
         }
     }
     return -1;
@@ -245,4 +283,14 @@ int _set_cursor(ureg_t *ureg) {
         break;
     }
     return 0;
+}
+
+uint32_t get_descriptor_base_addr(uint16_t seg_sel) {
+    uint32_t idx_in_gdt = GDT_INDEX(seg_sel);
+    uint64_t descriptor;
+    descriptor = init_gdt[idx_in_gdt];
+    // TODO macro
+    uint32_t base = (descriptor & 0x00000000ffff0000) >> 16;
+    base += ((descriptor >> 32) & 0xff000000) + ((descriptor >> 32) & 0x000000ff);
+    return base;
 }

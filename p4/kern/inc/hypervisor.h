@@ -19,6 +19,8 @@
 #define MS_PER_S 1000
 #define KC_BUF_LEN 32
 
+#define GDT_INDEX(x) (((x) & 0xfff8) >> 3)
+
 typedef struct guest_info_t {
     /* use disable_interrupt to protect ? */
     int pic_ack_flag;
@@ -28,9 +30,9 @@ typedef struct guest_info_t {
     uint32_t timer_interval;
 
     /* virtual keyboard */
-    int keycode_buf[KC_BUF_LEN];
+    uint32_t keycode_buf[KC_BUF_LEN];
     int buf_start;
-    int but_end;
+    int buf_end;
 
     /* virtual_console, maybe? */
     int cursor_state;
@@ -40,7 +42,14 @@ typedef struct guest_info_t {
 #define ACKED 0
 #define KEYBOARD_NOT_ACKED 1
 #define TIMER_NOT_ACKED 2
-#define ALL_NOT_ACKED 3
+#define TIMER_KEYBOARD_NOT_ACKED 3
+#define KEYBOARD_TIMER_NOT_ACKED 4
+
+/* inter_en_flag */
+#define ENABLED 0
+#define DISABLED 1
+#define DISABLED_TIMER_PENDING 2
+#define DISABLED_KEYBOARD_PENDING 3
 
 /* timer_status */
 #define TIMER_UNINT 0
@@ -60,5 +69,8 @@ int load_guest_section(const char *fname, unsigned long start,
 guest_info_t *guest_info_init();
 void guest_info_destroy(guest_info_t *guest_info);
 int handle_sensi_instr(ureg_t *ureg);
+
+/* helper */
+uint32_t get_descriptor_base_addr(uint16_t seg_sel);
 
 #endif /* _HYPERVISOR_H_ */

@@ -5,6 +5,7 @@
  *  @author Qiaoyu Deng (qdeng)
  *  @bug    No known bugs.
  */
+#include <stdlib.h>
 #include <keyhelp.h>
 
 /* libc includes */
@@ -25,6 +26,8 @@ int _process_keypress(uint8_t keypress);
 /* functions definition */
 keyboard_buffer_t kb_buf;
 
+guest_info_t *guest_info_for_kb = NULL;
+
 /**
  * Initialize ketboard input buffer
  * @return 0 as success, -1 as failure
@@ -43,6 +46,18 @@ int keyboard_init() {
  */
 void add_to_kb_buf(void) {
     uint8_t keypress = inb(KEYBOARD_PORT);
+    if (guest_info_for_kb != NULL) {
+        int new_buf_end = (guest_info_for_kb->buf_end + 1) % KC_BUF_LEN;
+        if (new_buf_end == guest_info_for_kb->buf_start) {
+            outb(INT_ACK_CURRENT, INT_CTL_PORT);
+            return;
+        }
+        guest_info_for_kb->keycode_buf[guest_info_for_kb->buf_end] = keypress;
+        /* set iret go to keyboard handler */
+        guest_info_for_kb->buf_end = new_buf_end;
+        outb(INT_ACK_CURRENT, INT_CTL_PORT);
+        return;
+    }
     /* convert keyboard press into character */
     char ch = _process_keypress(keypress);
     if (ch == -1) {
@@ -53,7 +68,10 @@ void add_to_kb_buf(void) {
     int new_buf_ending = 0;
     new_buf_ending = (kb_buf.buf_ending + 1) % KB_BUF_LEN;
     /* if buffer is full */
-    if (new_buf_ending == kb_buf.buf_start) return;
+    if (new_buf_ending == kb_buf.buf_start) {
+        outb(INT_ACK_CURRENT, INT_CTL_PORT);
+        return;
+    }
     kb_buf.buf[kb_buf.buf_ending] = ch;
     kb_buf.buf_ending = new_buf_ending;
     /* report port here, then we can get more input */
