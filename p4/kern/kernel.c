@@ -42,6 +42,8 @@ void mutexes_init();
 void helper_init();
 thread_t *setup_task(const char *fname);
 
+#define PRINT_LINE_NO lprintf("line %d", __LINE__)
+
 /** @brief Kernel entrypoint.
  *
  *  This is the entrypoint for the kernel.
@@ -51,7 +53,6 @@ thread_t *setup_task(const char *fname);
 int kernel_main(mbinfo_t *mbinfo, int argc, char **argv, char **envp) {
     /* clear the messy console after booting */
     clear_console();
-
     /* install exception handler, device driver and all of syscalls */
     handler_init();
     /* set up kernel page directory, and set up physical memory allocator */

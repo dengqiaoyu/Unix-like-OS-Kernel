@@ -28,8 +28,8 @@
 extern thread_t *idle_thread;
 
 /* static global variable */
-static sche_node_t *cur_sche_node;     /* save the current running thread*/
-static schedule_t sche_list;           /* scheduler uses FIFO list to switch */
+static sche_node_t *cur_sche_node = NULL;  /* save the current running thread*/
+static schedule_t sche_list;            /* scheduler uses FIFO list to switch */
 
 /**
  * @brief   Initialize the scheduler's list structures.
@@ -169,6 +169,7 @@ void sche_yield(int status) {
  * @return tcb pointer
  */
 thread_t *get_cur_tcb() {
+    if (cur_sche_node == NULL) return NULL;
     return SCHE_NODE_TO_TCB(cur_sche_node);
 }
 

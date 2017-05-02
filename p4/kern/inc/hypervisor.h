@@ -11,13 +11,21 @@
 #define SEGSEL_GUEST_CS (SEGSEL_SPARE0 | 0x3)
 #define SEGSEL_GUEST_DS (SEGSEL_SPARE1 | 0x3)
 
+#define MSB_HANDLER(x) ((x) & 0xffff0000)
+#define LSB_HANDLER(x) ((x) & 0x0000ffff)
+
 #define GUEST_MEM_SIZE (24 * 1024 * 1024)
 #define GUEST_FRAMES (GUEST_MEM_SIZE / PAGE_SIZE)
 
 /* translate sensitive instruction */
+#define MAX_INSTR_LENGTH 32
 #define MAX_INS_DECODED_LENGTH 64
 #define MS_PER_S 1000
 #define KC_BUF_LEN 32
+
+/* device type */
+#define KEYBOARD_DEVICE 0
+#define TIMER_DEVICE 1
 
 #define GDT_INDEX(x) (((x) & 0xfff8) >> 3)
 
@@ -27,6 +35,7 @@ typedef struct guest_info_t {
     int inter_en_flag;
     /* virtual timer */
     int timer_init_stat;
+    uint32_t internal_ticks;
     uint32_t timer_interval;
 
     /* virtual keyboard */
@@ -69,8 +78,8 @@ int load_guest_section(const char *fname, unsigned long start,
 guest_info_t *guest_info_init();
 void guest_info_destroy(guest_info_t *guest_info);
 int handle_sensi_instr(ureg_t *ureg);
-
+void set_user_handler(int device_type);
 /* helper */
-uint32_t get_descriptor_base_addr(uint16_t seg_sel);
+// uint32_t get_descriptor_base_addr(uint16_t seg_sel);
 
 #endif /* _HYPERVISOR_H_ */
