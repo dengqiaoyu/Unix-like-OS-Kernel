@@ -52,6 +52,9 @@ static int _handle_timer_init(ureg_t *ureg);
 static int _handle_set_cursor(ureg_t *ureg);
 static void _handle_int_ack(guest_info_t *guest_info);
 
+/* debug */
+void _exn_print_ureg(ureg_t *ureg);
+
 /* used by set_user_handler */
 static uint32_t _get_handler_addr(int idt_idx);
 static uint32_t _get_descriptor_base_addr(uint16_t seg_sel);
@@ -88,6 +91,7 @@ int guest_init(simple_elf_t *header) {
 
     int ret = 0;
     /* load text */
+    // MAGIC_BREAK;
     ret = load_guest_section(header->e_fname,
                              header->e_txtstart,
                              header->e_txtlen,
@@ -111,13 +115,13 @@ int guest_init(simple_elf_t *header) {
     /* bss is already "loaded" */
 
     // TODO macro multiboot numbers
-    struct multiboot_info *mb_info = (void *)0x15410;
+    struct multiboot_info *mb_info = (void *)(0x15410 + USER_MEM_START);
     memset(mb_info, 0, sizeof(struct multiboot_info));
     mb_info->flags = MULTIBOOT_MEMORY;
     mb_info->mem_lower = 637;
     mb_info->mem_upper = GUEST_MEM_SIZE / 1024 - 1024;
 
-    /* 
+    /*
      * We set the guest console memory region to read only so that we can
      * detect console writes. The code below relies on CONSOLE_MEM_BASE being
      * page-aligned and CONSOLE_MEM_SIZE fitting within a single page.
@@ -137,6 +141,7 @@ int guest_init(simple_elf_t *header) {
 
     disable_interrupts();
     guest_info_driver = thread->task->guest_info;
+    // MAGIC_BREAK;
     kern_to_guest(header->e_entry);
     return 0;
 }
@@ -197,7 +202,7 @@ int handle_sensi_instr(ureg_t *ureg) {
                                  decoded_buf, MAX_DECODED_LENGTH);
 
     lprintf("eip_offset: %d, instruction: %s",
-            eip_offset, decoded_buf);
+    _exn_print_ureg(ureg);
 
     MAGIC_BREAK;
 
@@ -216,12 +221,15 @@ int handle_sensi_instr(ureg_t *ureg) {
 int _simulate_instr(char *instr, ureg_t *ureg) {
     guest_info_t *guest_info = get_cur_tcb()->task->guest_info;
     // void *handler_addr = NULL;
-    
+
     // TODO Need to reorder, jmp far/ long jmp
     int ret = 0;
-    if (strcmp(instr, "OUT DX, AX") == 0) {
-        ret = _handle_out(guest_info, ureg);
-        if (ret == 0) return 0;
+    if (strcmp(instr, "OUT DX, AL") == 0) {
+        // ret = _handle_out(guest_info, ureg);
+        // if (ret == 0) return 0;
+        // return 0;
+        _handle_out(guest_info, ureg);
+        return 0;
     } else if (strncmp(instr, "CLI", strlen("CLI")) == 0) {
         _handle_cli(guest_info);
         return 0;
@@ -229,8 +237,10 @@ int _simulate_instr(char *instr, ureg_t *ureg) {
         _handle_sti(guest_info);
         return 0;
     } else if (strcmp(instr, "IN AL, DX") == 0) {
-        ret = _handle_in(guest_info, ureg);
-        if (ret == 0) return 0;
+        // ret = _handle_in(guest_info, ureg);
+        // if (ret == 0) return 0;
+        _handle_in(guest_info, ureg);
+        return 0;
     } else if (strncmp(instr, "LGDT", strlen("LGDT")) == 0) {
         return 0;
     } else if (strncmp(instr, "LIDT", strlen("LIDT")) == 0) {
@@ -243,6 +253,8 @@ int _simulate_instr(char *instr, ureg_t *ureg) {
     } else if (strncmp(instr, "JMP FAR", strlen("JMP FAR")) == 0) {
         ret = _handle_jmp_far(guest_info, instr);
         if (ret == 0) return 0;
+    } else if (strncmp(instr, "MOV", strlen("MOV")) == 0) {
+        return 0;
     }
 
     return -1;
@@ -253,7 +265,7 @@ int _handle_out(guest_info_t *guest_info, ureg_t *ureg) {
     uint16_t outb_param1 = ureg->edx;
     uint8_t outb_param2 = ureg->eax;
     lprintf("outb_param1: %x, outb_param2: %x", outb_param1, outb_param2);
-
+    MAGIC_BREAK;
     if (outb_param1 == TIMER_MODE_IO_PORT
             || outb_param1 == TIMER_PERIOD_IO_PORT) {
         /* guest_info set timer */
@@ -278,35 +290,35 @@ int _handle_timer_init(ureg_t *ureg) {
 
     guest_info_t *guest_info = get_cur_tcb()->task->guest_info;
     switch (guest_info->timer_init_stat) {
-        case TIMER_UNINT:
-            if (outb_param1 == TIMER_MODE_IO_PORT)
-                guest_info->timer_init_stat = TIMER_FREQUENCY_PART1;
-            else /* invalid timer init process */
-                return -1;
-            break;
-
-        case TIMER_FREQUENCY_PART1:
-            if (outb_param1 == TIMER_PERIOD_IO_PORT)
-                guest_info->timer_init_stat = TIMER_FREQUENCY_PART2;
-            else /* invalid timer init process */
-                return -1;
-            guest_info->timer_interval = outb_param2;
-            break;
-
-        case TIMER_FREQUENCY_PART2:
-            if (outb_param1 == TIMER_PERIOD_IO_PORT)
-                guest_info->timer_init_stat = TIMER_INTED;
-            else /* invalid timer init process */
-                return -1;
-            guest_info->timer_interval += (outb_param2) << 8;
-            guest_info->timer_interval =
-                MS_PER_S / (TIMER_RATE / guest_info->timer_interval);
-            if (guest_info->timer_interval / MS_PER_INTERRUPT < 1) return -1;
-            lprintf("guest_info->timer_interval: %d", (int)guest_info->timer_interval);
-            break;
-
-        default:
+    case TIMER_UNINT:
+        if (outb_param1 == TIMER_MODE_IO_PORT)
+            guest_info->timer_init_stat = TIMER_FREQUENCY_PART1;
+        else /* invalid timer init process */
             return -1;
+        break;
+
+    case TIMER_FREQUENCY_PART1:
+        if (outb_param1 == TIMER_PERIOD_IO_PORT)
+            guest_info->timer_init_stat = TIMER_FREQUENCY_PART2;
+        else /* invalid timer init process */
+            return -1;
+        guest_info->timer_interval = outb_param2;
+        break;
+
+    case TIMER_FREQUENCY_PART2:
+        if (outb_param1 == TIMER_PERIOD_IO_PORT)
+            guest_info->timer_init_stat = TIMER_INTED;
+        else /* invalid timer init process */
+            return -1;
+        guest_info->timer_interval += (outb_param2) << 8;
+        guest_info->timer_interval =
+            MS_PER_S / (TIMER_RATE / guest_info->timer_interval);
+        if (guest_info->timer_interval / MS_PER_INTERRUPT < 1) return -1;
+        lprintf("guest_info->timer_interval: %d", (int)guest_info->timer_interval);
+        break;
+
+    default:
+        return -1;
     }
 
     return 0;
@@ -370,7 +382,7 @@ void _handle_int_ack(guest_info_t *guest_info) {
         // do context switch ?
         break;
     default:
-        assert(0 == 1);
+        // assert(0 == 1);
         break;
     }
     return;
@@ -439,14 +451,14 @@ int _handle_jmp_far(guest_info_t *guest_info, char *instr) {
     sscanf(instr, "JMP FAR 0x%x:0x%x", &cs_value, &memory_addr);
     lprintf("memory_addr: 0x%08x", memory_addr);
     if (cs_value != SEGSEL_KERNEL_CS) return -1;
-    memory_addr += _get_descriptor_base_addr(SEGSEL_SPARE0);
+    memory_addr += _get_descriptor_base_addr(SEGSEL_GUEST_CS);
     lprintf("memory_addr: 0x%08x", memory_addr);
     /* Why this memory region is not valid? */
-    int ret = validate_user_mem(memory_addr, 1, MAP_USER | MAP_EXECUTE);
-    lprintf("ret: %d", ret);
-    MAGIC_BREAK;
-    if (ret < 0) return -1;
-    MAGIC_BREAK;
+    // int ret = validate_user_mem(memory_addr, 1, MAP_USER | MAP_EXECUTE);
+    // lprintf("ret: %d", ret);
+    // MAGIC_BREAK;
+    // if (ret < 0) return -1;
+    // MAGIC_BREAK;
 
     return 0;
 }
@@ -474,7 +486,7 @@ void set_user_handler(int device_type) {
 }
 
 uint32_t _get_handler_addr(int idt_idx) {
-    uint32_t seg_base = _get_descriptor_base_addr(SEGSEL_SPARE0);
+    uint32_t seg_base = _get_descriptor_base_addr(SEGSEL_GUEST_CS);
     uint32_t ori_idt_addr = (uint32_t)idt_base() + 2 * idt_idx;
     uint32_t *user_idt_addr = (uint32_t *)(ori_idt_addr + seg_base);
     uint32_t handler_addr =
@@ -490,4 +502,19 @@ uint32_t _get_descriptor_base_addr(uint16_t seg_sel) {
     uint32_t base = (descriptor & 0x00000000ffff0000) >> 16;
     base += ((descriptor >> 32) & 0xff000000) + ((descriptor >> 32) & 0x000000ff);
     return base;
+}
+
+void _exn_print_ureg(ureg_t *ureg) {
+    printf("Registers Dump:\n");
+    printf("cause: %d, error_code: %d, cr2: 0x%08x\n",
+           ureg->cause, ureg->error_code, ureg->cr2);
+    printf("cs:  0x%08x, ss:  0x%08x\n", ureg->cs, ureg->ss);
+    printf("ds:  0x%08x, es:  0x%08x, fs:  0x%08x, gs:  0x%08x\n",
+           ureg->ds, ureg->es, ureg->fs, ureg-> gs);
+    printf("edi: 0x%08x, esi: 0x%08x, ebp: 0x%08x\n",
+           ureg->edi, ureg->esi, ureg->ebp);
+    printf("eax: 0x%08x, ebx: 0x%08x, ecx: 0x%08x, edx: 0x%08x\n",
+           ureg->eax, ureg->ebx, ureg->ecx, ureg->edx);
+    printf("eip: 0x%08x, esp: 0x%08x\neflags: 0x%08x\n\n",
+           ureg->eip, ureg->esp, ureg->eflags);
 }

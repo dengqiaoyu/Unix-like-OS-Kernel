@@ -56,14 +56,18 @@ void _prepare_guest_timer(void) {
     thread_t *thread = get_cur_tcb();
     if (thread == NULL) return;
     guest_info_t *guest_info = thread->task->guest_info;
+
     if (guest_info == NULL || guest_info->timer_init_stat != TIMER_INTED)
         return;
+    // lprintf("I am going to invoke timer");
     uint32_t guest_interval = guest_info->timer_interval;
     uint32_t host_interval = MS_PER_INTERRUPT;
     uint32_t multiple = guest_interval / host_interval;
     guest_info->internal_ticks++;
-    if (guest_info->internal_ticks % multiple == 0)
+    if (guest_info->internal_ticks % multiple == 0) {
+        // lprintf("invoke guest timer handler");
         set_user_handler(TIMER_DEVICE);
+    }
     return;
 }
 

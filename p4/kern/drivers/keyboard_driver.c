@@ -22,7 +22,7 @@
 
 /* internal function */
 static int _process_keypress(uint8_t keypress);
-static void _handle_guest_kb_handler(uint8_t keypress);
+// static void _handle_guest_kb_handler(uint8_t keypress);
 
 /* functions definition */
 keyboard_buffer_t kb_buf;
@@ -47,10 +47,10 @@ int keyboard_init() {
  */
 void add_to_kb_buf(void) {
     uint8_t keypress = inb(KEYBOARD_PORT);
-    if (guest_info_driver != NULL) {
-        _handle_guest_kb_handler(keypress);
-        return;
-    }
+    // if (guest_info_driver != NULL) {
+    //     _handle_guest_kb_handler(keypress);
+    //     return;
+    // }
     /* convert keyboard press into character */
     char ch = _process_keypress(keypress);
     if (ch == -1) {
@@ -84,35 +84,35 @@ int _process_keypress(uint8_t keypress) {
     return -1;
 }
 
-void _handle_guest_kb_handler(uint8_t keypress) {
-    int inter_en_flag = guest_info_driver->inter_en_flag;
-    if (inter_en_flag != ENABLED && inter_en_flag != DISABLED) return;
-    int pic_ack_flag = guest_info_driver->pic_ack_flag;
-    if (pic_ack_flag != ACKED && pic_ack_flag != TIMER_NOT_ACKED) return;
+// void _handle_guest_kb_handler(uint8_t keypress) {
+//     int inter_en_flag = guest_info_driver->inter_en_flag;
+//     if (inter_en_flag != ENABLED && inter_en_flag != DISABLED) return;
+//     int pic_ack_flag = guest_info_driver->pic_ack_flag;
+//     if (pic_ack_flag != ACKED && pic_ack_flag != TIMER_NOT_ACKED) return;
 
-    /* check whether full */
-    int new_buf_end = (guest_info_driver->buf_end + 1) % KC_BUF_LEN;
-    if (new_buf_end == guest_info_driver->buf_start) {
-        outb(INT_ACK_CURRENT, INT_CTL_PORT);
-        return;
-    }
+//     /* check whether full */
+//     int new_buf_end = (guest_info_driver->buf_end + 1) % KC_BUF_LEN;
+//     if (new_buf_end == guest_info_driver->buf_start) {
+//         outb(INT_ACK_CURRENT, INT_CTL_PORT);
+//         return;
+//     }
 
-    guest_info_driver->keycode_buf[guest_info_driver->buf_end] = keypress;
-    guest_info_driver->buf_end = new_buf_end;
-    /* set iret go to keyboard handler */
+//     guest_info_driver->keycode_buf[guest_info_driver->buf_end] = keypress;
+//     guest_info_driver->buf_end = new_buf_end;
+//     /* set iret go to keyboard handler */
 
-    if (pic_ack_flag == ACKED) {
-        guest_info_driver->pic_ack_flag = KEYBOARD_NOT_ACKED;
-    } else {
-        /* TIMER_NOT_ACKED */
-        guest_info_driver->pic_ack_flag = TIMER_KEYBOARD_NOT_ACKED;
-    }
+//     if (pic_ack_flag == ACKED) {
+//         guest_info_driver->pic_ack_flag = KEYBOARD_NOT_ACKED;
+//     } else {
+//         /* TIMER_NOT_ACKED */
+//         guest_info_driver->pic_ack_flag = TIMER_KEYBOARD_NOT_ACKED;
+//     }
 
-    if (inter_en_flag == DISABLED)
-        guest_info_driver->inter_en_flag = DISABLED_KEYBOARD_PENDING;
-    else
-        set_user_handler(KEYBOARD_DEVICE);
+//     if (inter_en_flag == DISABLED)
+//         guest_info_driver->inter_en_flag = DISABLED_KEYBOARD_PENDING;
+//     else
+//         set_user_handler(KEYBOARD_DEVICE);
 
-    outb(INT_ACK_CURRENT, INT_CTL_PORT);
-    return;
-}
+//     outb(INT_ACK_CURRENT, INT_CTL_PORT);
+//     return;
+// }
