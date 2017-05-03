@@ -108,6 +108,7 @@ void print_error_msg(ureg_t *ureg) {
         break;
     case SWEXN_CAUSE_PAGEFAULT:
         printf("PAGEFAULT ERROR:\n");
+        MAGIC_BREAK;
         if (error_code & ERROR_CODE_P) printf("non-present page's");
         else printf("non-present page's");
         if (error_code & ERROR_CODE_WR) printf(" write fault");

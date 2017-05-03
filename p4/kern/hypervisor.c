@@ -190,7 +190,7 @@ void guest_info_destroy(guest_info_t *guest_info) {
 
 int handle_sensi_instr(ureg_t *ureg) {
     thread_t *thread = get_cur_tcb();
-    lprintf("kern_stack: %p", (void *)thread->kern_sp);
+    // lprintf("kern_stack: %p", (void *)thread->kern_sp);
 
     uint32_t *kern_sp = (uint32_t *)(thread->kern_sp);
 
@@ -208,14 +208,14 @@ int handle_sensi_instr(ureg_t *ureg) {
     int eip_offset = disassemble(instr_buf, MAX_INSTR_LENGTH,
                                  instr_buf_decoded, MAX_INS_DECODED_LENGTH + 1);
 
-    lprintf("eip_offset: %d, instruction: %s",
-            eip_offset, instr_buf_decoded);
-    guest_info_t *guest_info = thread->task->guest_info;
+    // lprintf("eip_offset: %d, instruction: %s",
+    //         eip_offset, instr_buf_decoded);
+    // guest_info_t *guest_info = thread->task->guest_info;
 
-    lprintf("inter_en_flag: %d, pic_ack_flag: %d",
-            guest_info->inter_en_flag, guest_info->pic_ack_flag);
-    _exn_print_ureg(ureg);
-    MAGIC_BREAK;
+    // lprintf("inter_en_flag: %d, pic_ack_flag: %d",
+    //         guest_info->inter_en_flag, guest_info->pic_ack_flag);
+    // _exn_print_ureg(ureg);
+    // MAGIC_BREAK;
 
     /* need to set new return address first, because call handler need new ip */
     *((uint32_t *)(kern_sp - 5)) = ori_eip_value + eip_offset;
@@ -225,7 +225,7 @@ int handle_sensi_instr(ureg_t *ureg) {
         *((uint32_t *)(kern_sp - 5)) = ori_eip_value;
         return -1;
     }
-
+    // lprintf("line 228 in hypervisor");
     return 0;
 }
 
@@ -278,7 +278,7 @@ int _handle_out(guest_info_t *guest_info, ureg_t *ureg) {
     int ret = 0;
     uint16_t outb_param1 = ureg->edx;
     uint8_t outb_param2 = ureg->eax;
-    lprintf("outb_param1: %x, outb_param2: %x", outb_param1, outb_param2);
+    // lprintf("outb_param1: %x, outb_param2: %x", outb_param1, outb_param2);
     if (outb_param1 == TIMER_MODE_IO_PORT
             || outb_param1 == TIMER_PERIOD_IO_PORT) {
         /* guest_info set timer */
@@ -414,7 +414,7 @@ void _handle_cli(guest_info_t *guest_info) {
 }
 
 void _handle_sti(guest_info_t *guest_info) {
-    MAGIC_BREAK;
+    // MAGIC_BREAK;
     switch (guest_info->inter_en_flag) {
     case ENABLED:
     case DISABLED:
@@ -435,8 +435,8 @@ void _handle_sti(guest_info_t *guest_info) {
         assert(0 == 1);
         break;
     }
-    lprintf("guest_info->inter_en_flag: %d", guest_info->inter_en_flag);
-    MAGIC_BREAK;
+    // lprintf("guest_info->inter_en_flag: %d", guest_info->inter_en_flag);
+    // MAGIC_BREAK;
     return;
 }
 
@@ -471,10 +471,10 @@ int _handle_jmp_far(guest_info_t *guest_info, char *instr) {
     unsigned int cs_value = 0;
     unsigned int memory_addr = 0;
     sscanf(instr, "JMP FAR 0x%x:0x%x", &cs_value, &memory_addr);
-    lprintf("memory_addr: 0x%08x", memory_addr);
+    // lprintf("memory_addr: 0x%08x", memory_addr);
     if (cs_value != SEGSEL_KERNEL_CS) return -1;
     memory_addr += _get_descriptor_base_addr(SEGSEL_GUEST_CS);
-    lprintf("memory_addr: 0x%08x", memory_addr);
+    // lprintf("memory_addr: 0x%08x", memory_addr);
     /* Why this memory region is not valid? */
     // int ret = validate_user_mem(memory_addr, 1, MAP_USER | MAP_EXECUTE);
     // lprintf("ret: %d", ret);
@@ -493,11 +493,11 @@ void _handle_iret(guest_info_t *guest_info, ureg_t *ureg) {
     uint32_t addr_offset = _get_descriptor_base_addr(SEGSEL_GUEST_DS);
     uint32_t eip_to_return = *((uint32_t *)(user_esp_value + addr_offset));
 
-    lprintf("user_esp_value: %p, eip_to_return: %p",
-            (void *)user_esp_value, (void *)eip_to_return);
+    // lprintf("user_esp_value: %p, eip_to_return: %p",
+    //         (void *)user_esp_value, (void *)eip_to_return);
     *((uint32_t *)(kern_sp - 2)) = user_esp_value + 4;
     *((uint32_t *)(kern_sp - 5)) = eip_to_return;
-    MAGIC_BREAK;
+    // MAGIC_BREAK;
     return;
 }
 

@@ -228,6 +228,7 @@ void _exn_print_error_msg(ureg_t *ureg) {
         printf("PROTFAULT ERROR\n");
         break;
     case SWEXN_CAUSE_PAGEFAULT:
+        MAGIC_BREAK;
         printf("PAGEFAULT ERROR:\n");
         if (error_code & ERROR_CODE_P) printf("non-present page's");
         else printf("non-present page's");

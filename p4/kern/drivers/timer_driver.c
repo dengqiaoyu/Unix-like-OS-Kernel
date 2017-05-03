@@ -64,21 +64,21 @@ void _prepare_guest_timer(void) {
     //         && inter_en_flag != DISABLED) {
     //     return;
     // }
-    lprintf("inter_en_flag: %d", inter_en_flag);
+    // lprintf("inter_en_flag: %d", inter_en_flag);
     if (inter_en_flag != ENABLED) {
         return;
     }
 
-    lprintf("pic_ack_flag: %d", pic_ack_flag);
-    MAGIC_BREAK;
+    // lprintf("pic_ack_flag: %d", pic_ack_flag);
+    // MAGIC_BREAK;
     if (pic_ack_flag != ACKED
             && pic_ack_flag != KEYBOARD_NOT_ACKED) {
         return;
     }
 
-    lprintf("inter_en_flag: %d, pic_ack_flag: %d",
-            inter_en_flag, pic_ack_flag);
-    MAGIC_BREAK;
+    // lprintf("inter_en_flag: %d, pic_ack_flag: %d",
+    //         inter_en_flag, pic_ack_flag);
+    // MAGIC_BREAK;
 
     if (guest_info == NULL || guest_info->timer_init_stat != TIMER_INTED)
         return;
@@ -93,12 +93,12 @@ void _prepare_guest_timer(void) {
             guest_info->pic_ack_flag = TIMER_NOT_ACKED;
         else if (pic_ack_flag == KEYBOARD_NOT_ACKED)
             guest_info->pic_ack_flag = KEYBOARD_TIMER_NOT_ACKED;
-        lprintf("invoke guest timer handler");
+        // lprintf("invoke guest timer handler");
         set_user_handler(TIMER_DEVICE);
     }
-    lprintf("inter_en_flag: %d, pic_ack_flag: %d after setting user handler",
-            guest_info->inter_en_flag, guest_info->pic_ack_flag);
-    MAGIC_BREAK;
+    // lprintf("inter_en_flag: %d, pic_ack_flag: %d after setting user handler",
+    //         guest_info->inter_en_flag, guest_info->pic_ack_flag);
+    // MAGIC_BREAK;
     return;
 }
 
