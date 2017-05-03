@@ -36,6 +36,7 @@
 #include "vm.h"                         /* read_guest */
 #include "console.h"                    /* set_cursor */
 #include "asm_kern_to_user.h"
+#include "asm_page_inval.h"
 
 /* internal function */
 static int _simulate_instr(char *instr, ureg_t *ureg);
@@ -211,29 +212,41 @@ int guest_console_mov(uint32_t *dest, ureg_t *ureg) {
 
     uint32_t guest_console_mem = USER_MEM_START + CONSOLE_MEM_BASE;
     uint32_t frame = get_pte(guest_console_mem) & PAGE_ALIGN_MASK;
+    asm_page_inval((void *)guest_console_mem);
     // this set_pte call will not fail
     set_pte(guest_console_mem, frame, PTE_USER | PTE_WRITE | PTE_PRESENT);
 
-    lprintf(decoded_buf);
-    MAGIC_BREAK;
+    char one[] = "MOV BYTE [EAX], 0x";
+    int lenone = strlen(one);
+    char two[] = "MOV [EAX], 0x";
+    int lentwo = strlen(two);
+    char three[] = "MOV [EAX], DL";
+    int lenthree = strlen(three);
 
-    if (strncmp(decoded_buf, "MOV BYTE [EAX]", strlen("MOV BYTE [EAX]")) == 0) {
+    if (strncmp(decoded_buf, one, lenone) == 0) {
         int val = 0;
         sscanf(decoded_buf, "MOV BYTE [EAX], 0x%x", &val);
         *dest = val;
+    } else if (strncmp(decoded_buf, two, lentwo) == 0) {
+        int val = 0;
+        sscanf(decoded_buf, "MOV [EAX], 0x%x", &val);
+        *dest = val;
+    } else if (strncmp(decoded_buf, three, lenthree) == 0) {
+        *dest = ureg->edx & 0xff;
     } else {
+        lprintf(decoded_buf);
+        MAGIC_BREAK;
         ret = -1;
     }
 
     if (ret == 0) _mirror_console(dest);
-
-    MAGIC_BREAK;
 
     /* need to set new return address */
     if (ret == 0) *((uint32_t *)(kern_sp - 5)) = eip + eip_offset;
 
     // this set_pte call will not fail
     set_pte(guest_console_mem, frame, PTE_USER | PTE_PRESENT);
+    asm_page_inval((void *)guest_console_mem);
 
     return ret;
 }
@@ -252,8 +265,15 @@ int handle_sensi_instr(ureg_t *ureg) {
     int eip_offset = disassemble(instr_buf, MAX_INSTR_LENGTH,
                                  decoded_buf, MAX_DECODED_LENGTH);
 
-    lprintf("eip: %d, eip_offset: %d, instruction: %s",
-            (int)eip, eip_offset, decoded_buf);
+    // TODO why doesn't fac3 get recognized??
+    char fac3[] = {0xfa, 0xc3};
+    if (memcmp(fac3, instr_buf, 2) == 0) {
+        sprintf(decoded_buf, "CLI ");
+        eip_offset = 1;
+    }
+
+    lprintf("eip: %x, eip_offset: %d, instruction: %s",
+            (unsigned int)eip, eip_offset, decoded_buf);
     // _exn_print_ureg(ureg);
 
     // MAGIC_BREAK;
