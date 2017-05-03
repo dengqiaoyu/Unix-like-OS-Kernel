@@ -13,6 +13,24 @@
 
 #include <video_defines.h>
 
+#define CONSOLE_MEM_SIZE (2 * CONSOLE_WIDTH * CONSOLE_HEIGHT)
+
+//TODO docs
+typedef struct console_state {
+    int cursor_row;
+    int cursor_col;
+    int cursor_hidden;
+    char mem[CONSOLE_MEM_SIZE];
+} console_state_t;
+
+int backup_main_console();
+
+void restore_main_console();
+
+console_state_t *backup_console();
+
+void restore_console(console_state_t *backup);
+
 /** @brief Prints character ch at the current location
  *         of the cursor.
  *

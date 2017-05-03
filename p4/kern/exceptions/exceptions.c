@@ -104,7 +104,7 @@ void hwerror_handler(int cause, int ec_flag) {
  */
 void exn_handler(int cause, int ec_flag) {
     thread_t *thread = get_cur_tcb();
-
+    task_t *task = thread->task;
 
     uint32_t *esp0 = (uint32_t *)(thread->kern_sp);
     uint32_t *esp3;
@@ -150,13 +150,10 @@ void exn_handler(int cause, int ec_flag) {
     *(--esp3) = cause;
     /* ureg_t is set up */
 
-    int virtualized = -1;
     ureg_t *ureg_ptr = (ureg_t *)esp3;
-    task_t *task = thread->task;
-    if (ureg_ptr->cause == SWEXN_CAUSE_PROTFAULT && task->guest_info != NULL) {
-        virtualized = handle_sensi_instr(ureg_ptr);
+    if (cause == SWEXN_CAUSE_PROTFAULT && task->guest_info != NULL) {
+        if (handle_sensi_instr(ureg_ptr) == 0) return;
     }
-    if (virtualized == 0) return;
 
     if (thread->swexn_handler == NULL) {
         task_t *task = thread->task;
@@ -169,8 +166,7 @@ void exn_handler(int cause, int ec_flag) {
         kern_vanish();
     } else {
         // push the two swexn handler arguments and a dummy return address
-        uint32_t ureg_addr = (uint32_t)esp3;
-        *(--esp3) = ureg_addr;
+        *(--esp3) = (uint32_t)ureg_ptr;
         uint32_t swexn_arg = (uint32_t)thread->swexn_arg;
         *(--esp3) = swexn_arg;
         *(--esp3) = 0;

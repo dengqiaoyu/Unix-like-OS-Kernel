@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <ureg.h>                       /* ureg_t */
 #include <elf_410.h>
+#include <console.h>
 
 #define SEGDES_GUEST_CS 0x01cffb000000ffff
 #define SEGDES_GUEST_DS 0x01cff2000000ffff
@@ -43,10 +44,14 @@ typedef struct guest_info_t {
     int buf_start;
     int buf_end;
 
-    /* virtual_console, maybe? */
-    int cursor_state;
+    /* virtual cursor registers */
+    int cursor_data;
     uint32_t cursor_idx;
+
+    /* virtual console status info */
+    console_state_t *console_state;
 } guest_info_t;
+
 /* pic_ack_flag */
 #define ACKED 0
 #define KEYBOARD_NOT_ACKED 1
@@ -72,13 +77,20 @@ typedef struct guest_info_t {
 #define SIGNAL_CURSOR_MSB_IDX 2
 
 void hypervisor_init();
+
 int guest_init(simple_elf_t *header);
+
 int load_guest_section(const char *fname, unsigned long start,
                        unsigned long len, unsigned long offset);
+
 guest_info_t *guest_info_init();
+
 void guest_info_destroy(guest_info_t *guest_info);
+
 int handle_sensi_instr(ureg_t *ureg);
+
 void set_user_handler(int device_type);
+
 /* helper */
 // uint32_t get_descriptor_base_addr(uint16_t seg_sel);
 
