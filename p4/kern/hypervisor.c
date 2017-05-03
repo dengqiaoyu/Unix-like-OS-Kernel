@@ -69,7 +69,6 @@ void hypervisor_init() {
 
 int guest_init(simple_elf_t *header) {
     thread_t *thread = get_cur_tcb();
-    thread->task->guest_info = guest_info_init();
 
     task_t *task = thread->task;
 
@@ -231,8 +230,11 @@ int _simulate_instr(char *instr, ureg_t *ureg) {
     // TODO Need to reorder, jmp far/ long jmp
     int ret = 0;
     if (strcmp(instr, "OUT DX, AL") == 0) {
-        ret = _handle_out(guest_info, ureg);
-        if (ret == 0) return 0;
+        // ret = _handle_out(guest_info, ureg);
+        // if (ret == 0) return 0;
+        // return 0;
+        _handle_out(guest_info, ureg);
+        return 0;
     } else if (strncmp(instr, "CLI", strlen("CLI")) == 0) {
         _handle_cli(guest_info);
         return 0;
@@ -240,8 +242,10 @@ int _simulate_instr(char *instr, ureg_t *ureg) {
         _handle_sti(guest_info);
         return 0;
     } else if (strcmp(instr, "IN AL, DX") == 0) {
-        ret = _handle_in(guest_info, ureg);
-        if (ret == 0) return 0;
+        // ret = _handle_in(guest_info, ureg);
+        // if (ret == 0) return 0;
+        _handle_in(guest_info, ureg);
+        return 0;
     } else if (strncmp(instr, "LGDT", strlen("LGDT")) == 0) {
         return 0;
     } else if (strncmp(instr, "LIDT", strlen("LIDT")) == 0) {
@@ -266,7 +270,7 @@ int _handle_out(guest_info_t *guest_info, ureg_t *ureg) {
     uint16_t outb_param1 = ureg->edx;
     uint8_t outb_param2 = ureg->eax;
     lprintf("outb_param1: %x, outb_param2: %x", outb_param1, outb_param2);
-
+    MAGIC_BREAK;
     if (outb_param1 == TIMER_MODE_IO_PORT
             || outb_param1 == TIMER_PERIOD_IO_PORT) {
         /* guest_info set timer */
@@ -383,7 +387,7 @@ void _handle_int_ack(guest_info_t *guest_info) {
         // do context switch ?
         break;
     default:
-        assert(0 == 1);
+        // assert(0 == 1);
         break;
     }
     return;
