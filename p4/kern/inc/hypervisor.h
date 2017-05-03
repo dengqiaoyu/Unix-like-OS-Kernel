@@ -76,6 +76,8 @@ typedef struct guest_info_t {
 #define SIGNAL_CURSOR_LSB_IDX 1
 #define SIGNAL_CURSOR_MSB_IDX 2
 
+#define IDT_ENTRY_LENGTH 8
+
 void hypervisor_init();
 
 int guest_init(simple_elf_t *header);

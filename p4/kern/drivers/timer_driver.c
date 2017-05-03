@@ -56,18 +56,49 @@ void _prepare_guest_timer(void) {
     thread_t *thread = get_cur_tcb();
     if (thread == NULL) return;
     guest_info_t *guest_info = thread->task->guest_info;
+    if (guest_info == NULL) return;
+    int inter_en_flag = guest_info->inter_en_flag;
+    int pic_ack_flag = guest_info->pic_ack_flag;
+
+    // if (inter_en_flag != ENABLED
+    //         && inter_en_flag != DISABLED) {
+    //     return;
+    // }
+    lprintf("inter_en_flag: %d", inter_en_flag);
+    if (inter_en_flag != ENABLED) {
+        return;
+    }
+
+    lprintf("pic_ack_flag: %d", pic_ack_flag);
+    MAGIC_BREAK;
+    if (pic_ack_flag != ACKED
+            && pic_ack_flag != KEYBOARD_NOT_ACKED) {
+        return;
+    }
+
+    lprintf("inter_en_flag: %d, pic_ack_flag: %d",
+            inter_en_flag, pic_ack_flag);
+    MAGIC_BREAK;
 
     if (guest_info == NULL || guest_info->timer_init_stat != TIMER_INTED)
         return;
-    // lprintf("I am going to invoke timer");
     uint32_t guest_interval = guest_info->timer_interval;
     uint32_t host_interval = MS_PER_INTERRUPT;
     uint32_t multiple = guest_interval / host_interval;
     guest_info->internal_ticks++;
     if (guest_info->internal_ticks % multiple == 0) {
-        // lprintf("invoke guest timer handler");
+        if (inter_en_flag == DISABLED)
+            guest_info->inter_en_flag = DISABLED_TIMER_PENDING;
+        if (pic_ack_flag == ACKED)
+            guest_info->pic_ack_flag = TIMER_NOT_ACKED;
+        else if (pic_ack_flag == KEYBOARD_NOT_ACKED)
+            guest_info->pic_ack_flag = KEYBOARD_TIMER_NOT_ACKED;
+        lprintf("invoke guest timer handler");
         set_user_handler(TIMER_DEVICE);
     }
+    lprintf("inter_en_flag: %d, pic_ack_flag: %d after setting user handler",
+            guest_info->inter_en_flag, guest_info->pic_ack_flag);
+    MAGIC_BREAK;
     return;
 }
 
