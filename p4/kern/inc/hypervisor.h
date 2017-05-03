@@ -17,10 +17,11 @@
 
 #define GUEST_MEM_SIZE (24 * 1024 * 1024)
 #define GUEST_FRAMES (GUEST_MEM_SIZE / PAGE_SIZE)
+#define GUEST_CONSOLE_BASE (CONSOLE_MEM_BASE + USER_MEM_START)
 
 /* translate sensitive instruction */
 #define MAX_INSTR_LENGTH 32
-#define MAX_INS_DECODED_LENGTH 64
+#define MAX_DECODED_LENGTH 64
 #define MS_PER_S 1000
 #define KC_BUF_LEN 32
 
@@ -78,6 +79,8 @@ typedef struct guest_info_t {
 
 #define IDT_ENTRY_LENGTH 8
 
+// TODO docs
+
 void hypervisor_init();
 
 int guest_init(simple_elf_t *header);
@@ -88,6 +91,8 @@ int load_guest_section(const char *fname, unsigned long start,
 guest_info_t *guest_info_init();
 
 void guest_info_destroy(guest_info_t *guest_info);
+
+int guest_console_mov(uint32_t *dest, ureg_t *ureg);
 
 int handle_sensi_instr(ureg_t *ureg);
 
