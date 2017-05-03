@@ -187,6 +187,57 @@ void guest_info_destroy(guest_info_t *guest_info) {
     free(guest_info);
 }
 
+void _mirror_console(uint32_t *addr) {
+    uint32_t offset = (uint32_t)addr & ~PAGE_ALIGN_MASK;
+    if (offset < CONSOLE_MEM_SIZE) {
+        *(uint32_t *)(CONSOLE_MEM_BASE + offset) = *addr;
+    }
+}
+
+int guest_console_mov(uint32_t *dest, ureg_t *ureg) {
+    thread_t *thread = get_cur_tcb();
+    int ret = 0;
+
+    uint32_t *kern_sp = (uint32_t *)(thread->kern_sp);
+    uint32_t eip = *(kern_sp - 5);
+
+    char instr_buf[MAX_INSTR_LENGTH + 1] = {0};
+    char decoded_buf[MAX_DECODED_LENGTH + 1] = {0};
+
+    read_guest(instr_buf, eip, MAX_INSTR_LENGTH, SEGSEL_GUEST_DS);
+
+    int eip_offset = disassemble(instr_buf, MAX_INSTR_LENGTH,
+                                 decoded_buf, MAX_DECODED_LENGTH);
+
+    uint32_t guest_console_mem = USER_MEM_START + CONSOLE_MEM_BASE;
+    uint32_t frame = get_pte(guest_console_mem) & PAGE_ALIGN_MASK;
+    // this set_pte call will not fail
+    set_pte(guest_console_mem, frame, PTE_USER | PTE_WRITE | PTE_PRESENT);
+
+    lprintf(decoded_buf);
+    MAGIC_BREAK;
+
+    if (strncmp(decoded_buf, "MOV BYTE [EAX]", strlen("MOV BYTE [EAX]")) == 0) {
+        int val = 0;
+        sscanf(decoded_buf, "MOV BYTE [EAX], 0x%x", &val);
+        *dest = val;
+    } else {
+        ret = -1;
+    }
+
+    if (ret == 0) _mirror_console(dest);
+
+    MAGIC_BREAK;
+
+    /* need to set new return address */
+    if (ret == 0) *((uint32_t *)(kern_sp - 5)) = eip + eip_offset;
+
+    // this set_pte call will not fail
+    set_pte(guest_console_mem, frame, PTE_USER | PTE_PRESENT);
+
+    return ret;
+}
+
 int handle_sensi_instr(ureg_t *ureg) {
     thread_t *thread = get_cur_tcb();
 
@@ -201,10 +252,11 @@ int handle_sensi_instr(ureg_t *ureg) {
     int eip_offset = disassemble(instr_buf, MAX_INSTR_LENGTH,
                                  decoded_buf, MAX_DECODED_LENGTH);
 
-    lprintf("eip_offset: %d, instruction: %s",
-    _exn_print_ureg(ureg);
+    lprintf("eip: %d, eip_offset: %d, instruction: %s",
+            (int)eip, eip_offset, decoded_buf);
+    // _exn_print_ureg(ureg);
 
-    MAGIC_BREAK;
+    // MAGIC_BREAK;
 
     /* need to set new return address first, because call handler need new ip */
     *((uint32_t *)(kern_sp - 5)) = eip + eip_offset;
@@ -230,12 +282,14 @@ int _simulate_instr(char *instr, ureg_t *ureg) {
         // return 0;
         _handle_out(guest_info, ureg);
         return 0;
+        // temp disable TODO
     } else if (strncmp(instr, "CLI", strlen("CLI")) == 0) {
         _handle_cli(guest_info);
         return 0;
     } else if (strncmp(instr, "STI", strlen("STI")) == 0) {
-        _handle_sti(guest_info);
         return 0;
+        // temp disable TODO
+        _handle_sti(guest_info);
     } else if (strcmp(instr, "IN AL, DX") == 0) {
         // ret = _handle_in(guest_info, ureg);
         // if (ret == 0) return 0;
@@ -255,6 +309,9 @@ int _simulate_instr(char *instr, ureg_t *ureg) {
         if (ret == 0) return 0;
     } else if (strncmp(instr, "MOV", strlen("MOV")) == 0) {
         return 0;
+    } else {
+        MAGIC_BREAK;
+        return 0;
     }
 
     return -1;
@@ -265,7 +322,8 @@ int _handle_out(guest_info_t *guest_info, ureg_t *ureg) {
     uint16_t outb_param1 = ureg->edx;
     uint8_t outb_param2 = ureg->eax;
     lprintf("outb_param1: %x, outb_param2: %x", outb_param1, outb_param2);
-    MAGIC_BREAK;
+    // MAGIC_BREAK;
+
     if (outb_param1 == TIMER_MODE_IO_PORT
             || outb_param1 == TIMER_PERIOD_IO_PORT) {
         /* guest_info set timer */

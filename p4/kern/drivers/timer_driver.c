@@ -48,26 +48,33 @@ void timer_init(void (*tickback)(unsigned int)) {
 void timer_handler() {
     num_ticks++;
     outb(INT_ACK_CURRENT, INT_CTL_PORT);
-    _prepare_guest_timer();
     callback_func(num_ticks);
+    return;
+    // TODO enable
+    _prepare_guest_timer();
 }
 
 void _prepare_guest_timer(void) {
     thread_t *thread = get_cur_tcb();
     if (thread == NULL) return;
-    guest_info_t *guest_info = thread->task->guest_info;
 
+    guest_info_t *guest_info = thread->task->guest_info;
     if (guest_info == NULL || guest_info->timer_init_stat != TIMER_INTED)
         return;
+
+    MAGIC_BREAK;
+
     // lprintf("I am going to invoke timer");
     uint32_t guest_interval = guest_info->timer_interval;
     uint32_t host_interval = MS_PER_INTERRUPT;
     uint32_t multiple = guest_interval / host_interval;
+
     guest_info->internal_ticks++;
     if (guest_info->internal_ticks % multiple == 0) {
         // lprintf("invoke guest timer handler");
         set_user_handler(TIMER_DEVICE);
     }
+
     return;
 }
 

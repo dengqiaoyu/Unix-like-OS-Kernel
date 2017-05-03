@@ -76,6 +76,8 @@ typedef struct guest_info_t {
 #define SIGNAL_CURSOR_LSB_IDX 1
 #define SIGNAL_CURSOR_MSB_IDX 2
 
+// TODO docs
+
 void hypervisor_init();
 
 int guest_init(simple_elf_t *header);
@@ -86,6 +88,8 @@ int load_guest_section(const char *fname, unsigned long start,
 guest_info_t *guest_info_init();
 
 void guest_info_destroy(guest_info_t *guest_info);
+
+int guest_console_mov(uint32_t *dest, ureg_t *ureg);
 
 int handle_sensi_instr(ureg_t *ureg);
 

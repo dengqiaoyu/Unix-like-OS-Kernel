@@ -287,6 +287,9 @@ int kern_exec(void) {
     page_dir_clear(task->page_dir);
     set_cr3((uint32_t)task->page_dir);
 
+    // update fname for simics symbolic debugging
+    sim_reg_process(task->page_dir, elf_header.e_fname);
+
     // check whether we should defer to hypervisor loader
     if (thread->ip < USER_MEM_START) {
         if (guest_init(&elf_header) < 0) {
@@ -329,9 +332,6 @@ int kern_exec(void) {
     *(ptr + 2) = (uint32_t)argv;
     *(ptr + 3) = USER_STACK_LOW + USER_STACK_SIZE;
     *(ptr + 4) = USER_STACK_LOW;
-
-    // update fname for simics symbolic debugging
-    sim_reg_process(task->page_dir, elf_header.e_fname);
 
     set_esp0(thread->kern_sp);
     kern_to_user(USER_STACK_START, elf_header.e_entry);
