@@ -117,7 +117,7 @@ int guest_init(simple_elf_t *header) {
     /* bss is already "loaded" */
 
     // TODO macro multiboot numbers
-    struct multiboot_info *mb_info = (void *)0x15410;
+    struct multiboot_info *mb_info = (void *)(0x15410 + USER_MEM_START);
     memset(mb_info, 0, sizeof(struct multiboot_info));
     mb_info->flags = MULTIBOOT_MEMORY;
     mb_info->mem_lower = 637;
@@ -230,7 +230,7 @@ int _simulate_instr(char *instr, ureg_t *ureg) {
 
     // TODO Need to reorder, jmp far/ long jmp
     int ret = 0;
-    if (strcmp(instr, "OUT DX, AX") == 0) {
+    if (strcmp(instr, "OUT DX, AL") == 0) {
         ret = _handle_out(guest_info, ureg);
         if (ret == 0) return 0;
     } else if (strncmp(instr, "CLI", strlen("CLI")) == 0) {
@@ -331,26 +331,26 @@ int _handle_set_cursor(ureg_t *ureg) {
     uint16_t outb_param1 = ureg->edx;
     uint8_t outb_param2 = ureg->eax;
 
-    switch (guest_info->cursor_state) {
+    switch (guest_info->cursor_data) {
     case SIGNAL_CURSOR_NORMAL:
         if (outb_param1 == CRTC_IDX_REG && ureg->eax == CRTC_CURSOR_LSB_IDX) {
-            guest_info->cursor_state = SIGNAL_CURSOR_LSB_IDX;
+            guest_info->cursor_data = SIGNAL_CURSOR_LSB_IDX;
         } else if (outb_param1 == CRTC_IDX_REG
                    && outb_param2 == CRTC_CURSOR_MSB_IDX) {
-            guest_info->cursor_state = SIGNAL_CURSOR_MSB_IDX;
+            guest_info->cursor_data = SIGNAL_CURSOR_MSB_IDX;
         } else return -1;
         break;
 
     case SIGNAL_CURSOR_LSB_IDX:
         if (outb_param1 == CRTC_DATA_REG) {
-            guest_info->cursor_state = SIGNAL_CURSOR_NORMAL;
+            guest_info->cursor_data = SIGNAL_CURSOR_NORMAL;
             guest_info->cursor_idx = outb_param2;
         } else return -1;
         break;
 
     case SIGNAL_CURSOR_MSB_IDX:
         if (outb_param1 == CRTC_DATA_REG) {
-            guest_info->cursor_state = SIGNAL_CURSOR_NORMAL;
+            guest_info->cursor_data = SIGNAL_CURSOR_NORMAL;
             guest_info->cursor_idx += outb_param2 << 8;
 
             /* begin set cursor */
