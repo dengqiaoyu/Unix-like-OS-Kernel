@@ -408,6 +408,11 @@ void kern_vanish(void) {
             panic("init or idle task vanished?");
         }
 
+        // if the task is a guest kernel, restore the real kernel console
+        if (task->guest_info != NULL) {
+            restore_main_console();
+        }
+
         // assumes we are in the parent's child task list
         kern_mutex_lock(&(parent->child_task_list_mutex));
         remove_node(parent->child_task_list, TASK_TO_LIST_NODE(task));
@@ -426,6 +431,9 @@ void kern_vanish(void) {
 
             // disable interrupts to protect scheduler structures
             disable_interrupts();
+
+            // if the task is a guest kernel, free virtualization resources
+            if (task->guest_info != NULL) guest_info_destroy(task->guest_info);
 
             // wake the waiting thread
             waiter->thread->status = RUNNABLE;
@@ -460,6 +468,10 @@ void kern_vanish(void) {
              * and destroy it before we finish yielding...
              */
             disable_interrupts();
+
+            // if the task is a guest kernel, free virtualization resources
+            if (task->guest_info != NULL) guest_info_destroy(task->guest_info);
+
             add_node_to_tail(parent->zombie_task_list, TASK_TO_LIST_NODE(task));
             cli_kern_mutex_unlock(&(parent->wait_mutex));
             cli_kern_mutex_unlock(&(task->vanish_mutex));

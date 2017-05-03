@@ -93,7 +93,6 @@ int guest_init(simple_elf_t *header) {
 
     int ret = 0;
     /* load text */
-    // MAGIC_BREAK;
     ret = load_guest_section(header->e_fname,
                              header->e_txtstart,
                              header->e_txtlen,
@@ -132,7 +131,7 @@ int guest_init(simple_elf_t *header) {
     // this set_pte call will not fail
     set_pte(GUEST_CONSOLE_BASE, frame, PTE_USER | PTE_PRESENT);
 
-    backup_main_console();
+    if (backup_main_console() < 0) return -1;
     clear_console();
 
     // update fname for simics symbolic debugging
@@ -429,19 +428,16 @@ int _handle_set_cursor(ureg_t *ureg) {
         case SIGNAL_CURSOR_LSB_IDX:
             if (outb_param1 == CRTC_DATA_REG) {
                 guest_info->cursor_data = SIGNAL_CURSOR_NORMAL;
-                guest_info->cursor_idx = outb_param2;
+                outb(CRTC_IDX_REG, CRTC_CURSOR_LSB_IDX);
+                outb(CRTC_DATA_REG, outb_param2);
             } else return -1;
             break;
 
         case SIGNAL_CURSOR_MSB_IDX:
             if (outb_param1 == CRTC_DATA_REG) {
                 guest_info->cursor_data = SIGNAL_CURSOR_NORMAL;
-                guest_info->cursor_idx += outb_param2 << 8;
-
-                /* begin set cursor */
-                int row = guest_info->cursor_idx / CONSOLE_WIDTH;
-                int col = guest_info->cursor_idx % CONSOLE_WIDTH;
-                set_cursor(row, col);
+                outb(CRTC_IDX_REG, CRTC_CURSOR_MSB_IDX);
+                outb(CRTC_DATA_REG, outb_param2);
             } else return -1;
             break;
     }

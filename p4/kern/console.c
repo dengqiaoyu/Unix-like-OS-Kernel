@@ -20,7 +20,10 @@ static int cursor_col = 0;
 static int console_color = FGND_WHITE | BGND_BLACK;
 static int cursor_hidden = 0;
 
+/* for backing up main console state */
 static void *console_mem_back = NULL;
+static int cursor_row_back = 0;
+static int cursor_col_back = 0;
 
 /** @brief Scrolls the console down one line
  *
@@ -190,13 +193,19 @@ int backup_main_console() {
     assert(console_mem_back == NULL);
     console_mem_back = malloc(CONSOLE_MEM_SIZE);
     if (console_mem_back == NULL) return -1;
+
     memcpy(console_mem_back, (void *)CONSOLE_MEM_BASE, CONSOLE_MEM_SIZE);
+    cursor_row_back = cursor_row;
+    cursor_col_back = cursor_col;
     return 0;
 }
 
 void restore_main_console() {
     assert(console_mem_back != NULL);
     memcpy((void *)CONSOLE_MEM_BASE, console_mem_back, CONSOLE_MEM_SIZE);
+    cursor_row = cursor_row_back;
+    cursor_col = cursor_col_back;
+
     free(console_mem_back);
     console_mem_back = NULL;
     update_cursor();

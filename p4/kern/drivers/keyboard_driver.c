@@ -18,11 +18,12 @@
 
 /* user defined include */
 #include "drivers/keyboard_driver.h"
+#include "syscalls/life_cycle.h"
 #include "scheduler.h"
 
 /* internal function */
 static int _process_keypress(uint8_t keypress);
-// static void _handle_guest_kb_handler(uint8_t keypress);
+static void _handle_guest_kb_handler(uint8_t keypress);
 
 /* functions definition */
 keyboard_buffer_t kb_buf;
@@ -47,10 +48,14 @@ int keyboard_init() {
  */
 void add_to_kb_buf(void) {
     uint8_t keypress = inb(KEYBOARD_PORT);
-    // if (guest_info_driver != NULL) {
-    //     _handle_guest_kb_handler(keypress);
-    //     return;
-    // }
+
+    thread_t *thread = get_cur_tcb();
+    task_t *task = thread->task;
+    if (task->guest_info != NULL) {
+        _handle_guest_kb_handler(keypress);
+        return;
+    }
+
     /* convert keyboard press into character */
     char ch = _process_keypress(keypress);
     if (ch == -1) {
@@ -79,40 +84,52 @@ void add_to_kb_buf(void) {
  */
 int _process_keypress(uint8_t keypress) {
     kh_type augchar = process_scancode(keypress);
-    if (KH_HASDATA(augchar) && !KH_ISMAKE(augchar))
+    if (KH_HASDATA(augchar) && KH_ISMAKE(augchar))
         return KH_GETCHAR(augchar);
     return -1;
 }
 
-// void _handle_guest_kb_handler(uint8_t keypress) {
-//     int inter_en_flag = guest_info_driver->inter_en_flag;
-//     if (inter_en_flag != ENABLED && inter_en_flag != DISABLED) return;
-//     int pic_ack_flag = guest_info_driver->pic_ack_flag;
-//     if (pic_ack_flag != ACKED && pic_ack_flag != TIMER_NOT_ACKED) return;
+void _handle_guest_kb_handler(uint8_t keypress) {
+    kh_type augchar = process_scancode(keypress);
+    if (KH_HASRAW(augchar) && !KH_ISMAKE(augchar)) {
+        if (KH_GETRAW(augchar) == 'c' && KH_CTL(augchar)) {
+            lprintf("ctrl-c pressed in guest");
+            outb(INT_ACK_CURRENT, INT_CTL_PORT);
+            kern_vanish();
+        }
+    }
+    // TODO
+    outb(INT_ACK_CURRENT, INT_CTL_PORT);
+    return;
 
-//     /* check whether full */
-//     int new_buf_end = (guest_info_driver->buf_end + 1) % KC_BUF_LEN;
-//     if (new_buf_end == guest_info_driver->buf_start) {
-//         outb(INT_ACK_CURRENT, INT_CTL_PORT);
-//         return;
-//     }
+    int inter_en_flag = guest_info_driver->inter_en_flag;
+    if (inter_en_flag != ENABLED && inter_en_flag != DISABLED) return;
+    int pic_ack_flag = guest_info_driver->pic_ack_flag;
+    if (pic_ack_flag != ACKED && pic_ack_flag != TIMER_NOT_ACKED) return;
 
-//     guest_info_driver->keycode_buf[guest_info_driver->buf_end] = keypress;
-//     guest_info_driver->buf_end = new_buf_end;
-//     /* set iret go to keyboard handler */
+    /* check whether full */
+    int new_buf_end = (guest_info_driver->buf_end + 1) % KC_BUF_LEN;
+    if (new_buf_end == guest_info_driver->buf_start) {
+        outb(INT_ACK_CURRENT, INT_CTL_PORT);
+        return;
+    }
 
-//     if (pic_ack_flag == ACKED) {
-//         guest_info_driver->pic_ack_flag = KEYBOARD_NOT_ACKED;
-//     } else {
-//         /* TIMER_NOT_ACKED */
-//         guest_info_driver->pic_ack_flag = TIMER_KEYBOARD_NOT_ACKED;
-//     }
+    guest_info_driver->keycode_buf[guest_info_driver->buf_end] = keypress;
+    guest_info_driver->buf_end = new_buf_end;
+    /* set iret go to keyboard handler */
 
-//     if (inter_en_flag == DISABLED)
-//         guest_info_driver->inter_en_flag = DISABLED_KEYBOARD_PENDING;
-//     else
-//         set_user_handler(KEYBOARD_DEVICE);
+    if (pic_ack_flag == ACKED) {
+        guest_info_driver->pic_ack_flag = KEYBOARD_NOT_ACKED;
+    } else {
+        /* TIMER_NOT_ACKED */
+        guest_info_driver->pic_ack_flag = TIMER_KEYBOARD_NOT_ACKED;
+    }
 
-//     outb(INT_ACK_CURRENT, INT_CTL_PORT);
-//     return;
-// }
+    if (inter_en_flag == DISABLED)
+        guest_info_driver->inter_en_flag = DISABLED_KEYBOARD_PENDING;
+    else
+        set_user_handler(KEYBOARD_DEVICE);
+
+    outb(INT_ACK_CURRENT, INT_CTL_PORT);
+    return;
+}
