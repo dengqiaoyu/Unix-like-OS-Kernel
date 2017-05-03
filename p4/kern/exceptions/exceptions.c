@@ -48,6 +48,9 @@ static void _exn_print_error_msg(ureg_t *ureg);
  */
 static void _exn_print_ureg(ureg_t *ureg);
 
+// TODO docs
+static int _guest_console_mov(uint32_t *dest, char *mov_instr, ureg_t *ureg);
+
 /**
  * @brief   handle with PAGEFAULT fault, when it is a ZFOD frame just assign a
  *          new frame to the page fault address
@@ -63,10 +66,56 @@ void pagefault_handler() {
         asm_page_inval((void *)pf_addr);
         uint32_t frame_addr = get_frame();
         set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
-    } else {
-        /* otherwise call handler to handle page fault */
-        exn_handler(SWEXN_CAUSE_PAGEFAULT, ERROR_CODE);
+        return;
     }
+
+    thread_t *thread = get_cur_tcb();
+    task_t *task = thread->task;
+    if (task->guest_info != NULL) {
+        if ((pf_addr % USER_MEM_START) & PAGE_ALIGN_MASK == CONSOLE_MEM_BASE) {
+            lprintf("guest console pf, cr2 is 0x%x", (unsigned int)pf_addr);
+
+            uint32_t *kern_sp = (uint32_t *)(thread->kern_sp);
+            uint32_t eip = *(kern_sp - 5);
+
+            char instr_buf[MAX_INSTR_LENGTH + 1] = {0};
+            char decoded_buf[MAX_DECODED_LENGTH + 1] = {0};
+
+            read_guest(instr_buf, eip, MAX_INSTR_LENGTH, SEGSEL_GUEST_DS);
+
+            int eip_offset = disassemble(instr_buf, MAX_INSTR_LENGTH,
+                                         decoded_buf, MAX_DECODED_LENGTH);
+
+            int ret = _guest_console_mov((void *)pf_addr, decoded_buf, ureg);
+            if (ret == 0) return;
+        }
+    }
+
+    /* otherwise call handler to handle page fault */
+    exn_handler(SWEXN_CAUSE_PAGEFAULT, ERROR_CODE);
+}
+
+int _guest_console_mov(uint32_t *dest, char *mov_instr, ureg_t *ureg) {
+    int ret = 0;
+
+    uint32_t guest_console_mem = USER_MEM_START + CONSOLE_MEM_BASE;
+    uint32_t frame = get_pte(guest_console_mem) & PAGE_ALIGN_MASK;
+    // this set_pte call will not fail
+    set_pte(guest_console_mem, frame, PTE_USER | PTE_WRITE | PTE_PRESENT);
+
+    lprintf(mov_instr);
+    MAGIC_BREAK;
+
+    if (strcmp(instr, "MOV DX, AX") == 0) {
+        // TODO simply do that move
+    } else {
+        ret = -1;
+    }
+
+    // this set_pte call will not fail
+    set_pte(guest_console_mem, frame, PTE_USER | PTE_PRESENT);
+
+    return ret;
 }
 
 /**

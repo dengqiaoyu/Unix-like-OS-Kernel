@@ -66,8 +66,6 @@ void hypervisor_init() {
 
 int guest_init(simple_elf_t *header) {
     thread_t *thread = get_cur_tcb();
-    thread->task->guest_info = guest_info_init();
-
     task_t *task = thread->task;
 
     task->guest_info = guest_info_init();
@@ -170,6 +168,7 @@ guest_info_t *guest_info_init() {
     guest_info->buf_start = 0;
     guest_info->buf_end = 0;
 
+    /* virtual console registers */
     guest_info->cursor_data = SIGNAL_CURSOR_NORMAL;
     guest_info->cursor_idx = 0;
 
@@ -187,33 +186,27 @@ int handle_sensi_instr(ureg_t *ureg) {
     thread_t *thread = get_cur_tcb();
 
     uint32_t *kern_sp = (uint32_t *)(thread->kern_sp);
-
-    // uint32_t cs_value = *((uint32_t *)(kern_sp - 4));
-    uint32_t ori_eip_value = *((uint32_t *)(kern_sp - 5));
-    // lprintf("cs_value: %p, eip_value: %p", (void *)cs_value, (void *)eip_value);
+    uint32_t eip = ureg->eip;
     
-    void *fault_ip = (void *)ureg->eip;
     char instr_buf[MAX_INSTR_LENGTH + 1] = {0};
-    char instr_buf_decoded[MAX_INS_DECODED_LENGTH + 1] = {0};
-    // lprintf("fault_ip: %p", fault_ip);
-    
-    read_guest(instr_buf, (uint32_t)fault_ip, MAX_INSTR_LENGTH,
-               (uint16_t)SEGSEL_SPARE0);
+    char decoded_buf[MAX_DECODED_LENGTH + 1] = {0};
+
+    read_guest(instr_buf, eip, MAX_INSTR_LENGTH, SEGSEL_GUEST_DS);
 
     int eip_offset = disassemble(instr_buf, MAX_INSTR_LENGTH,
-                                 instr_buf_decoded, MAX_INS_DECODED_LENGTH + 1);
+                                 decoded_buf, MAX_DECODED_LENGTH);
 
     lprintf("eip_offset: %d, instruction: %s",
-            eip_offset, instr_buf_decoded);
+            eip_offset, decoded_buf);
 
     MAGIC_BREAK;
 
     /* need to set new return address first, because call handler need new ip */
-    *((uint32_t *)(kern_sp - 5)) = ori_eip_value + eip_offset;
-    int ret = _simulate_instr(instr_buf_decoded, ureg);
+    *((uint32_t *)(kern_sp - 5)) = eip + eip_offset;
+    int ret = _simulate_instr(decoded_buf, ureg);
     if (ret != 0) {
-        /* Not a supported simulated instruction */
-        *((uint32_t *)(kern_sp - 5)) = ori_eip_value;
+        /* Not a supported simulated instruction, restore original eip */
+        *((uint32_t *)(kern_sp - 5)) = eip;
         return -1;
     }
 
@@ -325,26 +318,26 @@ int _handle_set_cursor(ureg_t *ureg) {
     uint16_t outb_param1 = ureg->edx;
     uint8_t outb_param2 = ureg->eax;
 
-    switch (guest_info->cursor_state) {
+    switch (guest_info->cursor_data) {
         case SIGNAL_CURSOR_NORMAL:
             if (outb_param1 == CRTC_IDX_REG && ureg->eax == CRTC_CURSOR_LSB_IDX) {
-                guest_info->cursor_state = SIGNAL_CURSOR_LSB_IDX;
+                guest_info->cursor_data = SIGNAL_CURSOR_LSB_IDX;
             } else if (outb_param1 == CRTC_IDX_REG
                     && outb_param2 == CRTC_CURSOR_MSB_IDX) {
-                guest_info->cursor_state = SIGNAL_CURSOR_MSB_IDX;
+                guest_info->cursor_data = SIGNAL_CURSOR_MSB_IDX;
             } else return -1;
             break;
 
         case SIGNAL_CURSOR_LSB_IDX:
             if (outb_param1 == CRTC_DATA_REG) {
-                guest_info->cursor_state = SIGNAL_CURSOR_NORMAL;
+                guest_info->cursor_data = SIGNAL_CURSOR_NORMAL;
                 guest_info->cursor_idx = outb_param2;
             } else return -1;
             break;
 
         case SIGNAL_CURSOR_MSB_IDX:
             if (outb_param1 == CRTC_DATA_REG) {
-                guest_info->cursor_state = SIGNAL_CURSOR_NORMAL;
+                guest_info->cursor_data = SIGNAL_CURSOR_NORMAL;
                 guest_info->cursor_idx += outb_param2 << 8;
 
                 /* begin set cursor */

@@ -20,7 +20,7 @@
 
 /* translate sensitive instruction */
 #define MAX_INSTR_LENGTH 32
-#define MAX_INS_DECODED_LENGTH 64
+#define MAX_DECODED_LENGTH 64
 #define MS_PER_S 1000
 #define KC_BUF_LEN 32
 
