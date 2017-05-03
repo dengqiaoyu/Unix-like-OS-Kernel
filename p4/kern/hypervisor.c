@@ -52,6 +52,9 @@ static int _handle_timer_init(ureg_t *ureg);
 static int _handle_set_cursor(ureg_t *ureg);
 static void _handle_int_ack(guest_info_t *guest_info);
 
+/* debug */
+void _exn_print_ureg(ureg_t *ureg);
+
 /* used by set_user_handler */
 static uint32_t _get_handler_addr(int idt_idx);
 static uint32_t _get_descriptor_base_addr(uint16_t seg_sel);
@@ -88,6 +91,7 @@ int guest_init(simple_elf_t *header) {
     int ret = 0;
 
     /* load text */
+    // MAGIC_BREAK;
     ret = load_guest_section(header->e_fname,
                              header->e_txtstart,
                              header->e_txtlen,
@@ -115,6 +119,7 @@ int guest_init(simple_elf_t *header) {
 
     disable_interrupts();
     guest_info_driver = thread->task->guest_info;
+    // MAGIC_BREAK;
     kern_to_guest(header->e_entry);
     return 0;
 }
@@ -166,11 +171,12 @@ int handle_sensi_instr(ureg_t *ureg) {
     char instr_buf_decoded[MAX_INS_DECODED_LENGTH + 1] = {0};
     // lprintf("fault_ip: %p", fault_ip);
     read_guest(instr_buf, (uint32_t)fault_ip, MAX_INSTR_LENGTH,
-               (uint16_t)SEGSEL_SPARE0);
+               (uint16_t)SEGSEL_GUEST_CS);
     int eip_offset = disassemble(instr_buf, MAX_INSTR_LENGTH,
                                  instr_buf_decoded, MAX_INS_DECODED_LENGTH + 1);
     lprintf("eip_offset: %d, instruction: %s",
             eip_offset, instr_buf_decoded);
+    _exn_print_ureg(ureg);
     MAGIC_BREAK;
     /* need to set new return address first, because call handler need new ip */
     *((uint32_t *)(kern_sp - 5)) = ori_eip_value + eip_offset;
@@ -213,6 +219,8 @@ int _simulate_instr(char *instr, ureg_t *ureg) {
     } else if (strncmp(instr, "JMP FAR", strlen("JMP FAR")) == 0) {
         ret = _handle_jmp_far(guest_info, instr);
         if (ret == 0) return 0;
+    } else if (strncmp(instr, "MOV", strlen("MOV")) == 0) {
+        return 0;
     }
     return -1;
 }
@@ -395,14 +403,14 @@ int _handle_jmp_far(guest_info_t *guest_info, char *instr) {
     sscanf(instr, "JMP FAR 0x%x:0x%x", &cs_value, &memory_addr);
     lprintf("memory_addr: 0x%08x", memory_addr);
     if (cs_value != SEGSEL_KERNEL_CS) return -1;
-    memory_addr += _get_descriptor_base_addr(SEGSEL_SPARE0);
+    memory_addr += _get_descriptor_base_addr(SEGSEL_GUEST_CS);
     lprintf("memory_addr: 0x%08x", memory_addr);
     /* Why this memory region is not valid? */
-    int ret = validate_user_mem(memory_addr, 1, MAP_USER | MAP_EXECUTE);
-    lprintf("ret: %d", ret);
-    MAGIC_BREAK;
-    if (ret < 0) return -1;
-    MAGIC_BREAK;
+    // int ret = validate_user_mem(memory_addr, 1, MAP_USER | MAP_EXECUTE);
+    // lprintf("ret: %d", ret);
+    // MAGIC_BREAK;
+    // if (ret < 0) return -1;
+    // MAGIC_BREAK;
 
     return 0;
 }
@@ -430,7 +438,7 @@ void set_user_handler(int device_type) {
 }
 
 uint32_t _get_handler_addr(int idt_idx) {
-    uint32_t seg_base = _get_descriptor_base_addr(SEGSEL_SPARE0);
+    uint32_t seg_base = _get_descriptor_base_addr(SEGSEL_GUEST_CS);
     uint32_t ori_idt_addr = (uint32_t)idt_base() + 2 * idt_idx;
     uint32_t *user_idt_addr = (uint32_t *)(ori_idt_addr + seg_base);
     uint32_t handler_addr =
@@ -446,4 +454,19 @@ uint32_t _get_descriptor_base_addr(uint16_t seg_sel) {
     uint32_t base = (descriptor & 0x00000000ffff0000) >> 16;
     base += ((descriptor >> 32) & 0xff000000) + ((descriptor >> 32) & 0x000000ff);
     return base;
+}
+
+void _exn_print_ureg(ureg_t *ureg) {
+    printf("Registers Dump:\n");
+    printf("cause: %d, error_code: %d, cr2: 0x%08x\n",
+           ureg->cause, ureg->error_code, ureg->cr2);
+    printf("cs:  0x%08x, ss:  0x%08x\n", ureg->cs, ureg->ss);
+    printf("ds:  0x%08x, es:  0x%08x, fs:  0x%08x, gs:  0x%08x\n",
+           ureg->ds, ureg->es, ureg->fs, ureg-> gs);
+    printf("edi: 0x%08x, esi: 0x%08x, ebp: 0x%08x\n",
+           ureg->edi, ureg->esi, ureg->ebp);
+    printf("eax: 0x%08x, ebx: 0x%08x, ecx: 0x%08x, edx: 0x%08x\n",
+           ureg->eax, ureg->ebx, ureg->ecx, ureg->edx);
+    printf("eip: 0x%08x, esp: 0x%08x\neflags: 0x%08x\n\n",
+           ureg->eip, ureg->esp, ureg->eflags);
 }
