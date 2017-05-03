@@ -128,10 +128,11 @@ int guest_init(simple_elf_t *header) {
      * detect console writes. The code below relies on CONSOLE_MEM_BASE being
      * page-aligned and CONSOLE_MEM_SIZE fitting within a single page.
      */
-    uint32_t guest_console_mem = USER_MEM_START + CONSOLE_MEM_BASE;
-    uint32_t frame = get_pte(guest_console_mem) & PAGE_ALIGN_MASK;
+    // BUG this line is comment out for debuging keyboard by not page fault
+    // uint32_t guest_console_mem = USER_MEM_START + CONSOLE_MEM_BASE;
+    // uint32_t frame = get_pte(guest_console_mem) & PAGE_ALIGN_MASK;
     // this set_pte call will not fail
-    set_pte(guest_console_mem, frame, PTE_USER | PTE_PRESENT);
+    // set_pte(guest_console_mem, frame, PTE_USER | PTE_PRESENT);
 
     backup_main_console();
     clear_console();
@@ -190,7 +191,7 @@ void guest_info_destroy(guest_info_t *guest_info) {
 
 int handle_sensi_instr(ureg_t *ureg) {
     thread_t *thread = get_cur_tcb();
-    // lprintf("kern_stack: %p", (void *)thread->kern_sp);
+    lprintf("kern_stack: %p", (void *)thread->kern_sp);
 
     uint32_t *kern_sp = (uint32_t *)(thread->kern_sp);
 
@@ -208,8 +209,8 @@ int handle_sensi_instr(ureg_t *ureg) {
     int eip_offset = disassemble(instr_buf, MAX_INSTR_LENGTH,
                                  instr_buf_decoded, MAX_INS_DECODED_LENGTH + 1);
 
-    // lprintf("eip_offset: %d, instruction: %s",
-    //         eip_offset, instr_buf_decoded);
+    lprintf("eip_offset: %d, instruction: %s",
+            eip_offset, instr_buf_decoded);
     // guest_info_t *guest_info = thread->task->guest_info;
 
     // lprintf("inter_en_flag: %d, pic_ack_flag: %d",
@@ -248,6 +249,8 @@ int _simulate_instr(char *instr, ureg_t *ureg) {
         _handle_sti(guest_info);
         return 0;
     } else if (strcmp(instr, "IN AL, DX") == 0) {
+        lprintf("get into IN");
+        MAGIC_BREAK;
         // ret = _handle_in(guest_info, ureg);
         // if (ret == 0) return 0;
         _handle_in(guest_info, ureg);
@@ -386,6 +389,19 @@ void _handle_int_ack(guest_info_t *guest_info) {
     if (guest_info->inter_en_flag != ENABLED) return;
     switch (guest_info->pic_ack_flag) {
     case KEYBOARD_NOT_ACKED:
+        lprintf("inter_en_flag: %d, pic_ack_flag: %d in keyboard outb",
+                guest_info->inter_en_flag, guest_info->pic_ack_flag);
+        MAGIC_BREAK;
+        if (guest_info->buf_start != guest_info->buf_end) {
+            /* deliver next keyboard interrupt */
+            if (guest_info->inter_en_flag == ENABLED) {
+                set_user_handler(KEYBOARD_DEVICE);
+                lprintf("after setting set_user_handler in keyboard outb");
+                MAGIC_BREAK;
+            } else if (guest_info->inter_en_flag == DISABLED) {
+                guest_info->inter_en_flag = DISABLED_KEYBOARD_PENDING;
+            }
+        }
         guest_info->pic_ack_flag = ACKED;
         break;
     case TIMER_NOT_ACKED:
@@ -448,7 +464,11 @@ int _handle_in(guest_info_t *guest_info, ureg_t *ureg) {
         uint8_t keycode = (uint8_t)guest_info->keycode_buf[buf_start];
         /* buf_start should never equal to buf_end in this function */
         buf_start = (buf_start + 1) % KC_BUF_LEN;
+        lprintf("buf_start moves from %u to %u",
+                (unsigned int)guest_info->buf_start, (unsigned int)buf_start);
         guest_info->buf_start = buf_start;
+        lprintf("keycode is %d", keycode);
+        MAGIC_BREAK;
         // *((uint32_t *)(kern_sp - 5)) = handler_addr;
         /* change the eax value that is saved on stack when went into handler */
         *((uint32_t *)(kern_sp - 7)) = (uint32_t)keycode;
