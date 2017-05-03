@@ -160,8 +160,8 @@ void exn_handler(int cause, int ec_flag) {
     // TODO organize
     if (task->guest_info != NULL && cause == SWEXN_CAUSE_PAGEFAULT) {
         uint32_t pf_addr = get_cr2();
-        if (((pf_addr % USER_MEM_START) & PAGE_ALIGN_MASK) == CONSOLE_MEM_BASE) {
-            lprintf("guest console pf, cr2 is 0x%x", (unsigned int)pf_addr);
+        if ((pf_addr & PAGE_ALIGN_MASK) == GUEST_CONSOLE_BASE) {
+            // lprintf("guest console pf, cr2 is 0x%x", (unsigned int)pf_addr);
 
             int ret;
             ret = guest_console_mov((void *)pf_addr, ureg_ptr);
@@ -243,6 +243,7 @@ void _exn_print_error_msg(ureg_t *ureg) {
         printf("PROTFAULT ERROR\n");
         break;
     case SWEXN_CAUSE_PAGEFAULT:
+        MAGIC_BREAK;
         printf("PAGEFAULT ERROR:\n");
         if (error_code & ERROR_CODE_P) printf("non-present page's");
         else printf("non-present page's");

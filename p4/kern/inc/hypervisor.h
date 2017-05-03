@@ -17,6 +17,7 @@
 
 #define GUEST_MEM_SIZE (24 * 1024 * 1024)
 #define GUEST_FRAMES (GUEST_MEM_SIZE / PAGE_SIZE)
+#define GUEST_CONSOLE_BASE (CONSOLE_MEM_BASE + USER_MEM_START)
 
 /* translate sensitive instruction */
 #define MAX_INSTR_LENGTH 32
@@ -75,6 +76,8 @@ typedef struct guest_info_t {
 #define SIGNAL_CURSOR_NORMAL 0
 #define SIGNAL_CURSOR_LSB_IDX 1
 #define SIGNAL_CURSOR_MSB_IDX 2
+
+#define IDT_ENTRY_LENGTH 8
 
 // TODO docs
 

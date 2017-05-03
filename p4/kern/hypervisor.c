@@ -47,6 +47,7 @@ static void _handle_sti(guest_info_t *guest_info);
 static int _handle_in(guest_info_t *guest_info, ureg_t *ureg);
 static void _handle_hlt(guest_info_t *guest_info, ureg_t *ureg);
 static int _handle_jmp_far(guest_info_t *guest_info, char *instr);
+static void _handle_iret(guest_info_t *guest_info, ureg_t *ureg);
 
 /* used by _handle_out */
 static int _handle_timer_init(ureg_t *ureg);
@@ -127,10 +128,9 @@ int guest_init(simple_elf_t *header) {
      * detect console writes. The code below relies on CONSOLE_MEM_BASE being
      * page-aligned and CONSOLE_MEM_SIZE fitting within a single page.
      */
-    uint32_t guest_console_mem = USER_MEM_START + CONSOLE_MEM_BASE;
-    uint32_t frame = get_pte(guest_console_mem) & PAGE_ALIGN_MASK;
+    uint32_t frame = get_pte(GUEST_CONSOLE_BASE) & PAGE_ALIGN_MASK;
     // this set_pte call will not fail
-    set_pte(guest_console_mem, frame, PTE_USER | PTE_PRESENT);
+    set_pte(GUEST_CONSOLE_BASE, frame, PTE_USER | PTE_PRESENT);
 
     backup_main_console();
     clear_console();
@@ -161,7 +161,7 @@ guest_info_t *guest_info_init() {
     guest_info_t *guest_info = calloc(1, sizeof(guest_info_t));
     if (guest_info == NULL) return NULL;
 
-    guest_info->pic_ack_flag = ACKED;
+    guest_info->pic_ack_flag = TIMER_NOT_ACKED;
     guest_info->inter_en_flag = DISABLED;
 
     /* virtual timer */
@@ -210,11 +210,10 @@ int guest_console_mov(uint32_t *dest, ureg_t *ureg) {
     int eip_offset = disassemble(instr_buf, MAX_INSTR_LENGTH,
                                  decoded_buf, MAX_DECODED_LENGTH);
 
-    uint32_t guest_console_mem = USER_MEM_START + CONSOLE_MEM_BASE;
-    uint32_t frame = get_pte(guest_console_mem) & PAGE_ALIGN_MASK;
-    asm_page_inval((void *)guest_console_mem);
+    uint32_t frame = get_pte(GUEST_CONSOLE_BASE) & PAGE_ALIGN_MASK;
+    asm_page_inval((void *)GUEST_CONSOLE_BASE);
     // this set_pte call will not fail
-    set_pte(guest_console_mem, frame, PTE_USER | PTE_WRITE | PTE_PRESENT);
+    set_pte(GUEST_CONSOLE_BASE, frame, PTE_USER | PTE_WRITE | PTE_PRESENT);
 
     char one[] = "MOV BYTE [EAX], 0x";
     int lenone = strlen(one);
@@ -245,8 +244,8 @@ int guest_console_mov(uint32_t *dest, ureg_t *ureg) {
     if (ret == 0) *((uint32_t *)(kern_sp - 5)) = eip + eip_offset;
 
     // this set_pte call will not fail
-    set_pte(guest_console_mem, frame, PTE_USER | PTE_PRESENT);
-    asm_page_inval((void *)guest_console_mem);
+    set_pte(GUEST_CONSOLE_BASE, frame, PTE_USER | PTE_PRESENT);
+    asm_page_inval((void *)GUEST_CONSOLE_BASE);
 
     return ret;
 }
@@ -268,15 +267,21 @@ int handle_sensi_instr(ureg_t *ureg) {
     // TODO why doesn't fac3 get recognized??
     char fac3[] = {0xfa, 0xc3};
     if (memcmp(fac3, instr_buf, 2) == 0) {
+        /*
+        lprintf("instr_buf: 0x%x", *(unsigned int *)instr_buf);
+        lprintf("eip: %x, eip_offset: %d, decoded_buf: %s",
+                (unsigned int)eip, eip_offset, decoded_buf);
+        MAGIC_BREAK;
+        */
+
         sprintf(decoded_buf, "CLI ");
         eip_offset = 1;
     }
 
+    /*
     lprintf("eip: %x, eip_offset: %d, instruction: %s",
             (unsigned int)eip, eip_offset, decoded_buf);
-    // _exn_print_ureg(ureg);
-
-    // MAGIC_BREAK;
+            */
 
     /* need to set new return address first, because call handler need new ip */
     *((uint32_t *)(kern_sp - 5)) = eip + eip_offset;
@@ -286,7 +291,7 @@ int handle_sensi_instr(ureg_t *ureg) {
         *((uint32_t *)(kern_sp - 5)) = eip;
         return -1;
     }
-
+    // lprintf("line 228 in hypervisor");
     return 0;
 }
 
@@ -329,9 +334,11 @@ int _simulate_instr(char *instr, ureg_t *ureg) {
         if (ret == 0) return 0;
     } else if (strncmp(instr, "MOV", strlen("MOV")) == 0) {
         return 0;
+    } else if (strncmp(instr, "IRET", strlen("IRET")) == 0) {
+        _handle_iret(guest_info, ureg);
+        return 0;
     } else {
         MAGIC_BREAK;
-        return 0;
     }
 
     return -1;
@@ -341,15 +348,15 @@ int _handle_out(guest_info_t *guest_info, ureg_t *ureg) {
     int ret = 0;
     uint16_t outb_param1 = ureg->edx;
     uint8_t outb_param2 = ureg->eax;
-    lprintf("outb_param1: %x, outb_param2: %x", outb_param1, outb_param2);
-    // MAGIC_BREAK;
+
+    // lprintf("outb_param1: %x, outb_param2: %x", outb_param1, outb_param2);
 
     if (outb_param1 == TIMER_MODE_IO_PORT
             || outb_param1 == TIMER_PERIOD_IO_PORT) {
         /* guest_info set timer */
         ret = _handle_timer_init(ureg);
         if (ret == 0) return 0;
-    } else if (outb_param1 == INT_ACK_CURRENT) {
+    } else if (outb_param1 == INT_ACK_CURRENT && outb_param2 == INT_CTL_PORT) {
         /* guest_info ack device interrupt */
         _handle_int_ack(guest_info);
         return 0;
@@ -384,9 +391,10 @@ int _handle_timer_init(ureg_t *ureg) {
         break;
 
     case TIMER_FREQUENCY_PART2:
-        if (outb_param1 == TIMER_PERIOD_IO_PORT)
+        if (outb_param1 == TIMER_PERIOD_IO_PORT) {
+            guest_info->pic_ack_flag = ACKED;
             guest_info->timer_init_stat = TIMER_INTED;
-        else /* invalid timer init process */
+        } else /* invalid timer init process */
             return -1;
         guest_info->timer_interval += (outb_param2) << 8;
         guest_info->timer_interval =
@@ -443,6 +451,11 @@ int _handle_set_cursor(ureg_t *ureg) {
 
 /* TODO how to run guest timer */
 void _handle_int_ack(guest_info_t *guest_info) {
+    /**
+     * if interrupt is disabled, does that mean we will not get a int_ack
+     * request?
+     */
+    if (guest_info->inter_en_flag != ENABLED) return;
     switch (guest_info->pic_ack_flag) {
     case KEYBOARD_NOT_ACKED:
         guest_info->pic_ack_flag = ACKED;
@@ -450,7 +463,7 @@ void _handle_int_ack(guest_info_t *guest_info) {
     case TIMER_NOT_ACKED:
         guest_info->pic_ack_flag = ACKED;
         // do context switch ? Since we are in a time interrupt
-        sche_yield(RUNNABLE);
+        // sche_yield(RUNNABLE);
         break;
     case TIMER_KEYBOARD_NOT_ACKED:
         guest_info->pic_ack_flag = TIMER_NOT_ACKED;
@@ -473,6 +486,7 @@ void _handle_cli(guest_info_t *guest_info) {
 }
 
 void _handle_sti(guest_info_t *guest_info) {
+    // MAGIC_BREAK;
     switch (guest_info->inter_en_flag) {
     case ENABLED:
     case DISABLED:
@@ -493,6 +507,8 @@ void _handle_sti(guest_info_t *guest_info) {
         assert(0 == 1);
         break;
     }
+    // lprintf("guest_info->inter_en_flag: %d", guest_info->inter_en_flag);
+    // MAGIC_BREAK;
     return;
 }
 
@@ -527,10 +543,10 @@ int _handle_jmp_far(guest_info_t *guest_info, char *instr) {
     unsigned int cs_value = 0;
     unsigned int memory_addr = 0;
     sscanf(instr, "JMP FAR 0x%x:0x%x", &cs_value, &memory_addr);
-    lprintf("memory_addr: 0x%08x", memory_addr);
+    // lprintf("memory_addr: 0x%08x", memory_addr);
     if (cs_value != SEGSEL_KERNEL_CS) return -1;
     memory_addr += _get_descriptor_base_addr(SEGSEL_GUEST_CS);
-    lprintf("memory_addr: 0x%08x", memory_addr);
+    // lprintf("memory_addr: 0x%08x", memory_addr);
     /* Why this memory region is not valid? */
     // int ret = validate_user_mem(memory_addr, 1, MAP_USER | MAP_EXECUTE);
     // lprintf("ret: %d", ret);
@@ -541,10 +557,25 @@ int _handle_jmp_far(guest_info_t *guest_info, char *instr) {
     return 0;
 }
 
-void set_user_handler(int device_type) {
+void _handle_iret(guest_info_t *guest_info, ureg_t *ureg) {
     thread_t *thread = get_cur_tcb();
     uint32_t *kern_sp = (uint32_t *)(thread->kern_sp);
 
+    uint32_t user_esp_value = ureg->esp;
+    uint32_t addr_offset = _get_descriptor_base_addr(SEGSEL_GUEST_DS);
+    uint32_t eip_to_return = *((uint32_t *)(user_esp_value + addr_offset));
+
+    // lprintf("user_esp_value: %p, eip_to_return: %p",
+    //         (void *)user_esp_value, (void *)eip_to_return);
+    *((uint32_t *)(kern_sp - 2)) = user_esp_value + 4;
+    *((uint32_t *)(kern_sp - 5)) = eip_to_return;
+    // MAGIC_BREAK;
+    return;
+}
+
+void set_user_handler(int device_type) {
+    thread_t *thread = get_cur_tcb();
+    uint32_t *kern_sp = (uint32_t *)(thread->kern_sp);
     uint32_t handler_addr = 0;
     if (device_type == TIMER_DEVICE) {
         handler_addr =  _get_handler_addr(TIMER_IDT_ENTRY);
@@ -554,10 +585,12 @@ void set_user_handler(int device_type) {
         /* impossible */
         assert(0 == 1);
     }
+    uint32_t addr_offset = _get_descriptor_base_addr(SEGSEL_GUEST_DS);
     // *((uint32_t *)(kern_sp - 5)) = eip_value + eip_offset;
     uint32_t guest_esp_value = *((uint32_t *)(kern_sp - 2));
-    guest_esp_value--;
-    *((uint32_t *)guest_esp_value) = *((uint32_t *)(kern_sp - 5));
+    guest_esp_value -= 4;
+    *((uint32_t *)(guest_esp_value + addr_offset)) =
+        *((uint32_t *)(kern_sp - 5));
     *((uint32_t *)(kern_sp - 2)) = guest_esp_value;
     *((uint32_t *)(kern_sp - 5)) = handler_addr;
     return;
@@ -565,7 +598,13 @@ void set_user_handler(int device_type) {
 
 uint32_t _get_handler_addr(int idt_idx) {
     uint32_t seg_base = _get_descriptor_base_addr(SEGSEL_GUEST_CS);
-    uint32_t ori_idt_addr = (uint32_t)idt_base() + 2 * idt_idx;
+    uint32_t ori_idt_addr =
+        (uint32_t)((void *)idt_base() + idt_idx * IDT_ENTRY_LENGTH);
+
+    // lprintf("idt_base: %p, idt_idx: %d", idt_base(), idt_idx);
+    // lprintf("seg_base: %p, ori_idt_addr: %p",
+    //         (void *)seg_base, (void *)ori_idt_addr);
+    // MAGIC_BREAK;
     uint32_t *user_idt_addr = (uint32_t *)(ori_idt_addr + seg_base);
     uint32_t handler_addr =
         LSB_HANDLER((*user_idt_addr)) + MSB_HANDLER((*(user_idt_addr + 1 )));
