@@ -128,6 +128,7 @@ int guest_init(simple_elf_t *header) {
      * detect console writes. The code below relies on CONSOLE_MEM_BASE being
      * page-aligned and CONSOLE_MEM_SIZE fitting within a single page.
      */
+    /* I comment this part because without console, we will get a pagefault. */
     // uint32_t guest_console_mem = USER_MEM_START + CONSOLE_MEM_BASE;
     // uint32_t frame = get_pte(guest_console_mem) & PAGE_ALIGN_MASK;
     // // this set_pte call will not fail
