@@ -50,8 +50,6 @@ void timer_handler() {
     outb(INT_ACK_CURRENT, INT_CTL_PORT);
     _prepare_guest_timer();
     callback_func(num_ticks);
-    return;
-    // TODO this return is just for debugging (disabling prepare guest)
 }
 
 void _prepare_guest_timer(void) {
@@ -73,7 +71,7 @@ void _prepare_guest_timer(void) {
         return;
     }
 
-    // lprintf("pic_ack_flag: %d", pic_ack_flag);
+    lprintf("pic_ack_flag: %d", pic_ack_flag);
     // MAGIC_BREAK;
     if (pic_ack_flag != ACKED
             && pic_ack_flag != KEYBOARD_NOT_ACKED) {
@@ -99,7 +97,7 @@ void _prepare_guest_timer(void) {
             guest_info->pic_ack_flag = TIMER_NOT_ACKED;
         else if (pic_ack_flag == KEYBOARD_NOT_ACKED)
             guest_info->pic_ack_flag = KEYBOARD_TIMER_NOT_ACKED;
-        // lprintf("invoke guest timer handler");
+        lprintf("invoke guest timer handler");
         set_user_handler(TIMER_DEVICE);
     }
 

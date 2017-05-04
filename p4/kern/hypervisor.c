@@ -312,7 +312,6 @@ int _simulate_instr(char *instr, ureg_t *ureg) {
         _handle_sti(guest_info);
         return 0;
     } else if (strcmp(instr, "IN AL, DX") == 0) {
-        lprintf("get into IN");
         // MAGIC_BREAK;
         // ret = _handle_in(guest_info, ureg);
         // if (ret == 0) return 0;
@@ -416,30 +415,30 @@ int _handle_set_cursor(ureg_t *ureg) {
     uint8_t outb_param2 = ureg->eax;
 
     switch (guest_info->cursor_data) {
-        case SIGNAL_CURSOR_NORMAL:
-            if (outb_param1 == CRTC_IDX_REG && ureg->eax == CRTC_CURSOR_LSB_IDX) {
-                guest_info->cursor_data = SIGNAL_CURSOR_LSB_IDX;
-            } else if (outb_param1 == CRTC_IDX_REG
-                    && outb_param2 == CRTC_CURSOR_MSB_IDX) {
-                guest_info->cursor_data = SIGNAL_CURSOR_MSB_IDX;
-            } else return -1;
-            break;
+    case SIGNAL_CURSOR_NORMAL:
+        if (outb_param1 == CRTC_IDX_REG && ureg->eax == CRTC_CURSOR_LSB_IDX) {
+            guest_info->cursor_data = SIGNAL_CURSOR_LSB_IDX;
+        } else if (outb_param1 == CRTC_IDX_REG
+                   && outb_param2 == CRTC_CURSOR_MSB_IDX) {
+            guest_info->cursor_data = SIGNAL_CURSOR_MSB_IDX;
+        } else return -1;
+        break;
 
-        case SIGNAL_CURSOR_LSB_IDX:
-            if (outb_param1 == CRTC_DATA_REG) {
-                guest_info->cursor_data = SIGNAL_CURSOR_NORMAL;
-                outb(CRTC_IDX_REG, CRTC_CURSOR_LSB_IDX);
-                outb(CRTC_DATA_REG, outb_param2);
-            } else return -1;
-            break;
+    case SIGNAL_CURSOR_LSB_IDX:
+        if (outb_param1 == CRTC_DATA_REG) {
+            guest_info->cursor_data = SIGNAL_CURSOR_NORMAL;
+            outb(CRTC_IDX_REG, CRTC_CURSOR_LSB_IDX);
+            outb(CRTC_DATA_REG, outb_param2);
+        } else return -1;
+        break;
 
-        case SIGNAL_CURSOR_MSB_IDX:
-            if (outb_param1 == CRTC_DATA_REG) {
-                guest_info->cursor_data = SIGNAL_CURSOR_NORMAL;
-                outb(CRTC_IDX_REG, CRTC_CURSOR_MSB_IDX);
-                outb(CRTC_DATA_REG, outb_param2);
-            } else return -1;
-            break;
+    case SIGNAL_CURSOR_MSB_IDX:
+        if (outb_param1 == CRTC_DATA_REG) {
+            guest_info->cursor_data = SIGNAL_CURSOR_NORMAL;
+            outb(CRTC_IDX_REG, CRTC_CURSOR_MSB_IDX);
+            outb(CRTC_DATA_REG, outb_param2);
+        } else return -1;
+        break;
     }
 
     return 0;
@@ -447,22 +446,22 @@ int _handle_set_cursor(ureg_t *ureg) {
 
 /* TODO how to run guest timer */
 void _handle_int_ack(guest_info_t *guest_info) {
-    lprintf("%d", guest_info->pic_ack_flag);
-
     switch (guest_info->pic_ack_flag) {
     case KEYBOARD_NOT_ACKED:
-        lprintf("inter_en_flag: %d, pic_ack_flag: %d in keyboard outb",
-                guest_info->inter_en_flag, guest_info->pic_ack_flag);
+        // lprintf("inter_en_flag: %d, pic_ack_flag: %d in keyboard outb",
+        //         guest_info->inter_en_flag, guest_info->pic_ack_flag);
+        // MAGIC_BREAK;
         if (guest_info->buf_start != guest_info->buf_end) {
             /* deliver next keyboard interrupt */
             if (guest_info->inter_en_flag == ENABLED) {
                 set_user_handler(KEYBOARD_DEVICE);
-                lprintf("after setting set_user_handler in keyboard outb");
             } else if (guest_info->inter_en_flag == DISABLED) {
                 guest_info->inter_en_flag = DISABLED_KEYBOARD_PENDING;
             }
         }
         guest_info->pic_ack_flag = ACKED;
+        lprintf("inter_en_flag: %d, pic_ack_flag: %d in keyboard outb",
+                guest_info->inter_en_flag, guest_info->pic_ack_flag);
         break;
     case TIMER_NOT_ACKED:
         if (guest_info->buf_start != guest_info->buf_end) {
@@ -488,10 +487,21 @@ void _handle_int_ack(guest_info_t *guest_info) {
             }
         }
         guest_info->pic_ack_flag = TIMER_NOT_ACKED;
+        if (guest_info->buf_start != guest_info->buf_end) {
+            /* deliver next keyboard interrupt */
+            if (guest_info->inter_en_flag == ENABLED) {
+                set_user_handler(KEYBOARD_DEVICE);
+                // lprintf("after setting set_user_handler in keyboard outb");
+                // MAGIC_BREAK;
+            } else if (guest_info->inter_en_flag == DISABLED) {
+                guest_info->inter_en_flag = DISABLED_KEYBOARD_PENDING;
+            }
+        }
+        guest_info->pic_ack_flag = TIMER_NOT_ACKED;
         break;
     case KEYBOARD_TIMER_NOT_ACKED:
         guest_info->pic_ack_flag = KEYBOARD_NOT_ACKED;
-        // do context switch ?
+        sche_yield(RUNNABLE);
         break;
     default:
         // assert(0 == 1);
@@ -543,10 +553,9 @@ int _handle_in(guest_info_t *guest_info, ureg_t *ureg) {
         uint8_t keycode = (uint8_t)guest_info->keycode_buf[buf_start];
         /* buf_start should never equal to buf_end in this function */
         buf_start = (buf_start + 1) % KC_BUF_LEN;
-        lprintf("buf_start moves from %u to %u",
-                (unsigned int)guest_info->buf_start, (unsigned int)buf_start);
+        // lprintf("buf_start moves from %u to %u",
+        //         (unsigned int)guest_info->buf_start, (unsigned int)buf_start);
         guest_info->buf_start = buf_start;
-        lprintf("keycode is %d", keycode);
         // MAGIC_BREAK;
         // *((uint32_t *)(kern_sp - 5)) = handler_addr;
         /* change the eax value that is saved on stack when went into handler */
@@ -597,6 +606,8 @@ void _handle_iret(guest_info_t *guest_info, ureg_t *ureg) {
     *((uint32_t *)(kern_sp - 2)) = user_esp_value + 4;
     *((uint32_t *)(kern_sp - 5)) = eip_to_return;
     // MAGIC_BREAK;
+    lprintf("return addr: %p", (void *)eip_to_return);
+
     return;
 }
 
@@ -616,9 +627,15 @@ void set_user_handler(int device_type) {
     uint32_t addr_offset = _get_descriptor_base_addr(SEGSEL_GUEST_DS);
     // *((uint32_t *)(kern_sp - 5)) = eip_value + eip_offset;
     uint32_t guest_esp_value = *((uint32_t *)(kern_sp - 2));
-    guest_esp_value -= 4;
+    guest_esp_value -= 12;
+
     *((uint32_t *)(guest_esp_value + addr_offset)) =
         *((uint32_t *)(kern_sp - 5));
+    *((uint32_t *)(guest_esp_value + 4 + addr_offset)) =
+        *((uint32_t *)(kern_sp - 4));
+    *((uint32_t *)(guest_esp_value + 8 + addr_offset)) =
+        *((uint32_t *)(kern_sp - 3));
+
     *((uint32_t *)(kern_sp - 2)) = guest_esp_value;
     *((uint32_t *)(kern_sp - 5)) = handler_addr;
     return;

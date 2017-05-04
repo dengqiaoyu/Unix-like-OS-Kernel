@@ -48,8 +48,7 @@ int keyboard_init() {
  */
 void add_to_kb_buf(void) {
     uint8_t keypress = inb(KEYBOARD_PORT);
-
-    lprintf("get keypress in add_to_kb_buf, keypress: %u", keypress);
+    lprintf("keypress: %u", keypress);
     if (cur_guest_info != NULL) {
         _handle_guest_kb_handler(keypress);
         return;
@@ -104,7 +103,7 @@ void _handle_guest_kb_handler(uint8_t keypress) {
     int pic_ack_flag = cur_guest_info->pic_ack_flag;
     // if (pic_ack_flag != ACKED && pic_ack_flag != TIMER_NOT_ACKED) return;
 
-    lprintf("keypress in _handle_guest_kb_handler: %u", keypress);
+    // lprintf("keypress in _handle_guest_kb_handler: %u", keypress);
     /* check whether full */
     int new_buf_end = (cur_guest_info->buf_end + 1) % KC_BUF_LEN;
     if (new_buf_end == cur_guest_info->buf_start) {
@@ -113,11 +112,11 @@ void _handle_guest_kb_handler(uint8_t keypress) {
     }
 
     cur_guest_info->keycode_buf[cur_guest_info->buf_end] = keypress;
-    lprintf("cur_guest_info->buf_end: %u, new_buf_end: %u",
-            (unsigned int)cur_guest_info->buf_end, (unsigned int)new_buf_end);
-    lprintf("keycode_buf[%u]: %u",
-            (unsigned int)cur_guest_info->buf_end,
-            (unsigned int)cur_guest_info->keycode_buf[cur_guest_info->buf_end]);
+    // lprintf("cur_guest_info->buf_end: %u, new_buf_end: %u",
+    //         (unsigned int)cur_guest_info->buf_end, (unsigned int)new_buf_end);
+    // lprintf("keycode_buf[%u]: %u",
+    //         (unsigned int)cur_guest_info->buf_end,
+    //         (unsigned int)cur_guest_info->keycode_buf[cur_guest_info->buf_end]);
     cur_guest_info->buf_end = new_buf_end;
     /* set iret go to keyboard handler */
     // MAGIC_BREAK;
@@ -127,9 +126,10 @@ void _handle_guest_kb_handler(uint8_t keypress) {
         cur_guest_info->pic_ack_flag = KEYBOARD_NOT_ACKED;
         if (inter_en_flag == DISABLED)
             cur_guest_info->inter_en_flag = DISABLED_KEYBOARD_PENDING;
+        else if (inter_en_flag == DISABLED_TIMER_PENDING)
+            break;
         else
             set_user_handler(KEYBOARD_DEVICE);
-        lprintf("after setting user handler");
         break;
     case KEYBOARD_NOT_ACKED:
         break;
