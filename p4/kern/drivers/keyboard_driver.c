@@ -84,6 +84,8 @@ int _process_keypress(uint8_t keypress) {
     return -1;
 }
 
+/* keybord not working */
+
 // void _handle_guest_kb_handler(uint8_t keypress) {
 //     int inter_en_flag = guest_info_driver->inter_en_flag;
 //     if (inter_en_flag != ENABLED && inter_en_flag != DISABLED) return;
