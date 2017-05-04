@@ -62,7 +62,7 @@ static uint32_t _get_handler_addr(int idt_idx);
 static uint32_t _get_descriptor_base_addr(uint16_t seg_sel);
 
 extern uint64_t init_gdt[GDT_SEGS];
-guest_info_t *guest_info_driver;
+guest_info_t *cur_guest_info;
 
 void hypervisor_init() {
     init_gdt[SEGSEL_SPARE0_IDX] = SEGDES_GUEST_CS;
@@ -140,7 +140,7 @@ int guest_init(simple_elf_t *header) {
     set_esp0(thread->kern_sp);
 
     disable_interrupts();
-    guest_info_driver = thread->task->guest_info;
+    cur_guest_info = thread->task->guest_info;
     // MAGIC_BREAK;
     kern_to_guest(header->e_entry);
     return 0;
