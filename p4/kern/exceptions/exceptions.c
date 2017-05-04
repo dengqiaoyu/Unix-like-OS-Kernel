@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>                     /* memcpy */
 #include <ureg.h>                       /* ureg_t */
+#include <common_kern.h>                /* USER_MEM_START */
 #include <stdio.h>                      /* printf */
 
 /* x86 specific includes */
@@ -63,10 +64,11 @@ void pagefault_handler() {
         asm_page_inval((void *)pf_addr);
         uint32_t frame_addr = get_frame();
         set_pte(pf_addr, frame_addr, PTE_WRITE | PTE_USER | PTE_PRESENT);
-    } else {
-        /* otherwise call handler to handle page fault */
-        exn_handler(SWEXN_CAUSE_PAGEFAULT, ERROR_CODE);
+        return;
     }
+
+    /* otherwise call handler to handle page fault */
+    exn_handler(SWEXN_CAUSE_PAGEFAULT, ERROR_CODE);
 }
 
 /**
@@ -155,6 +157,18 @@ void exn_handler(int cause, int ec_flag) {
         if (handle_sensi_instr(ureg_ptr) == 0) return;
     }
 
+    // TODO organize
+    if (task->guest_info != NULL && cause == SWEXN_CAUSE_PAGEFAULT) {
+        uint32_t pf_addr = get_cr2();
+        if ((pf_addr & PAGE_ALIGN_MASK) == GUEST_CONSOLE_BASE) {
+            // lprintf("guest console pf, cr2 is 0x%x", (unsigned int)pf_addr);
+
+            int ret;
+            ret = guest_console_mov((void *)pf_addr, ureg_ptr);
+            if (ret == 0) return;
+        }
+    }
+
     if (thread->swexn_handler == NULL) {
         task_t *task = thread->task;
 
@@ -162,6 +176,7 @@ void exn_handler(int cause, int ec_flag) {
         int live_threads = get_list_size(task->live_thread_list);
         if (live_threads == 1) task->status = -2;
         kern_mutex_unlock(&(task->thread_list_mutex));
+
         _exn_print_error_msg(&ureg);
         kern_vanish();
     } else {

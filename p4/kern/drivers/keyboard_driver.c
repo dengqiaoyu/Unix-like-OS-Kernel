@@ -18,6 +18,7 @@
 
 /* user defined include */
 #include "drivers/keyboard_driver.h"
+#include "syscalls/life_cycle.h"
 #include "scheduler.h"
 
 /* internal function */
@@ -27,7 +28,7 @@ static void _handle_guest_kb_handler(uint8_t keypress);
 /* functions definition */
 keyboard_buffer_t kb_buf;
 
-extern guest_info_t *guest_info_driver;
+extern guest_info_t *cur_guest_info;
 
 /**
  * Initialize ketboard input buffer
@@ -48,10 +49,11 @@ int keyboard_init() {
 void add_to_kb_buf(void) {
     uint8_t keypress = inb(KEYBOARD_PORT);
     lprintf("keypress: %u", keypress);
-    if (guest_info_driver != NULL) {
+    if (cur_guest_info != NULL) {
         _handle_guest_kb_handler(keypress);
         return;
     }
+
     /* convert keyboard press into character */
     char ch = _process_keypress(keypress);
     if (ch == -1) {
@@ -80,42 +82,50 @@ void add_to_kb_buf(void) {
  */
 int _process_keypress(uint8_t keypress) {
     kh_type augchar = process_scancode(keypress);
-    if (KH_HASDATA(augchar) && !KH_ISMAKE(augchar))
+    if (KH_HASDATA(augchar) && KH_ISMAKE(augchar))
         return KH_GETCHAR(augchar);
     return -1;
 }
 
 void _handle_guest_kb_handler(uint8_t keypress) {
-    int inter_en_flag = guest_info_driver->inter_en_flag;
-    int pic_ack_flag = guest_info_driver->pic_ack_flag;
-    lprintf("inter_en_flag: %d, pic_ack_flag: %d", inter_en_flag, pic_ack_flag);
-    if (inter_en_flag != ENABLED && inter_en_flag != DISABLED) return;
+    kh_type augchar = process_scancode(keypress);
+    if (KH_HASRAW(augchar) && !KH_ISMAKE(augchar)) {
+        if (KH_GETRAW(augchar) == 'c' && KH_CTL(augchar)) {
+            lprintf("ctrl-c pressed in guest");
+            outb(INT_ACK_CURRENT, INT_CTL_PORT);
+            kern_vanish();
+            return;
+        }
+    }
 
+    int inter_en_flag = cur_guest_info->inter_en_flag;
+    if (inter_en_flag != ENABLED && inter_en_flag != DISABLED) return;
+    int pic_ack_flag = cur_guest_info->pic_ack_flag;
     // if (pic_ack_flag != ACKED && pic_ack_flag != TIMER_NOT_ACKED) return;
 
     // lprintf("keypress in _handle_guest_kb_handler: %u", keypress);
     /* check whether full */
-    int new_buf_end = (guest_info_driver->buf_end + 1) % KC_BUF_LEN;
-    if (new_buf_end == guest_info_driver->buf_start) {
+    int new_buf_end = (cur_guest_info->buf_end + 1) % KC_BUF_LEN;
+    if (new_buf_end == cur_guest_info->buf_start) {
         outb(INT_ACK_CURRENT, INT_CTL_PORT);
         return;
     }
 
-    guest_info_driver->keycode_buf[guest_info_driver->buf_end] = keypress;
-    // lprintf("guest_info_driver->buf_end: %u, new_buf_end: %u",
-    //         (unsigned int)guest_info_driver->buf_end, (unsigned int)new_buf_end);
+    cur_guest_info->keycode_buf[cur_guest_info->buf_end] = keypress;
+    // lprintf("cur_guest_info->buf_end: %u, new_buf_end: %u",
+    //         (unsigned int)cur_guest_info->buf_end, (unsigned int)new_buf_end);
     // lprintf("keycode_buf[%u]: %u",
-    //         (unsigned int)guest_info_driver->buf_end,
-    //         (unsigned int)guest_info_driver->keycode_buf[guest_info_driver->buf_end]);
-    guest_info_driver->buf_end = new_buf_end;
+    //         (unsigned int)cur_guest_info->buf_end,
+    //         (unsigned int)cur_guest_info->keycode_buf[cur_guest_info->buf_end]);
+    cur_guest_info->buf_end = new_buf_end;
     /* set iret go to keyboard handler */
     // MAGIC_BREAK;
 
     switch (pic_ack_flag) {
     case ACKED:
-        guest_info_driver->pic_ack_flag = KEYBOARD_NOT_ACKED;
+        cur_guest_info->pic_ack_flag = KEYBOARD_NOT_ACKED;
         if (inter_en_flag == DISABLED)
-            guest_info_driver->inter_en_flag = DISABLED_KEYBOARD_PENDING;
+            cur_guest_info->inter_en_flag = DISABLED_KEYBOARD_PENDING;
         else if (inter_en_flag == DISABLED_TIMER_PENDING)
             break;
         else
@@ -126,7 +136,7 @@ void _handle_guest_kb_handler(uint8_t keypress) {
     case KEYBOARD_NOT_ACKED:
         break;
     case TIMER_NOT_ACKED:
-        guest_info_driver->pic_ack_flag = TIMER_KEYBOARD_NOT_ACKED;
+        cur_guest_info->pic_ack_flag = TIMER_KEYBOARD_NOT_ACKED;
         /* TODO how to deal with this situation */
         break;
     case TIMER_KEYBOARD_NOT_ACKED:

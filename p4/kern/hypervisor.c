@@ -36,6 +36,7 @@
 #include "vm.h"                         /* read_guest */
 #include "console.h"                    /* set_cursor */
 #include "asm_kern_to_user.h"
+#include "asm_page_inval.h"
 
 /* internal function */
 static int _simulate_instr(char *instr, ureg_t *ureg);
@@ -61,7 +62,7 @@ static uint32_t _get_handler_addr(int idt_idx);
 static uint32_t _get_descriptor_base_addr(uint16_t seg_sel);
 
 extern uint64_t init_gdt[GDT_SEGS];
-guest_info_t *guest_info_driver;
+guest_info_t *cur_guest_info;
 
 void hypervisor_init() {
     init_gdt[SEGSEL_SPARE0_IDX] = SEGDES_GUEST_CS;
@@ -70,7 +71,6 @@ void hypervisor_init() {
 
 int guest_init(simple_elf_t *header) {
     thread_t *thread = get_cur_tcb();
-
     task_t *task = thread->task;
 
     task->guest_info = guest_info_init();
@@ -93,7 +93,6 @@ int guest_init(simple_elf_t *header) {
 
     int ret = 0;
     /* load text */
-    // MAGIC_BREAK;
     ret = load_guest_section(header->e_fname,
                              header->e_txtstart,
                              header->e_txtlen,
@@ -128,13 +127,11 @@ int guest_init(simple_elf_t *header) {
      * detect console writes. The code below relies on CONSOLE_MEM_BASE being
      * page-aligned and CONSOLE_MEM_SIZE fitting within a single page.
      */
-    // BUG this line is comment out for debuging keyboard by not page fault
-    // uint32_t guest_console_mem = USER_MEM_START + CONSOLE_MEM_BASE;
-    // uint32_t frame = get_pte(guest_console_mem) & PAGE_ALIGN_MASK;
+    uint32_t frame = get_pte(GUEST_CONSOLE_BASE) & PAGE_ALIGN_MASK;
     // this set_pte call will not fail
-    // set_pte(guest_console_mem, frame, PTE_USER | PTE_PRESENT);
+    set_pte(GUEST_CONSOLE_BASE, frame, PTE_USER | PTE_PRESENT);
 
-    backup_main_console();
+    if (backup_main_console() < 0) return -1;
     clear_console();
 
     // update fname for simics symbolic debugging
@@ -143,7 +140,7 @@ int guest_init(simple_elf_t *header) {
     set_esp0(thread->kern_sp);
 
     disable_interrupts();
-    guest_info_driver = thread->task->guest_info;
+    cur_guest_info = thread->task->guest_info;
     // MAGIC_BREAK;
     kern_to_guest(header->e_entry);
     return 0;
@@ -176,6 +173,7 @@ guest_info_t *guest_info_init() {
     guest_info->buf_start = 0;
     guest_info->buf_end = 0;
 
+    /* virtual console registers */
     guest_info->cursor_data = SIGNAL_CURSOR_NORMAL;
     guest_info->cursor_idx = 0;
 
@@ -189,41 +187,106 @@ void guest_info_destroy(guest_info_t *guest_info) {
     free(guest_info);
 }
 
+void _mirror_console(uint32_t *addr) {
+    uint32_t offset = (uint32_t)addr & ~PAGE_ALIGN_MASK;
+    if (offset < CONSOLE_MEM_SIZE) {
+        *(uint32_t *)(CONSOLE_MEM_BASE + offset) = *addr;
+    }
+}
+
+int guest_console_mov(uint32_t *dest, ureg_t *ureg) {
+    thread_t *thread = get_cur_tcb();
+    int ret = 0;
+    uint32_t *kern_sp = (uint32_t *)(thread->kern_sp);
+    uint32_t eip = *(kern_sp - 5);
+
+    char instr_buf[MAX_INSTR_LENGTH + 1] = {0};
+    char decoded_buf[MAX_DECODED_LENGTH + 1] = {0};
+
+    read_guest(instr_buf, eip, MAX_INSTR_LENGTH, SEGSEL_GUEST_DS);
+
+    int eip_offset = disassemble(instr_buf, MAX_INSTR_LENGTH,
+                                 decoded_buf, MAX_DECODED_LENGTH);
+
+    uint32_t frame = get_pte(GUEST_CONSOLE_BASE) & PAGE_ALIGN_MASK;
+    asm_page_inval((void *)GUEST_CONSOLE_BASE);
+    // this set_pte call will not fail
+    set_pte(GUEST_CONSOLE_BASE, frame, PTE_USER | PTE_WRITE | PTE_PRESENT);
+
+    char one[] = "MOV BYTE [EAX], 0x";
+    int lenone = strlen(one);
+    char two[] = "MOV [EAX], 0x";
+    int lentwo = strlen(two);
+    char three[] = "MOV [EAX], DL";
+    int lenthree = strlen(three);
+
+    if (strncmp(decoded_buf, one, lenone) == 0) {
+        int val = 0;
+        sscanf(decoded_buf, "MOV BYTE [EAX], 0x%x", &val);
+        *dest = val;
+    } else if (strncmp(decoded_buf, two, lentwo) == 0) {
+        int val = 0;
+        sscanf(decoded_buf, "MOV [EAX], 0x%x", &val);
+        *dest = val;
+    } else if (strncmp(decoded_buf, three, lenthree) == 0) {
+        *dest = ureg->edx & 0xff;
+    } else {
+        lprintf(decoded_buf);
+        MAGIC_BREAK;
+        ret = -1;
+    }
+
+    if (ret == 0) _mirror_console(dest);
+
+    /* need to set new return address */
+    if (ret == 0) *((uint32_t *)(kern_sp - 5)) = eip + eip_offset;
+
+    // this set_pte call will not fail
+    set_pte(GUEST_CONSOLE_BASE, frame, PTE_USER | PTE_PRESENT);
+    asm_page_inval((void *)GUEST_CONSOLE_BASE);
+
+    return ret;
+}
+
 int handle_sensi_instr(ureg_t *ureg) {
     thread_t *thread = get_cur_tcb();
-    // lprintf("kern_stack: %p", (void *)thread->kern_sp);
 
     uint32_t *kern_sp = (uint32_t *)(thread->kern_sp);
+    uint32_t eip = ureg->eip;
 
-    // uint32_t cs_value = *((uint32_t *)(kern_sp - 4));
-    uint32_t ori_eip_value = *((uint32_t *)(kern_sp - 5));
-    // lprintf("cs_value: %p, eip_value: %p", (void *)cs_value, (void *)eip_value);
-
-    void *fault_ip = (void *)ureg->eip;
     char instr_buf[MAX_INSTR_LENGTH + 1] = {0};
-    char instr_buf_decoded[MAX_INS_DECODED_LENGTH + 1] = {0};
-    // lprintf("fault_ip: %p", fault_ip);
+    char decoded_buf[MAX_DECODED_LENGTH + 1] = {0};
 
-    read_guest(instr_buf, (uint32_t)fault_ip, MAX_INSTR_LENGTH,
-               (uint16_t)SEGSEL_GUEST_CS);
+    read_guest(instr_buf, eip, MAX_INSTR_LENGTH, SEGSEL_GUEST_DS);
+
     int eip_offset = disassemble(instr_buf, MAX_INSTR_LENGTH,
-                                 instr_buf_decoded, MAX_INS_DECODED_LENGTH + 1);
+                                 decoded_buf, MAX_DECODED_LENGTH);
 
-    // lprintf("eip_offset: %d, instruction: %s",
-    //         eip_offset, instr_buf_decoded);
-    // guest_info_t *guest_info = thread->task->guest_info;
+    // TODO why doesn't fac3 get recognized??
+    char fac3[] = {0xfa, 0xc3};
+    if (memcmp(fac3, instr_buf, 2) == 0) {
+        /*
+        lprintf("instr_buf: 0x%x", *(unsigned int *)instr_buf);
+        lprintf("eip: %x, eip_offset: %d, decoded_buf: %s",
+                (unsigned int)eip, eip_offset, decoded_buf);
+        MAGIC_BREAK;
+        */
 
-    // lprintf("inter_en_flag: %d, pic_ack_flag: %d",
-    //         guest_info->inter_en_flag, guest_info->pic_ack_flag);
-    // _exn_print_ureg(ureg);
-    // MAGIC_BREAK;
+        sprintf(decoded_buf, "CLI ");
+        eip_offset = 1;
+    }
+
+    /*
+    lprintf("eip: %x, eip_offset: %d, instruction: %s",
+            (unsigned int)eip, eip_offset, decoded_buf);
+            */
 
     /* need to set new return address first, because call handler need new ip */
-    *((uint32_t *)(kern_sp - 5)) = ori_eip_value + eip_offset;
-    int ret = _simulate_instr(instr_buf_decoded, ureg);
+    *((uint32_t *)(kern_sp - 5)) = eip + eip_offset;
+    int ret = _simulate_instr(decoded_buf, ureg);
     if (ret != 0) {
-        /* Not a supported simulated instruction */
-        *((uint32_t *)(kern_sp - 5)) = ori_eip_value;
+        /* Not a supported simulated instruction, restore original eip */
+        *((uint32_t *)(kern_sp - 5)) = eip;
         return -1;
     }
     // lprintf("line 228 in hypervisor");
@@ -242,12 +305,14 @@ int _simulate_instr(char *instr, ureg_t *ureg) {
         // return 0;
         _handle_out(guest_info, ureg);
         return 0;
+        // temp disable TODO
     } else if (strncmp(instr, "CLI", strlen("CLI")) == 0) {
         _handle_cli(guest_info);
         return 0;
     } else if (strncmp(instr, "STI", strlen("STI")) == 0) {
-        _handle_sti(guest_info);
         return 0;
+        // temp disable TODO
+        _handle_sti(guest_info);
     } else if (strcmp(instr, "IN AL, DX") == 0) {
         // lprintf("get into IN");
         // MAGIC_BREAK;
@@ -272,6 +337,8 @@ int _simulate_instr(char *instr, ureg_t *ureg) {
     } else if (strncmp(instr, "IRET", strlen("IRET")) == 0) {
         _handle_iret(guest_info, ureg);
         return 0;
+    } else {
+        MAGIC_BREAK;
     }
 
     return -1;
@@ -281,7 +348,9 @@ int _handle_out(guest_info_t *guest_info, ureg_t *ureg) {
     int ret = 0;
     uint16_t outb_param1 = ureg->edx;
     uint8_t outb_param2 = ureg->eax;
+
     // lprintf("outb_param1: %x, outb_param2: %x", outb_param1, outb_param2);
+
     if (outb_param1 == TIMER_MODE_IO_PORT
             || outb_param1 == TIMER_PERIOD_IO_PORT) {
         /* guest_info set timer */
@@ -360,19 +429,16 @@ int _handle_set_cursor(ureg_t *ureg) {
     case SIGNAL_CURSOR_LSB_IDX:
         if (outb_param1 == CRTC_DATA_REG) {
             guest_info->cursor_data = SIGNAL_CURSOR_NORMAL;
-            guest_info->cursor_idx = outb_param2;
+            outb(CRTC_IDX_REG, CRTC_CURSOR_LSB_IDX);
+            outb(CRTC_DATA_REG, outb_param2);
         } else return -1;
         break;
 
     case SIGNAL_CURSOR_MSB_IDX:
         if (outb_param1 == CRTC_DATA_REG) {
             guest_info->cursor_data = SIGNAL_CURSOR_NORMAL;
-            guest_info->cursor_idx += outb_param2 << 8;
-
-            /* begin set cursor */
-            int row = guest_info->cursor_idx / CONSOLE_WIDTH;
-            int col = guest_info->cursor_idx % CONSOLE_WIDTH;
-            set_cursor(row, col);
+            outb(CRTC_IDX_REG, CRTC_CURSOR_MSB_IDX);
+            outb(CRTC_DATA_REG, outb_param2);
         } else return -1;
         break;
     }

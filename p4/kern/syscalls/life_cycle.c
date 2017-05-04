@@ -287,6 +287,9 @@ int kern_exec(void) {
     page_dir_clear(task->page_dir);
     set_cr3((uint32_t)task->page_dir);
 
+    // update fname for simics symbolic debugging
+    sim_reg_process(task->page_dir, elf_header.e_fname);
+
     // check whether we should defer to hypervisor loader
     if (thread->ip < USER_MEM_START) {
         if (guest_init(&elf_header) < 0) {
@@ -329,9 +332,6 @@ int kern_exec(void) {
     *(ptr + 2) = (uint32_t)argv;
     *(ptr + 3) = USER_STACK_LOW + USER_STACK_SIZE;
     *(ptr + 4) = USER_STACK_LOW;
-
-    // update fname for simics symbolic debugging
-    sim_reg_process(task->page_dir, elf_header.e_fname);
 
     set_esp0(thread->kern_sp);
     kern_to_user(USER_STACK_START, elf_header.e_entry);
@@ -408,6 +408,11 @@ void kern_vanish(void) {
             panic("init or idle task vanished?");
         }
 
+        // if the task is a guest kernel, restore the real kernel console
+        if (task->guest_info != NULL) {
+            restore_main_console();
+        }
+
         // assumes we are in the parent's child task list
         kern_mutex_lock(&(parent->child_task_list_mutex));
         remove_node(parent->child_task_list, TASK_TO_LIST_NODE(task));
@@ -426,6 +431,9 @@ void kern_vanish(void) {
 
             // disable interrupts to protect scheduler structures
             disable_interrupts();
+
+            // if the task is a guest kernel, free virtualization resources
+            if (task->guest_info != NULL) guest_info_destroy(task->guest_info);
 
             // wake the waiting thread
             waiter->thread->status = RUNNABLE;
@@ -460,6 +468,10 @@ void kern_vanish(void) {
              * and destroy it before we finish yielding...
              */
             disable_interrupts();
+
+            // if the task is a guest kernel, free virtualization resources
+            if (task->guest_info != NULL) guest_info_destroy(task->guest_info);
+
             add_node_to_tail(parent->zombie_task_list, TASK_TO_LIST_NODE(task));
             cli_kern_mutex_unlock(&(parent->wait_mutex));
             cli_kern_mutex_unlock(&(task->vanish_mutex));
