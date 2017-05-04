@@ -305,17 +305,15 @@ int _simulate_instr(char *instr, ureg_t *ureg) {
         // return 0;
         _handle_out(guest_info, ureg);
         return 0;
-        // temp disable TODO
     } else if (strncmp(instr, "CLI", strlen("CLI")) == 0) {
         _handle_cli(guest_info);
         return 0;
     } else if (strncmp(instr, "STI", strlen("STI")) == 0) {
-        return 0;
-        // temp disable TODO
         _handle_sti(guest_info);
+        return 0;
     } else if (strcmp(instr, "IN AL, DX") == 0) {
         lprintf("get into IN");
-        MAGIC_BREAK;
+        // MAGIC_BREAK;
         // ret = _handle_in(guest_info, ureg);
         // if (ret == 0) return 0;
         _handle_in(guest_info, ureg);
@@ -358,6 +356,7 @@ int _handle_out(guest_info_t *guest_info, ureg_t *ureg) {
         if (ret == 0) return 0;
     } else if (outb_param1 == INT_ACK_CURRENT && outb_param2 == INT_CTL_PORT) {
         /* guest_info ack device interrupt */
+        lprintf("handling out");
         _handle_int_ack(guest_info);
         return 0;
     } else if (outb_param1 == CRTC_IDX_REG || ureg->eax == CRTC_DATA_REG) {
@@ -448,16 +447,24 @@ int _handle_set_cursor(ureg_t *ureg) {
 
 /* TODO how to run guest timer */
 void _handle_int_ack(guest_info_t *guest_info) {
-    /**
-     * if interrupt is disabled, does that mean we will not get a int_ack
-     * request?
-     */
-    if (guest_info->inter_en_flag != ENABLED) return;
+    lprintf("%d", guest_info->pic_ack_flag);
+
     switch (guest_info->pic_ack_flag) {
     case KEYBOARD_NOT_ACKED:
         lprintf("inter_en_flag: %d, pic_ack_flag: %d in keyboard outb",
                 guest_info->inter_en_flag, guest_info->pic_ack_flag);
-        MAGIC_BREAK;
+        if (guest_info->buf_start != guest_info->buf_end) {
+            /* deliver next keyboard interrupt */
+            if (guest_info->inter_en_flag == ENABLED) {
+                set_user_handler(KEYBOARD_DEVICE);
+                lprintf("after setting set_user_handler in keyboard outb");
+            } else if (guest_info->inter_en_flag == DISABLED) {
+                guest_info->inter_en_flag = DISABLED_KEYBOARD_PENDING;
+            }
+        }
+        guest_info->pic_ack_flag = ACKED;
+        break;
+    case TIMER_NOT_ACKED:
         if (guest_info->buf_start != guest_info->buf_end) {
             /* deliver next keyboard interrupt */
             if (guest_info->inter_en_flag == ENABLED) {
@@ -470,12 +477,16 @@ void _handle_int_ack(guest_info_t *guest_info) {
         }
         guest_info->pic_ack_flag = ACKED;
         break;
-    case TIMER_NOT_ACKED:
-        guest_info->pic_ack_flag = ACKED;
-        // do context switch ? Since we are in a time interrupt
-        // sche_yield(RUNNABLE);
-        break;
     case TIMER_KEYBOARD_NOT_ACKED:
+        if (guest_info->buf_start != guest_info->buf_end) {
+            /* deliver next keyboard interrupt */
+            if (guest_info->inter_en_flag == ENABLED) {
+                set_user_handler(KEYBOARD_DEVICE);
+                lprintf("after setting set_user_handler in keyboard outb");
+            } else if (guest_info->inter_en_flag == DISABLED) {
+                guest_info->inter_en_flag = DISABLED_KEYBOARD_PENDING;
+            }
+        }
         guest_info->pic_ack_flag = TIMER_NOT_ACKED;
         break;
     case KEYBOARD_TIMER_NOT_ACKED:
@@ -486,6 +497,8 @@ void _handle_int_ack(guest_info_t *guest_info) {
         // assert(0 == 1);
         break;
     }
+
+    enable_interrupts();
     return;
 }
 
@@ -534,7 +547,7 @@ int _handle_in(guest_info_t *guest_info, ureg_t *ureg) {
                 (unsigned int)guest_info->buf_start, (unsigned int)buf_start);
         guest_info->buf_start = buf_start;
         lprintf("keycode is %d", keycode);
-        MAGIC_BREAK;
+        // MAGIC_BREAK;
         // *((uint32_t *)(kern_sp - 5)) = handler_addr;
         /* change the eax value that is saved on stack when went into handler */
         *((uint32_t *)(kern_sp - 7)) = (uint32_t)keycode;
@@ -588,6 +601,7 @@ void _handle_iret(guest_info_t *guest_info, ureg_t *ureg) {
 }
 
 void set_user_handler(int device_type) {
+    disable_interrupts();
     thread_t *thread = get_cur_tcb();
     uint32_t *kern_sp = (uint32_t *)(thread->kern_sp);
     uint32_t handler_addr = 0;

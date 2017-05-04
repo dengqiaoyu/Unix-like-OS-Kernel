@@ -120,7 +120,7 @@ void _handle_guest_kb_handler(uint8_t keypress) {
             (unsigned int)cur_guest_info->keycode_buf[cur_guest_info->buf_end]);
     cur_guest_info->buf_end = new_buf_end;
     /* set iret go to keyboard handler */
-    MAGIC_BREAK;
+    // MAGIC_BREAK;
 
     switch (pic_ack_flag) {
     case ACKED:
@@ -130,13 +130,16 @@ void _handle_guest_kb_handler(uint8_t keypress) {
         else
             set_user_handler(KEYBOARD_DEVICE);
         lprintf("after setting user handler");
-        MAGIC_BREAK;
         break;
     case KEYBOARD_NOT_ACKED:
         break;
     case TIMER_NOT_ACKED:
         cur_guest_info->pic_ack_flag = TIMER_KEYBOARD_NOT_ACKED;
-        /* TODO how to deal with this situation */
+        if (inter_en_flag == DISABLED)
+            cur_guest_info->inter_en_flag = DISABLED_KEYBOARD_PENDING;
+        else
+            set_user_handler(KEYBOARD_DEVICE);
+        lprintf("after setting user handler");
         break;
     case TIMER_KEYBOARD_NOT_ACKED:
     case KEYBOARD_TIMER_NOT_ACKED:

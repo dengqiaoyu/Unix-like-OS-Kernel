@@ -30,6 +30,8 @@
 #define ARGC_MAX 16
 #define N_MAIN_ARGS 4
 
+extern guest_info_t *cur_guest_info;
+
 /* helper function declaration */
 void asm_set_exec_context(uint32_t old_kern_sp,
                           uint32_t new_kern_sp,
@@ -433,7 +435,10 @@ void kern_vanish(void) {
             disable_interrupts();
 
             // if the task is a guest kernel, free virtualization resources
-            if (task->guest_info != NULL) guest_info_destroy(task->guest_info);
+            if (task->guest_info != NULL) {
+                guest_info_destroy(task->guest_info);
+                if (cur_guest_info == task->guest_info) cur_guest_info = NULL;
+            }
 
             // wake the waiting thread
             waiter->thread->status = RUNNABLE;
@@ -470,7 +475,10 @@ void kern_vanish(void) {
             disable_interrupts();
 
             // if the task is a guest kernel, free virtualization resources
-            if (task->guest_info != NULL) guest_info_destroy(task->guest_info);
+            if (task->guest_info != NULL) {
+                guest_info_destroy(task->guest_info);
+                if (cur_guest_info == task->guest_info) cur_guest_info = NULL;
+            }
 
             add_node_to_tail(parent->zombie_task_list, TASK_TO_LIST_NODE(task));
             cli_kern_mutex_unlock(&(parent->wait_mutex));
