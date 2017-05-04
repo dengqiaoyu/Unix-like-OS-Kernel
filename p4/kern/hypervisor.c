@@ -389,6 +389,7 @@ void _handle_int_ack(guest_info_t *guest_info) {
     // lprintf("inter_en_flag: %d, pic_ack_flag: %d in keyboard outb",
     //         guest_info->inter_en_flag, guest_info->pic_ack_flag);
     if (guest_info->inter_en_flag != ENABLED) return;
+
     switch (guest_info->pic_ack_flag) {
     case KEYBOARD_NOT_ACKED:
         // lprintf("inter_en_flag: %d, pic_ack_flag: %d in keyboard outb",
@@ -405,6 +406,8 @@ void _handle_int_ack(guest_info_t *guest_info) {
             }
         }
         guest_info->pic_ack_flag = ACKED;
+        lprintf("inter_en_flag: %d, pic_ack_flag: %d in keyboard outb",
+                guest_info->inter_en_flag, guest_info->pic_ack_flag);
         break;
     case TIMER_NOT_ACKED:
         guest_info->pic_ack_flag = ACKED;
@@ -413,10 +416,21 @@ void _handle_int_ack(guest_info_t *guest_info) {
         break;
     case TIMER_KEYBOARD_NOT_ACKED:
         guest_info->pic_ack_flag = TIMER_NOT_ACKED;
+        if (guest_info->buf_start != guest_info->buf_end) {
+            /* deliver next keyboard interrupt */
+            if (guest_info->inter_en_flag == ENABLED) {
+                set_user_handler(KEYBOARD_DEVICE);
+                // lprintf("after setting set_user_handler in keyboard outb");
+                // MAGIC_BREAK;
+            } else if (guest_info->inter_en_flag == DISABLED) {
+                guest_info->inter_en_flag = DISABLED_KEYBOARD_PENDING;
+            }
+        }
+        guest_info->pic_ack_flag = TIMER_NOT_ACKED;
         break;
     case KEYBOARD_TIMER_NOT_ACKED:
         guest_info->pic_ack_flag = KEYBOARD_NOT_ACKED;
-        // do context switch ?
+        sche_yield(RUNNABLE);
         break;
     default:
         // assert(0 == 1);

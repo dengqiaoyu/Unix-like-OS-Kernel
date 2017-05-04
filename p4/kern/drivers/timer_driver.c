@@ -69,7 +69,7 @@ void _prepare_guest_timer(void) {
         return;
     }
 
-    // lprintf("pic_ack_flag: %d", pic_ack_flag);
+    lprintf("pic_ack_flag: %d", pic_ack_flag);
     // MAGIC_BREAK;
     if (pic_ack_flag != ACKED
             && pic_ack_flag != KEYBOARD_NOT_ACKED) {
@@ -93,7 +93,7 @@ void _prepare_guest_timer(void) {
             guest_info->pic_ack_flag = TIMER_NOT_ACKED;
         else if (pic_ack_flag == KEYBOARD_NOT_ACKED)
             guest_info->pic_ack_flag = KEYBOARD_TIMER_NOT_ACKED;
-        // lprintf("invoke guest timer handler");
+        lprintf("invoke guest timer handler");
         set_user_handler(TIMER_DEVICE);
     }
     // lprintf("inter_en_flag: %d, pic_ack_flag: %d after setting user handler",

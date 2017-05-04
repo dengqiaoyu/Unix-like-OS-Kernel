@@ -87,8 +87,10 @@ int _process_keypress(uint8_t keypress) {
 
 void _handle_guest_kb_handler(uint8_t keypress) {
     int inter_en_flag = guest_info_driver->inter_en_flag;
-    if (inter_en_flag != ENABLED && inter_en_flag != DISABLED) return;
     int pic_ack_flag = guest_info_driver->pic_ack_flag;
+    lprintf("inter_en_flag: %d, pic_ack_flag: %d", inter_en_flag, pic_ack_flag);
+    if (inter_en_flag != ENABLED && inter_en_flag != DISABLED) return;
+
     // if (pic_ack_flag != ACKED && pic_ack_flag != TIMER_NOT_ACKED) return;
 
     // lprintf("keypress in _handle_guest_kb_handler: %u", keypress);
