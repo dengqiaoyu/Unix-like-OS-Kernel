@@ -5,4 +5,12 @@
 @author Newton Xie (ncx)
 @author Qiaoyu Deng (qdeng)
 
+This is a horribly incomplete, not-working p4. Sorry to whoever has to read it...
+We are able to properly set up segments, and we have a paging hack in place to
+deal with writing to a virtual console.
+
+We have written out the logic for handling all sensitive instructions and
+delivering interrupts, but it's very broken. At one point we were able to
+consistently deliver timer interrupts, but right now nothing seems to work.
+
 */

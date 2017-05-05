@@ -51,6 +51,7 @@ void add_to_kb_buf(void) {
     lprintf("keypress: %u", keypress);
     if (cur_guest_info != NULL) {
         _handle_guest_kb_handler(keypress);
+        outb(INT_ACK_CURRENT, INT_CTL_PORT);
         return;
     }
 
@@ -121,23 +122,20 @@ void _handle_guest_kb_handler(uint8_t keypress) {
     /* set iret go to keyboard handler */
     // MAGIC_BREAK;
 
+    if (inter_en_flag == DISABLED)
+        cur_guest_info->inter_en_flag = DISABLED_KEYBOARD_PENDING;
+
     switch (pic_ack_flag) {
     case ACKED:
         cur_guest_info->pic_ack_flag = KEYBOARD_NOT_ACKED;
-        if (inter_en_flag == DISABLED)
-            cur_guest_info->inter_en_flag = DISABLED_KEYBOARD_PENDING;
-        else if (inter_en_flag == DISABLED_TIMER_PENDING)
-            break;
-        else
+        if (inter_en_flag == ENABLED)
             set_user_handler(KEYBOARD_DEVICE);
         break;
     case KEYBOARD_NOT_ACKED:
         break;
     case TIMER_NOT_ACKED:
         cur_guest_info->pic_ack_flag = TIMER_KEYBOARD_NOT_ACKED;
-        if (inter_en_flag == DISABLED)
-            cur_guest_info->inter_en_flag = DISABLED_KEYBOARD_PENDING;
-        else
+        if (inter_en_flag == ENABLED)
             set_user_handler(KEYBOARD_DEVICE);
         lprintf("after setting user handler");
         break;

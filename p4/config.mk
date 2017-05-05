@@ -72,7 +72,7 @@ STUDENTTESTS = my_getchar_test my_sensitive_instr
 # A list of the data files you want built in from the user/files
 # directory.
 #
-STUDENTFILES = p1kernel p1k
+STUDENTFILES = p1kernel
 
 ###########################################################################
 # Object files for your thread library

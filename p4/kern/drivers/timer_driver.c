@@ -71,7 +71,7 @@ void _prepare_guest_timer(void) {
         return;
     }
 
-    lprintf("pic_ack_flag: %d", pic_ack_flag);
+    // lprintf("pic_ack_flag: %d", pic_ack_flag);
     // MAGIC_BREAK;
     if (pic_ack_flag != ACKED
             && pic_ack_flag != KEYBOARD_NOT_ACKED) {

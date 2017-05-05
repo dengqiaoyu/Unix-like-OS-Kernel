@@ -183,7 +183,6 @@ guest_info_t *guest_info_init() {
 }
 
 void guest_info_destroy(guest_info_t *guest_info) {
-    //TODO
     free(guest_info);
 }
 
@@ -508,7 +507,6 @@ void _handle_int_ack(guest_info_t *guest_info) {
         break;
     }
 
-    enable_interrupts();
     return;
 }
 
@@ -549,6 +547,11 @@ int _handle_in(guest_info_t *guest_info, ureg_t *ureg) {
     uint32_t *kern_sp = (uint32_t *)(get_cur_tcb()->kern_sp);
     uint16_t inb_param = ureg->edx;
     if (inb_param == KEYBOARD_PORT) {
+        if (guest_info->buf_start == guest_info->buf_end) {
+            *((uint32_t *)(kern_sp - 7)) = 0;
+            return 0;
+        }
+
         int buf_start = guest_info->buf_start;
         uint8_t keycode = (uint8_t)guest_info->keycode_buf[buf_start];
         /* buf_start should never equal to buf_end in this function */
@@ -612,7 +615,6 @@ void _handle_iret(guest_info_t *guest_info, ureg_t *ureg) {
 }
 
 void set_user_handler(int device_type) {
-    disable_interrupts();
     thread_t *thread = get_cur_tcb();
     uint32_t *kern_sp = (uint32_t *)(thread->kern_sp);
     uint32_t handler_addr = 0;
