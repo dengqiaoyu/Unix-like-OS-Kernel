@@ -99,6 +99,9 @@ void _handle_guest_kb_handler(uint8_t keypress) {
         }
     }
 
+    // TODO not working!
+    return;
+
     int inter_en_flag = cur_guest_info->inter_en_flag;
     if (inter_en_flag != ENABLED && inter_en_flag != DISABLED) return;
     int pic_ack_flag = cur_guest_info->pic_ack_flag;
@@ -147,3 +150,37 @@ void _handle_guest_kb_handler(uint8_t keypress) {
     outb(INT_ACK_CURRENT, INT_CTL_PORT);
     return;
 }
+/* keybord not working */
+
+// void _handle_guest_kb_handler(uint8_t keypress) {
+//     int inter_en_flag = guest_info_driver->inter_en_flag;
+//     if (inter_en_flag != ENABLED && inter_en_flag != DISABLED) return;
+//     int pic_ack_flag = guest_info_driver->pic_ack_flag;
+//     if (pic_ack_flag != ACKED && pic_ack_flag != TIMER_NOT_ACKED) return;
+
+//     /* check whether full */
+//     int new_buf_end = (guest_info_driver->buf_end + 1) % KC_BUF_LEN;
+//     if (new_buf_end == guest_info_driver->buf_start) {
+//         outb(INT_ACK_CURRENT, INT_CTL_PORT);
+//         return;
+//     }
+
+//     guest_info_driver->keycode_buf[guest_info_driver->buf_end] = keypress;
+//     guest_info_driver->buf_end = new_buf_end;
+//     /* set iret go to keyboard handler */
+
+//     if (pic_ack_flag == ACKED) {
+//         guest_info_driver->pic_ack_flag = KEYBOARD_NOT_ACKED;
+//     } else {
+//         /* TIMER_NOT_ACKED */
+//         guest_info_driver->pic_ack_flag = TIMER_KEYBOARD_NOT_ACKED;
+//     }
+
+//     if (inter_en_flag == DISABLED)
+//         guest_info_driver->inter_en_flag = DISABLED_KEYBOARD_PENDING;
+//     else
+//         set_user_handler(KEYBOARD_DEVICE);
+
+//     outb(INT_ACK_CURRENT, INT_CTL_PORT);
+//     return;
+// }
