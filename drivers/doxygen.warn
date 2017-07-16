@@ -1,0 +1,120 @@
+warning: source ./README.dox is not a readable file or directory... skipping.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/timer_driver.c:2: warning: the name `time_driver.c' supplied as the second argument in the \file statement is not an input file
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:35: warning: Compound idt_gates is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:35: warning: Compound best_record_t is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:45: warning: Compound game_session_t is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/console_driver.c:33: warning: Found unknown command `\r'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/console_driver.c:34: warning: expected whitespace after ' command
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/console_driver.c:96: warning: Found unknown command `\r'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/console_driver.c:99: warning: expected whitespace after ' command
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/console_driver.c:33: warning: Found unknown command `\r'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/console_driver.c:34: warning: expected whitespace after ' command
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/console_driver.c:96: warning: Found unknown command `\r'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/console_driver.c:99: warning: expected whitespace after ' command
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/console_driver.c:22: warning: Member logic_cursor (variable) of file console_driver.c is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/console_driver.c:23: warning: Member term_color (variable) of file console_driver.c is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/console_driver.c:24: warning: Member is_hide (variable) of file console_driver.c is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/console_driver.c:25: warning: Member is_allowed_scroll (variable) of file console_driver.c is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/console_driver.c:4: warning: Found unknown command `\andrew_id'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/console_driver.c:33: warning: Found unknown command `\r'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/console_driver.c:34: warning: expected whitespace after ' command
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/console_driver.c:96: warning: Found unknown command `\r'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/console_driver.c:99: warning: expected whitespace after ' command
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/console_driver.h:13: warning: Member LSB(addr) (macro definition) of file console_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/console_driver.h:15: warning: Member MSB(addr) (macro definition) of file console_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/console_driver.h:17: warning: Member CURSOR_POS_HIDE (macro definition) of file console_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/console_driver.h:18: warning: Member SCREEN_LEN (macro definition) of file console_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/console_driver.h:27: warning: Found unknown command `\r'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/console_driver.h:28: warning: expected whitespace after ' command
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/console_driver.h:40: warning: Found unknown command `\r'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/console_driver.h:43: warning: expected whitespace after ' command
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/console_driver.h:4: warning: Found unknown command `\andrew_id'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/console_driver.h:27: warning: Found unknown command `\r'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/console_driver.h:28: warning: expected whitespace after ' command
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/console_driver.h:40: warning: Found unknown command `\r'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/console_driver.h:43: warning: expected whitespace after ' command
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/game.c:69: warning: Member abs(int x) (function) of file game.c is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/game.c:71: warning: Member pseudo_distance(int x1, int y1, int x2, int y2) (function) of file game.c is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/game.c:46: warning: Member game_ui_title_win[CONSOLE_HEIGHT] (variable) of file game.c is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/game.c:47: warning: Member game_ui_main_layout_win[CONSOLE_HEIGHT] (variable) of file game.c is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/game.c:48: warning: Member flu_mazes[] (variable) of file game.c is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/game.c:49: warning: Member flu_maze_count (variable) of file game.c is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/game.c:50: warning: Member if_cnt_time (variable) of file game.c is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/game.c:57: warning: Member through_col_step_virus[MOVE_DIRECTION] (variable) of file game.c is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/game.c:64: warning: Member expected_col_step_virus[MOVE_DIRECTION] (variable) of file game.c is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/game.c:8: warning: Found unknown command `\andrew_id'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:13: warning: Member MAZE_RECENT_RECORDS_NUM (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:14: warning: Member LEVEL_STRING_LENGTH (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:15: warning: Member LEVEL_BRACKET_LENGTH (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:16: warning: Member TIME_STRING_LENGTH (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:19: warning: Member TURNS_PER_MOVE (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:20: warning: Member MOVE_DIRECTION (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:21: warning: Member PLAYER_STEP_SIZE (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:22: warning: Member VIRUS_STEP_SIZE (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:25: warning: Member SECONDS_PER_HOUR (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:26: warning: Member SECONDS_PER_MINUTES (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:29: warning: Member INITIAL_LEVEL (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:30: warning: Member INITIAL_POSITION (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:31: warning: Member INITIAL_RECORD (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:59: warning: Member TITLE (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:60: warning: Member INSTRUCTION_IN_TITLE (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:61: warning: Member MAIN (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:62: warning: Member PAUSE_IN_MAIN (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:63: warning: Member INSTRUCTION_IN_MAIN (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:64: warning: Member CATCHED_IN_MAIN (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:65: warning: Member PASS_IN_MAIN (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:66: warning: Member CLEAR_IN_MAIN (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:67: warning: Member CHEAT_IN_MAIN (macro definition) of file game.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:4: warning: Found unknown command `\andrew_id'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:16: warning: Member BEST_RECORD_LEVEL_ROW (macro definition) of file game_ui.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:17: warning: Member BEST_RECORD_LEVEL_COL (macro definition) of file game_ui.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:18: warning: Member BEST_RECORD_TIME_ROW (macro definition) of file game_ui.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:19: warning: Member BEST_RECORD_TIME_COL (macro definition) of file game_ui.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:20: warning: Member FIRST_ROW_IN_SCREEN (macro definition) of file game_ui.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:21: warning: Member INSTRCUTION_WIDTH (macro definition) of file game_ui.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:22: warning: Member INSTRCUTION_HEIGHT (macro definition) of file game_ui.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:23: warning: Member POP_UP_WINDOW_WIDTH (macro definition) of file game_ui.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:24: warning: Member POP_UP_WINDOW_HEIGHT (macro definition) of file game_ui.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:25: warning: Member SCORE_MAX_LENGTH (macro definition) of file game_ui.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:26: warning: Member SCORE_POSITION_ROW (macro definition) of file game_ui.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:27: warning: Member SCORE_POSITION_COLUMN (macro definition) of file game_ui.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:28: warning: Member ATTEMPT_MAX_LENGTH (macro definition) of file game_ui.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:29: warning: Member ATTEMPT_POSITION_ROW (macro definition) of file game_ui.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:30: warning: Member ATTEMPT_POSITION_COLUMN (macro definition) of file game_ui.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:31: warning: Member TIME_POSITION_ROW (macro definition) of file game_ui.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:32: warning: Member TIME_POSITION_COLUMN (macro definition) of file game_ui.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game_ui.h:4: warning: Found unknown command `\andrew_id'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:13: warning: Member IDT_ENTRY_LENGTH (macro definition) of file install_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:17: warning: Member SEGMENT_OFFSET_BITS (macro definition) of file install_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:18: warning: Member SEGMENT_SELECTOR_BITS (macro definition) of file install_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:19: warning: Member RESERVED_BITS (macro definition) of file install_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:20: warning: Member ZEROS_BITS (macro definition) of file install_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:21: warning: Member GATE_TYPE_BITS (macro definition) of file install_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:22: warning: Member SIZE_BITS (macro definition) of file install_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:23: warning: Member ZERO_BITS (macro definition) of file install_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:24: warning: Member DESCRIPTOR_PRIVILEGE_LEVEL_BITS (macro definition) of file install_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:25: warning: Member SEGEMENT_PRESENT_FLAG_BITS (macro definition) of file install_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:28: warning: Member RESERVED (macro definition) of file install_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:29: warning: Member ZEROS (macro definition) of file install_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:30: warning: Member GATE_TYPE (macro definition) of file install_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:31: warning: Member D (macro definition) of file install_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:32: warning: Member DPL (macro definition) of file install_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:33: warning: Member P (macro definition) of file install_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:4: warning: Found unknown command `\andrew_id'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:59: warning: Found unknown command `\andrew_id'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/keyboard_driver.c:22: warning: Member buf[KB_BUF_LEN] (variable) of file keyboard_driver.c is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/keyboard_driver.c:24: warning: Member buf_ending (variable) of file keyboard_driver.c is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/keyboard_driver.c:26: warning: Member buf_cursor (variable) of file keyboard_driver.c is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/keyboard_driver.c:4: warning: Found unknown command `\andrew_id'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/keyboard_driver.h:12: warning: Member KB_BUF_LEN (macro definition) of file keyboard_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/keyboard_driver.h:4: warning: Found unknown command `\andrew_id'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/keyboard_handler.h:4: warning: Found unknown command `\andrew_id'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/timer_driver.h:12: warning: Member MS_PER_INTERRUPT (macro definition) of file timer_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/timer_driver.h:13: warning: Member MS_PER_S (macro definition) of file timer_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/timer_driver.h:15: warning: Member LSB(addr) (macro definition) of file timer_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/timer_driver.h:16: warning: Member MSB(addr) (macro definition) of file timer_driver.h is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/timer_driver.h:4: warning: Found unknown command `\andrew_id'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/timer_handler.h:4: warning: Found unknown command `\andrew_id'
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/game.h:41: warning: Member time_str[TIME_STRING_LENGTH+1] (variable) of class best_record_t is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:45: warning: Member dpl (variable) of class idt_gates is not documented.
+/afs/andrew.cmu.edu/usr14/qdeng/private/2_Semester/15-605/p1/kern/inc/install_driver.h:48: warning: Member msb_offset (variable) of class idt_gates is not documented.

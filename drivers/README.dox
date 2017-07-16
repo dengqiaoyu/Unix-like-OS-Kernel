@@ -1,0 +1,54 @@
+/**
+
+@mainpage 15-410 Project 1
+
+@author Qiaoyu Deng (qdeng)
+
+This game is called Escape the Flu Virus, which is Inspired by Robert Abbott's 
+'Theseus and the Minotaur'. It has three kinds of windows, the first one is
+title window, which displays the game's name and its author or other inspired
+thing, and the second one is game's main page, which shows the game map layout,
+current scores, attempts and time counter, the thrid one(or ones) is many small
+window that are used for notifying player for different situaions such as
+passing level, failing a level, pausing current game or toggling instruction.
+
+Here is a brief instructions about how to playing this game:
+***************************************
+*           'wasd' to move            *
+*           'space' to wait           *
+*            'r' to rewind            *
+*             'q' to quit             *
+*        'p' to pause/unpause         *
+*     'i' to toggle instructions      *
+*             'v' to skip             *
+*         Press 'i' to go back        *
+***************************************
+
+When you pass a level, your record will be recorded and then added into title,
+if you did a very good play. You will see:
+*********************
+*  Congradulations  *
+*   You are cured   *
+* 'v' to next stage *
+*********************
+However, you will see: 
+*********************
+*     So bad! :(    *
+*  You are killed!  *
+*  'r' to restart   *
+*********************
+to informa you that you have been killed by the virus, and need to start again.
+
+The game decides whether a item(player or virus) by whether its expected
+direction has a [SPACE], if it is true, then the item can move to that
+direction.
+
+readchar() is implemented by creating a loop buffer, where the keyboard_handler
+performs like a producer, and readchar() performs like a consumer.
+
+Item gets its position upadted by calling move_item(), which requires it to
+set the relative source and relative destination, note that it assumes the maze
+is printed in the center of the screen, which is exactly what this game's UI
+design.
+
+*/

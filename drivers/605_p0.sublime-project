@@ -1,0 +1,23 @@
+{
+	"folders":
+	[
+		{
+			"path": "."
+		}
+	],
+
+    "SublimeLinter":
+    {
+        "linters":
+        {
+            "clang": {
+                "extra_flags": "",
+                "include_dirs": [
+                    "${project}/spec/",
+                ]
+            }
+        }
+    },
+}
+
+
